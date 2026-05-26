@@ -3779,5 +3779,634 @@ function _triggerDownload(blob, filename){
 let _ltaTabOpened=false;
 
 </script>
+
+<!-- ══ SCROLL-TO-TOP BUBBLE ══ -->
+<style>
+#scroll-top-btn{
+  position:fixed;bottom:28px;right:28px;
+  width:46px;height:46px;border-radius:50%;
+  background:rgba(224,48,30,.15);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1.5px solid rgba(224,48,30,.30);
+  color:#e0301e;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:90;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .2s,background .2s;
+  box-shadow:0 4px 20px rgba(224,48,30,.12);
+}
+#scroll-top-btn.visible{opacity:1;pointer-events:auto;}
+#scroll-top-btn:hover{
+  background:rgba(224,48,30,.28);
+  transform:translateY(-2px);
+  box-shadow:0 6px 24px rgba(224,48,30,.22);
+}
+#scroll-top-btn:active{transform:translateY(0);}
+</style>
+<button id="scroll-top-btn" title="Back to top" aria-label="Scroll to top">
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+    <path d="M8 12V4M4 7l4-4 4 4"/>
+  </svg>
+</button>
+<script>
+(function(){
+  var btn=document.getElementById('scroll-top-btn');
+  if(!btn) return;
+  function onScroll(){
+    var top=window.pageYOffset||document.documentElement.scrollTop||document.body.scrollTop||0;
+    btn.classList.toggle('visible',top>220);
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  document.addEventListener('scroll',onScroll,{passive:true});
+  btn.onclick=function(){ window.scrollTo({top:0,behavior:'smooth'}); };
+  onScroll();
+})();
+</script>
+
+<!-- ══ USER LOGIN MODAL ══ -->
+<style>
+/* PC box states */
+.pc-box.pc-ok{border-color:#16a34a!important;background:#f0fdf4!important;}
+.pc-box.pc-err{border-color:#dc2626!important;background:#fff5f5!important;}
+/* Login overlay */
+#user-login-overlay{font-family:'Segoe UI',Arial,sans-serif;}
+.login-card{
+  background:#fff;border-radius:20px;padding:36px 40px;width:100%;max-width:420px;
+  box-shadow:0 24px 64px rgba(0,0,0,.28);position:relative;
+}
+.login-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+.login-brand-dot{width:10px;height:10px;border-radius:50%;background:#e0301e;flex-shrink:0;}
+.login-title{font-size:18px;font-weight:800;color:#0d1b3e;letter-spacing:-.02em;}
+.login-sub{font-size:10px;color:#94a3b8;font-family:monospace;margin-top:1px;}
+.login-step-bar{display:flex;gap:6px;margin-bottom:24px;}
+.login-step-pip{height:3px;border-radius:2px;flex:1;transition:background .2s;}
+.login-section-lbl{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#94a3b8;margin-bottom:10px;}
+.login-select-wrap{position:relative;}
+.login-select-wrap select{
+  width:100%;padding:10px 34px 10px 12px;font-size:13px;
+  border:2px solid #e2e8f0;border-radius:8px;background:#fff;color:#0f172a;
+  cursor:pointer;appearance:none;-webkit-appearance:none;
+  font-family:'Segoe UI',Arial,sans-serif;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  transition:border-color .15s;
+}
+.login-select-wrap select:focus{outline:none;border-color:#e0301e;}
+.login-btn-primary{
+  width:100%;padding:12px;background:#0d1b3e;color:#fff;border:none;border-radius:8px;
+  font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,transform .12s;
+  font-family:'Segoe UI',Arial,sans-serif;margin-top:4px;
+}
+.login-btn-primary:hover:not(:disabled){background:#1e3a8a;transform:translateY(-1px);}
+.login-btn-primary:disabled{background:#94a3b8;cursor:not-allowed;}
+.login-user-chip{
+  display:flex;align-items:center;gap:8px;
+  border:1px solid #bae6fd;border-radius:7px;padding:8px 12px;margin-bottom:14px;
+  background:#f0f9ff;
+}
+.login-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,#e0301e,#003087);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.login-chip-name{font-size:12px;font-weight:700;color:#0d1b3e;}
+.login-chip-id{font-size:10px;color:#94a3b8;font-family:monospace;}
+.pc-row{display:flex;gap:10px;justify-content:center;margin:14px 0 10px;}
+.login-err{display:none;text-align:center;font-size:11px;color:#dc2626;font-family:monospace;margin-bottom:8px;}
+.login-link-btn{background:transparent;border:none;color:#94a3b8;font-size:11px;cursor:pointer;font-family:monospace;text-decoration:underline;padding:0;}
+.login-link-btn:hover{color:#64748b;}
+/* Active user chip in header */
+#active-user-chip{
+  display:none;align-items:center;gap:8px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+  border-radius:10px;padding:5px 12px;cursor:pointer;transition:background .15s;
+}
+#active-user-chip:hover{background:rgba(255,255,255,.2);}
+#auc-avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(135deg,#e0301e,#003087);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;color:#fff;flex-shrink:0;
+}
+#auc-name{font-size:11px;font-weight:700;color:#fff;}
+#auc-role{font-size:9px;color:rgba(255,255,255,.55);font-family:monospace;}
+</style>
+
+<div id="user-login-overlay" style="position:fixed;inset:0;z-index:99999;background:rgba(10,20,50,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;">
+  <div class="login-card">
+    <!-- Header -->
+    <div class="login-logo-row">
+      <div class="login-brand-dot"></div>
+      <div>
+        <div class="login-title">🏗️ PROPEL SCM — Resource Dashboard</div>
+      </div>
+    </div>
+    <!-- Step indicator -->
+    <div class="login-step-bar">
+      <div class="login-step-pip" id="login-step-dot-1" style="background:rgba(224,48,30,.85)"></div>
+      <div class="login-step-pip" id="login-step-dot-2" style="background:rgba(224,48,30,.25)"></div>
+    </div>
+
+    <!-- Error banner -->
+    <div id="login-error" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#dc2626;font-family:monospace;" id="login-error">
+      <span id="login-error-msg"></span>
+    </div>
+
+    <!-- Loading -->
+    <div id="login-loading" style="text-align:center;padding:28px 0;color:#94a3b8;font-size:12px;font-family:monospace;">
+      <div style="width:32px;height:32px;border:3px solid #f0f0f0;border-top-color:#e0301e;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;"></div>
+      Loading user roster…
+    </div>
+
+    <!-- Step 1: Select name -->
+    <div id="login-step-1" style="display:none;">
+      <div class="login-section-lbl">Select your name</div>
+      <div class="login-select-wrap" style="margin-bottom:14px;">
+        <select id="login-user-select">
+          <option value="" disabled selected>— Select your name —</option>
+        </select>
+      </div>
+      <div id="login-not-found" style="display:none;font-size:11px;color:#94a3b8;font-family:monospace;margin-bottom:10px;">
+        Name not found? Contact PMO to update the users.json file.
+      </div>
+      <button class="login-btn-primary" id="login-step1-next" onclick="_loginStep1Next()" disabled style="background:#94a3b8;cursor:not-allowed;">
+        Continue →
+      </button>
+    </div>
+
+    <!-- Step 2a: Enter existing passcode -->
+    <div id="login-step-2-enter" style="display:none;">
+      <div class="login-user-chip" id="login-user-chip-2">
+        <div class="login-avatar" id="login-avatar-2"></div>
+        <div>
+          <div class="login-chip-name" id="login-chip-name-2"></div>
+          <div class="login-chip-id" id="login-chip-id-2"></div>
+        </div>
+        <button class="login-link-btn" onclick="_loginBackToStep1()" style="margin-left:auto;">Change</button>
+      </div>
+      <div class="login-section-lbl">Enter your 4-character passcode</div>
+      <div class="pc-row">
+        <input id="pc-e-0" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,1,'e')" onkeydown="_pcKey(event,0,'e')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-e-1" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,2,'e')" onkeydown="_pcKey(event,1,'e')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-e-2" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,3,'e')" onkeydown="_pcKey(event,2,'e')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-e-3" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,null,'e')" onkeydown="_pcKey(event,3,'e')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+      </div>
+      <div class="login-err" id="login-pc-error"></div>
+      <button class="login-btn-primary" onclick="_loginVerifyPasscode()" id="login-verify-btn">Sign In →</button>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="login-link-btn" onclick="_loginForgotPasscode()">Forgot passcode?</button>
+      </div>
+    </div>
+
+    <!-- Step 2b: Create passcode (first time) -->
+    <div id="login-step-2-create" style="display:none;">
+      <div class="login-user-chip" style="background:#f0fdf4;border-color:#bbf7d0;">
+        <div class="login-avatar" id="login-avatar-c" style="background:linear-gradient(135deg,#16a34a,#003087)"></div>
+        <div>
+          <div class="login-chip-name" id="login-chip-name-c" style="color:#14532d;"></div>
+          <div class="login-chip-id" id="login-chip-id-c"></div>
+        </div>
+        <button class="login-link-btn" onclick="_loginBackToStep1()" style="margin-left:auto;">Change</button>
+      </div>
+      <div class="login-section-lbl">Create a 4-character passcode (letters &amp; numbers)</div>
+      <div class="pc-row">
+        <input id="pc-c-0" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,1,'c')" onkeydown="_pcKey(event,0,'c')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-c-1" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,2,'c')" onkeydown="_pcKey(event,1,'c')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-c-2" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,3,'c')" onkeydown="_pcKey(event,2,'c')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-c-3" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,null,'c')" onkeydown="_pcKey(event,3,'c')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+      </div>
+      <div class="login-section-lbl" style="margin-top:4px;">Confirm passcode</div>
+      <div class="pc-row" style="margin-top:0;">
+        <input id="pc-cf-0" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,1,'cf')" onkeydown="_pcKey(event,0,'cf')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-cf-1" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,2,'cf')" onkeydown="_pcKey(event,1,'cf')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-cf-2" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,3,'cf')" onkeydown="_pcKey(event,2,'cf')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-cf-3" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,null,'cf')" onkeydown="_pcKey(event,3,'cf')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+      </div>
+      <div class="login-err" id="login-create-error"></div>
+      <button class="login-btn-primary" onclick="_loginCreatePasscode()" style="background:#16a34a;">Create Passcode &amp; Sign In →</button>
+    </div>
+
+    <!-- Step 2c: Re-login after idle -->
+    <div id="login-step-relogin" style="display:none;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div class="login-avatar" id="login-relogin-avatar" style="width:40px;height:40px;font-size:14px;margin:0 auto 8px;"></div>
+        <div style="font-size:13px;font-weight:700;color:#0d1b3e;" id="login-relogin-name"></div>
+        <div style="font-size:10px;color:#94a3b8;font-family:monospace;margin-top:2px;">Session expired — re-enter your passcode</div>
+      </div>
+      <div class="pc-row">
+        <input id="pc-r-0" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,1,'r')" onkeydown="_pcKey(event,0,'r')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-r-1" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,2,'r')" onkeydown="_pcKey(event,1,'r')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-r-2" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,3,'r')" onkeydown="_pcKey(event,2,'r')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+        <input id="pc-r-3" type="password" maxlength="1" class="pc-box" oninput="_pcInput(this,null,'r')" onkeydown="_pcKey(event,3,'r')" style="width:52px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #e2e8f0;border-radius:8px;font-family:monospace;text-transform:uppercase;color:#0d1b3e;outline:none;transition:border-color .15s;">
+      </div>
+      <div class="login-err" id="login-relogin-error"></div>
+      <button class="login-btn-primary" onclick="_loginVerifyRelogin()">Resume Session →</button>
+      <div style="text-align:center;margin-top:12px;display:flex;gap:16px;justify-content:center;">
+        <button class="login-link-btn" onclick="_loginForgotPasscode()">Forgot passcode?</button>
+        <button class="login-link-btn" onclick="_loginSwitchUserFromIdle()">Switch user</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Active user chip — injected into header by JS -->
+<script>
+(function(){
+  /* Inject active-user chip into .hdr badges area */
+  var badges=document.querySelector('.badges');
+  if(badges){
+    var chip=document.createElement('div');
+    chip.id='active-user-chip';
+    chip.title='Signed in user';
+    chip.innerHTML='<div id="auc-avatar"></div><div><div id="auc-name"></div><div id="auc-role"></div></div>';
+    badges.appendChild(chip);
+  }
+})();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════
+   LOGIN SYSTEM — RESOURCE DASHBOARD
+   Ported from PG&E SCM PMO Dashboard V10
+════════════════════════════════════════════════════ */
+
+/* GitHub Pages URL for users.json — same repo as dashboard files */
+var USER_ROSTER_URL   = 'https://kpwcite.github.io/pge-propel-scm-resources-dashboard/users.json';
+var PASSCODE_PREFIX   = 'propel_res_pc_';
+var ATTEMPTS_PREFIX   = 'propel_res_att_';
+var SESSION_STORE_KEY = 'propel_res_sessions';
+var SESSION_TTL_MS    = 2 * 60 * 60 * 1000;   /* 2 hours */
+var HEARTBEAT_INTERVAL= 60 * 1000;
+var MAX_ATTEMPTS      = 3;
+var LOCKOUT_MS        = 5 * 60 * 1000;
+
+/* Embedded fallback users (kept in sync with users.json) */
+var EMBEDDED_USERS = [
+  {name:'ALEXA BURNS',          pge_id:'AEBQ', pwc_email:'ALEXA.BURNS@PWC.COM',                active:true,  pc_hash:''},
+  {name:'ANIL G S',             pge_id:'AFGI', pwc_email:'ANIL.K.G.S@PWC.COM',                 active:true,  pc_hash:''},
+  {name:'ANKIT ANAND',          pge_id:'AHAB', pwc_email:'ANKIT.A.ANAND@PWC.COM',              active:true,  pc_hash:''},
+  {name:'ANSHUMAN BERA',        pge_id:'AW17', pwc_email:'ANSHUMAN.BERA@PWC.COM',              active:true,  pc_hash:''},
+  {name:'AVINASHA HALAGERI',    pge_id:'AQHF', pwc_email:'AVINASHA.SIDDAPPA.HALAGERI@PWC.COM', active:true,  pc_hash:''},
+  {name:'BANTY KUMAR GUPTA',    pge_id:'B7G2', pwc_email:'BANTY.KUMAR.GUPTA@PWC.COM',          active:true,  pc_hash:''},
+  {name:'BHAVANSHU MANDLOI',    pge_id:'BZM4', pwc_email:'BHAVANSHU.MANDLOI@PWC.COM',          active:true,  pc_hash:''},
+  {name:'CAITLIN NGUYEN',       pge_id:'C3NG', pwc_email:'CAITLIN.NGUYEN@PWC.COM',             active:true,  pc_hash:''},
+  {name:'GURMINDER SANDHU',     pge_id:'G4S4', pwc_email:'GURMINDER.SANDHU@PWC.COM',           active:true,  pc_hash:''},
+  {name:'HEMA MURTHY',          pge_id:'H3MQ', pwc_email:'HEMA.MURTHY@PWC.COM',                active:true,  pc_hash:''},
+  {name:'KAUSTUBH KULKARNI',    pge_id:'K4KH', pwc_email:'KAUSTUBH.K.KULKARNI@PWC.COM',       active:true,  pc_hash:''},
+  {name:'KETAN NAMDEO DAREKAR', pge_id:'K6DO', pwc_email:'KETAN.NAMDEO.DAREKAR@PWC.COM',      active:true,  pc_hash:''},
+  {name:'KUNTAL PHARAS',        pge_id:'K1PU', pwc_email:'KUNTAL.PHARAS@PWC.COM',              active:true,  pc_hash:''},
+  {name:'KUSUM ARYA',           pge_id:'K5A0', pwc_email:'KUSUM.ARYA@PWC.COM',                 active:true,  pc_hash:''},
+  {name:'MADDY BARRETT',        pge_id:'MZ2Y', pwc_email:'MADDY.BARRETT@PWC.COM',              active:true,  pc_hash:''},
+  {name:'PEARSON KURKA',        pge_id:'P7K4', pwc_email:'PEARSON.K.KURKA@PWC.COM',            active:true,  pc_hash:''},
+  {name:'PRADEEP KUMAR',        pge_id:'PK6I', pwc_email:'PRADEEP.H.KUMAR@PWC.COM',            active:true,  pc_hash:''},
+  {name:'PRATYAY SAHA',         pge_id:'PUSH', pwc_email:'PRATYAY.SAHA@PWC.COM',               active:true,  pc_hash:''},
+  {name:'RICHA MANGAL',         pge_id:'R12Q', pwc_email:'RICHA.MANGAL@PWC.COM',               active:false, pc_hash:''},
+  {name:'RUPAM CHATTERJEE',     pge_id:'RX1U', pwc_email:'RUPAM.CHATTERJEE@PWC.COM',           active:true,  pc_hash:''},
+  {name:'SAYAN MUKHERJEE',      pge_id:'SA1E', pwc_email:'SAYAN.N.MUKHERJEE@PWC.COM',          active:true,  pc_hash:''},
+  {name:'SHIVANI MAKADIA',      pge_id:'SR1X', pwc_email:'SHIVANI.MAKADIA@PWC.COM',            active:true,  pc_hash:''},
+  {name:'SHRESTH IYER',         pge_id:'S1I7', pwc_email:'SHRESTH.IYER@PWC.COM',              active:true,  pc_hash:''},
+  {name:'SIVA SAINATH B V',     pge_id:'SA11', pwc_email:'SIVA.SAINATH.B.V@PWC.COM',           active:true,  pc_hash:''},
+  {name:'SUNITA SHARMA',        pge_id:'SJ1E', pwc_email:'SUNITA.S.SHARMA@PWC.COM',            active:true,  pc_hash:''},
+  {name:'TANVI GOYAL',          pge_id:'T6G4', pwc_email:'TANVI.GOYAL@PWC.COM',                active:false, pc_hash:''},
+  {name:'TULIKA DAS',           pge_id:'T5D7', pwc_email:'TULIKA.C.DAS@PWC.COM',               active:true,  pc_hash:''},
+  {name:'VANESSA CHUA',         pge_id:'V3CO', pwc_email:'VANESSA.CHUA@PWC.COM',               active:true,  pc_hash:''},
+  {name:'VENKAT NADELLA',       pge_id:'V2NE', pwc_email:'VENKAT.NADELLA@PWC.COM',             active:true,  pc_hash:''},
+];
+
+window._rosterUsers = [];
+window._activeUser  = null;
+window._loginUser   = null;
+var _heartbeatTimer = null;
+var _broadcastChannel = null;
+var _lastActivity   = Date.now();
+
+/* ── Helpers ── */
+function _escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _toTitleCase(str){ if(!str) return ''; return str.toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();}); }
+
+function _hashPasscode(name,pc){
+  var s=pc.toUpperCase()+'|'+name.toLowerCase()+'|PROPEL_RES_2026';
+  var h=0;
+  for(var i=0;i<s.length;i++) h=(Math.imul(31,h)+s.charCodeAt(i))|0;
+  return (h>>>0).toString(16);
+}
+function _pcStorageKey(name){ return PASSCODE_PREFIX+name.replace(/\s+/g,'_').toLowerCase(); }
+function _hasPasscode(name){ return !!localStorage.getItem(_pcStorageKey(name)); }
+function _verifyPasscode(name,pc){ return localStorage.getItem(_pcStorageKey(name))===_hashPasscode(name,pc); }
+function _savePasscode(name,pc){
+  var hash=_hashPasscode(name,pc);
+  localStorage.setItem(_pcStorageKey(name),hash);
+  if(window._rosterUsers) window._rosterUsers.forEach(function(u){if(u.name===name) u.pc_hash=hash;});
+  _downloadUsersJson();
+}
+
+function _downloadUsersJson(){
+  var all=(window._allRosterUsers||window._rosterUsers||[]).map(function(u){
+    return {name:u.name,pge_id:u.pge_id,pwc_email:u.pwc_email||u.email||'',active:u.active!==false,pc_hash:u.pc_hash||''};
+  });
+  var json=JSON.stringify(all,null,2);
+  var blob=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='users.json'; a.style.display='none';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
+}
+
+function _getAttempts(name){ try{return JSON.parse(localStorage.getItem(ATTEMPTS_PREFIX+name)||'{"count":0,"lockUntil":0}');}catch(e){return{count:0,lockUntil:0};} }
+function _setAttempts(name,rec){ localStorage.setItem(ATTEMPTS_PREFIX+name,JSON.stringify(rec)); }
+function _clearAttempts(name){ localStorage.removeItem(ATTEMPTS_PREFIX+name); }
+
+function _getPcValue(prefix){
+  var v='';
+  for(var i=0;i<4;i++){ var el=document.getElementById('pc-'+prefix+'-'+i); v+=el?el.value.toUpperCase():''; }
+  return v;
+}
+function _clearPcInputs(prefix){
+  for(var i=0;i<4;i++){ var el=document.getElementById('pc-'+prefix+'-'+i); if(el){el.value='';el.classList.remove('pc-ok','pc-err');} }
+}
+function _setPcState(prefix,state){
+  for(var i=0;i<4;i++){ var el=document.getElementById('pc-'+prefix+'-'+i); if(!el) continue; el.classList.remove('pc-ok','pc-err'); if(state) el.classList.add(state); }
+}
+
+function _pcInput(el,nextIdx,prefix){
+  var v=el.value.replace(/[^a-zA-Z0-9]/g,'').slice(-1).toUpperCase();
+  el.value=v;
+  if(v&&nextIdx!==null){ var next=document.getElementById('pc-'+prefix+'-'+nextIdx); if(next) next.focus(); }
+}
+function _pcKey(event,idx,prefix){
+  if(event.key==='Backspace'){
+    var el=document.getElementById('pc-'+prefix+'-'+idx);
+    if(el&&!el.value&&idx>0){ var prev=document.getElementById('pc-'+prefix+'-'+(idx-1)); if(prev){prev.value='';prev.focus();} }
+  }
+  if(event.key==='Enter'){
+    if(prefix==='e') _loginVerifyPasscode();
+    else if(prefix==='cf') _loginCreatePasscode();
+    else if(prefix==='r') _loginVerifyRelogin();
+  }
+}
+
+function _loginShowScreen(screen){
+  var screens=['login-loading','login-step-1','login-step-2-enter','login-step-2-create','login-step-relogin'];
+  screens.forEach(function(s){ var el=document.getElementById(s); if(el) el.style.display=s===screen?'block':'none'; });
+  var d1=document.getElementById('login-step-dot-1'), d2=document.getElementById('login-step-dot-2');
+  var bright='rgba(224,48,30,.85)', dim='rgba(224,48,30,.25)';
+  if(d1&&d2){
+    if(screen==='login-step-1'){d1.style.background=bright;d2.style.background=dim;}
+    else{d1.style.background=bright;d2.style.background=bright;}
+  }
+}
+
+function _userLoginSelectionChanged(user){
+  var btn=document.getElementById('login-step1-next'); if(!btn) return;
+  if(user){btn.disabled=false;btn.style.background='#0d1b3e';btn.style.cursor='pointer';}
+  else{btn.disabled=true;btn.style.background='#94a3b8';btn.style.cursor='not-allowed';}
+  document.getElementById('login-not-found').style.display='none';
+}
+
+function _loginStep1Next(){
+  var sel=document.getElementById('login-user-select');
+  var user=window._rosterUsers.filter(function(u){return u.name===sel.value;})[0];
+  if(!user) return;
+  window._loginUser=user;
+  _loginShowStep2(user);
+}
+
+function _loginShowStep2(user){
+  var parts=user.name.trim().split(/\s+/);
+  var initials=(parts.length>=2?parts[0][0]+parts[parts.length-1][0]:user.name.slice(0,2)).toUpperCase();
+  var displayName=_toTitleCase(user.name)+' — '+user.pge_id;
+  var email=user.pwc_email||user.email||'';
+  if(_hasPasscode(user.name)){
+    var av2=document.getElementById('login-avatar-2'),nm2=document.getElementById('login-chip-name-2'),id2=document.getElementById('login-chip-id-2');
+    if(av2) av2.textContent=initials; if(nm2) nm2.textContent=displayName; if(id2) id2.textContent=email;
+    _clearPcInputs('e'); document.getElementById('login-pc-error').style.display='none';
+    _loginShowScreen('login-step-2-enter');
+    setTimeout(function(){var f=document.getElementById('pc-e-0');if(f)f.focus();},100);
+  } else {
+    var avc=document.getElementById('login-avatar-c'),nmc=document.getElementById('login-chip-name-c'),idc=document.getElementById('login-chip-id-c');
+    if(avc) avc.textContent=initials; if(nmc) nmc.textContent=displayName; if(idc) idc.textContent=email;
+    _clearPcInputs('c'); _clearPcInputs('cf'); document.getElementById('login-create-error').style.display='none';
+    _loginShowScreen('login-step-2-create');
+    setTimeout(function(){var f=document.getElementById('pc-c-0');if(f)f.focus();},100);
+  }
+}
+
+function _loginBackToStep1(){ window._loginUser=null; _clearPcInputs('e'); _clearPcInputs('c'); _clearPcInputs('cf'); _loginShowScreen('login-step-1'); }
+
+function _loginVerifyPasscode(){
+  var user=window._loginUser; if(!user) return;
+  var pc=_getPcValue('e');
+  if(pc.length<4){var e=document.getElementById('login-pc-error');e.style.display='block';e.textContent='Enter all 4 characters';return;}
+  var att=_getAttempts(user.name);
+  if(att.lockUntil>Date.now()){
+    var mins=Math.ceil((att.lockUntil-Date.now())/60000);
+    var e=document.getElementById('login-pc-error');e.style.display='block';e.textContent='Locked. Try again in '+mins+' min.';
+    _setPcState('e','pc-err');return;
+  }
+  if(_verifyPasscode(user.name,pc)){
+    _clearAttempts(user.name); _setPcState('e','pc-ok');
+    setTimeout(function(){_userApply(user);document.getElementById('user-login-overlay').style.display='none';},300);
+  } else {
+    att.count++;
+    if(att.count>=MAX_ATTEMPTS){att.lockUntil=Date.now()+LOCKOUT_MS;att.count=0;}
+    _setAttempts(user.name,att); _setPcState('e','pc-err');
+    var remaining=MAX_ATTEMPTS-att.count;
+    var msg=att.lockUntil>Date.now()?'Locked for 5 minutes.':'Incorrect passcode.'+(remaining>0?' '+remaining+' attempt(s) left.':'');
+    var e=document.getElementById('login-pc-error');e.style.display='block';e.textContent=msg;
+    setTimeout(function(){_clearPcInputs('e');var f=document.getElementById('pc-e-0');if(f)f.focus();},600);
+  }
+}
+
+function _loginCreatePasscode(){
+  var user=window._loginUser; if(!user) return;
+  var pc=_getPcValue('c'), pcf=_getPcValue('cf');
+  var errEl=document.getElementById('login-create-error');
+  errEl.style.color='#dc2626'; errEl.style.background=''; errEl.style.padding=''; errEl.style.borderRadius='';
+  if(pc.length<4){errEl.style.display='block';errEl.textContent='Enter all 4 characters.';return;}
+  if(pcf.length<4){errEl.style.display='block';errEl.textContent='Confirm all 4 characters.';return;}
+  if(pc!==pcf){
+    errEl.style.display='block';errEl.textContent='Passcodes do not match.';
+    _setPcState('c','pc-err');_setPcState('cf','pc-err');
+    setTimeout(function(){_clearPcInputs('c');_clearPcInputs('cf');var f=document.getElementById('pc-c-0');if(f)f.focus();},600);
+    return;
+  }
+  if(!/^[A-Z0-9]{4}$/.test(pc)){errEl.style.display='block';errEl.textContent='Letters and numbers only (A–Z, 0–9).';return;}
+  _savePasscode(user.name,pc); errEl.style.display='none';
+  _setPcState('c','pc-ok');_setPcState('cf','pc-ok');
+  setTimeout(function(){_clearPcInputs('c');_clearPcInputs('cf');window._loginUser=user;_loginShowStep2(user);},800);
+}
+
+function _loginForgotPasscode(){
+  var user=window._loginUser||window._activeUser;
+  if(!user){_loginBackToStep1();return;}
+  localStorage.removeItem(_pcStorageKey(user.name)); _clearAttempts(user.name);
+  window._loginUser=user;
+  var parts=user.name.trim().split(/\s+/);
+  var initials=(parts.length>=2?parts[0][0]+parts[parts.length-1][0]:user.name.slice(0,2)).toUpperCase();
+  var displayName=_toTitleCase(user.name)+' — '+user.pge_id;
+  var avc=document.getElementById('login-avatar-c'),nmc=document.getElementById('login-chip-name-c'),idc=document.getElementById('login-chip-id-c');
+  if(avc) avc.textContent=initials; if(nmc) nmc.textContent=displayName; if(idc) idc.textContent=user.pwc_email||'';
+  _clearPcInputs('c');_clearPcInputs('cf');
+  var errEl=document.getElementById('login-create-error');
+  if(errEl){errEl.style.display='block';errEl.style.color='#0369a1';errEl.style.background='#e0f2fe';errEl.style.padding='6px 10px';errEl.style.borderRadius='6px';errEl.textContent='Passcode reset. Please create a new one below.';}
+  _loginShowScreen('login-step-2-create');
+  setTimeout(function(){var f=document.getElementById('pc-c-0');if(f)f.focus();},100);
+}
+
+function _loginSwitchUserFromIdle(){ window._activeUser=null;window._loginUser=null;_loginBackToStep1();document.getElementById('user-login-overlay').style.display='flex'; }
+
+function _showIdleRelogin(){
+  var user=window._activeUser;
+  if(!user){_loginShowScreen('login-step-1');document.getElementById('user-login-overlay').style.display='flex';return;}
+  var parts=user.name.trim().split(/\s+/);
+  var initials=(parts.length>=2?parts[0][0]+parts[parts.length-1][0]:user.name.slice(0,2)).toUpperCase();
+  var av=document.getElementById('login-relogin-avatar'),nm=document.getElementById('login-relogin-name');
+  if(av) av.textContent=initials; if(nm) nm.textContent=_toTitleCase(user.name)+' — '+user.pge_id;
+  _clearPcInputs('r'); document.getElementById('login-relogin-error').style.display='none';
+  _loginShowScreen('login-step-relogin');
+  document.getElementById('user-login-overlay').style.display='flex';
+  setTimeout(function(){var f=document.getElementById('pc-r-0');if(f)f.focus();},100);
+}
+
+function _loginVerifyRelogin(){
+  var user=window._activeUser; if(!user) return;
+  var pc=_getPcValue('r'); if(pc.length<4) return;
+  var att=_getAttempts(user.name);
+  if(att.lockUntil>Date.now()){
+    var mins=Math.ceil((att.lockUntil-Date.now())/60000);
+    var e=document.getElementById('login-relogin-error');e.style.display='block';e.textContent='Locked. Try again in '+mins+' min.';_setPcState('r','pc-err');return;
+  }
+  if(_verifyPasscode(user.name,pc)){
+    _clearAttempts(user.name);_setPcState('r','pc-ok');
+    setTimeout(function(){document.getElementById('user-login-overlay').style.display='none';_lastActivity=Date.now();_sessionHeartbeat();},300);
+  } else {
+    att.count++;
+    if(att.count>=MAX_ATTEMPTS){att.lockUntil=Date.now()+LOCKOUT_MS;att.count=0;}
+    _setAttempts(user.name,att);_setPcState('r','pc-err');
+    var msg=att.lockUntil>Date.now()?'Locked for 5 minutes.':'Incorrect passcode.';
+    var e=document.getElementById('login-relogin-error');e.style.display='block';e.textContent=msg;
+    setTimeout(function(){_clearPcInputs('r');var f=document.getElementById('pc-r-0');if(f)f.focus();},600);
+  }
+}
+
+function _userApply(user){
+  window._activeUser=user; window._loginUser=null;
+  var chip=document.getElementById('active-user-chip');
+  var avatar=document.getElementById('auc-avatar');
+  var nameEl=document.getElementById('auc-name');
+  var roleEl=document.getElementById('auc-role');
+  if(chip) chip.style.display='flex';
+  if(avatar){ var parts=user.name.trim().split(/\s+/); avatar.textContent=(parts.length>=2?parts[0][0]+parts[parts.length-1][0]:user.name.slice(0,2)).toUpperCase(); }
+  if(nameEl) nameEl.textContent=_toTitleCase(user.name)+' — '+user.pge_id;
+  if(roleEl) roleEl.textContent=user.pwc_email||user.email||'';
+  if(_heartbeatTimer) clearInterval(_heartbeatTimer);
+  _sessionStart();
+}
+
+/* ── Session heartbeat ── */
+function _sessionsRead(){try{return JSON.parse(localStorage.getItem(SESSION_STORE_KEY)||'[]');}catch(e){return[];}}
+function _sessionsWrite(s){try{localStorage.setItem(SESSION_STORE_KEY,JSON.stringify(s));}catch(e){}}
+function _sessionsPrune(s){var c=Date.now()-SESSION_TTL_MS;return s.filter(function(x){return x.lastSeen>c;});}
+
+function _sessionHeartbeat(){
+  if(!window._activeUser) return;
+  var sessions=_sessionsPrune(_sessionsRead()); var found=false;
+  for(var i=0;i<sessions.length;i++){
+    if(sessions[i].name===window._activeUser.name){sessions[i].lastSeen=Date.now();sessions[i].pge_id=window._activeUser.pge_id;found=true;break;}
+  }
+  if(!found) sessions.push({name:window._activeUser.name,pge_id:window._activeUser.pge_id,lastSeen:Date.now()});
+  _sessionsWrite(sessions);
+}
+function _sessionRemove(){
+  if(!window._activeUser) return;
+  _sessionsWrite(_sessionsRead().filter(function(s){return s.name!==window._activeUser.name;}));
+}
+
+function _sessionStart(){
+  if(typeof BroadcastChannel!=='undefined'){
+    try{
+      if(_broadcastChannel) _broadcastChannel.close();
+      _broadcastChannel=new BroadcastChannel('propel_res_channel');
+      _broadcastChannel.onmessage=function(){};
+    }catch(e){}
+  }
+  _sessionHeartbeat();
+  _heartbeatTimer=setInterval(_sessionHeartbeat,HEARTBEAT_INTERVAL);
+  window.addEventListener('beforeunload',_sessionRemove);
+  window.addEventListener('pagehide',_sessionRemove);
+  _lastActivity=Date.now();
+  var _idleInterval=setInterval(function(){
+    if(!window._activeUser) return;
+    if(Date.now()-_lastActivity>SESSION_TTL_MS){ clearInterval(_heartbeatTimer);clearInterval(_idleInterval);_sessionRemove();_showIdleRelogin(); }
+  },30000);
+  ['mousemove','keydown','click','touchstart','scroll'].forEach(function(evt){
+    document.addEventListener(evt,function(){_lastActivity=Date.now();},{passive:true});
+  });
+}
+
+/* ── Load roster on page open ── */
+function _userLoadRoster(){
+  var overlay=document.getElementById('user-login-overlay');
+  var errBox=document.getElementById('login-error');
+  var errMsg=document.getElementById('login-error-msg');
+  _loginShowScreen('login-loading');
+  overlay.style.display='flex';
+  if(errBox) errBox.style.display='none';
+
+  function applyRoster(users,fromFallback){
+    if(fromFallback&&errBox&&errMsg){
+      errMsg.textContent='User data from approved PG&E Propel program users only. Contact PMO to update users.json if your name is missing.';
+      errBox.style.display='block';
+    }
+    window._allRosterUsers=(users||[]).map(function(u){
+      return {name:(u.name||'').trim(),pge_id:(u.pge_id||'').trim(),pwc_email:(u.pwc_email||u.email||'').trim(),active:u.active!==false&&String(u.active).toUpperCase()!=='NO',pc_hash:u.pc_hash||''};
+    });
+    window._rosterUsers=(users||[]).filter(function(u){
+      var nm=(u.name||'').trim(),pid=(u.pge_id||'').trim(),em=(u.pwc_email||u.email||'').trim();
+      var act=u.active!==false&&String(u.active).toUpperCase()!=='NO';
+      return nm&&pid&&em&&act;
+    }).sort(function(a,b){return a.name.localeCompare(b.name);});
+    /* Seed localStorage from pc_hash in users.json */
+    window._rosterUsers.forEach(function(u){
+      if(u.pc_hash&&u.pc_hash.trim()){
+        var key=_pcStorageKey(u.name);
+        if(!localStorage.getItem(key)) localStorage.setItem(key,u.pc_hash.trim());
+      }
+    });
+    _userBuildSelect('login-user-select','— Select your name —');
+    _loginShowScreen('login-step-1');
+  }
+
+  /* Try fetching from GitHub repo, fall back to embedded list */
+  var url=USER_ROSTER_URL+'?cb='+Date.now();
+  if(typeof fetch!=='undefined'){
+    fetch(url,{cache:'no-cache'})
+      .then(function(r){if(!r.ok) throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(d){applyRoster(Array.isArray(d)&&d.length?d:EMBEDDED_USERS,!Array.isArray(d)||!d.length);})
+      .catch(function(){applyRoster(EMBEDDED_USERS,true);});
+  } else {
+    applyRoster(EMBEDDED_USERS,true);
+  }
+}
+
+function _userBuildSelect(selectId,placeholder){
+  var sel=document.getElementById(selectId); if(!sel) return;
+  sel.innerHTML='<option value="" disabled selected>'+placeholder+'</option>'+
+    window._rosterUsers.map(function(u){
+      return '<option value="'+_escH(u.name)+'">'+_escH(_toTitleCase(u.name))+' — '+_escH(u.pge_id)+'</option>';
+    }).join('');
+  sel.value='';
+  sel.onchange=function(){
+    var chosen=window._rosterUsers.filter(function(u){return u.name===sel.value;})[0];
+    _userLoginSelectionChanged(chosen||null);
+  };
+}
+
+/* Kick off on page load */
+_userLoadRoster();
+</script>
 </body>
 </html>
