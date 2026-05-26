@@ -1,0 +1,3252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PROPEL SCM | Manage Resource Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1b1b1b;font-size:13px;}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,#1b1b1b,#2d2d2d);padding:16px 28px;
+  border-bottom:4px solid #e0301e;display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.hdr h1{color:#fff;font-size:1.2rem;font-weight:700;}
+.hdr p{color:#ffd700;font-size:.72rem;margin-top:3px;}
+.badges{display:flex;gap:8px;flex-wrap:wrap;}
+.badge{background:rgba(224,48,30,.2);border:1px solid #e0301e;color:#fff;
+  padding:4px 12px;border-radius:20px;font-size:.68rem;font-weight:700;}
+
+/* ── IMPORT BAR ── */
+.import-bar{background:#fff;border-bottom:2px solid #e0301e;padding:14px 28px 0;display:flex;flex-direction:column;gap:0;}
+.import-grid{display:grid;grid-template-columns:1fr 1.8fr auto;gap:0;align-items:stretch;}
+@media(max-width:860px){.import-grid{grid-template-columns:1fr;}}
+.import-section{display:flex;flex-direction:column;gap:6px;padding:12px 16px 14px;border-right:1px solid #f0f0f0;}
+.import-section:last-of-type{border-right:none;}
+.import-label{font-size:.67rem;font-weight:700;color:#555;text-transform:uppercase;
+  letter-spacing:.5px;display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+.import-label .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-roster{background:#003087;}
+.dot-flex{background:#e0301e;}
+.import-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.file-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;
+  font-size:.73rem;font-weight:700;cursor:pointer;border:2px dashed #ccc;
+  background:#fafafa;transition:all .2s;white-space:nowrap;}
+.file-btn:hover{border-color:#e0301e;background:#fff5f5;color:#e0301e;}
+.file-btn.loaded{border:2px solid #2e7d32;background:#f1f8e9;color:#1b5e20;}
+.file-btn input[type=file]{display:none;}
+.file-status{font-size:.67rem;color:#888;font-style:italic;margin-top:3px;}
+.file-status.ok{color:#2e7d32;font-weight:600;font-style:normal;}
+.file-status.err{color:#c62828;font-weight:600;font-style:normal;}
+
+/* ── GENERATE PANEL (right column of import grid) ── */
+.generate-panel{display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:10px;padding:14px 20px;background:#fafafa;border-left:1px solid #f0f0f0;min-width:170px;}
+.btn-generate{display:flex;align-items:center;gap:8px;padding:10px 22px;
+  background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:8px;
+  font-size:.82rem;font-weight:800;cursor:pointer;transition:all .2s;white-space:nowrap;
+  box-shadow:0 3px 10px rgba(46,125,50,.35);}
+.btn-generate:hover:not(:disabled){background:linear-gradient(135deg,#2e7d32,#388e3c);
+  box-shadow:0 4px 14px rgba(46,125,50,.5);transform:translateY(-1px);}
+.btn-generate:disabled{background:#b0bec5;box-shadow:none;cursor:not-allowed;opacity:.7;transform:none;}
+.generate-status{font-size:.66rem;color:#888;text-align:center;line-height:1.5;max-width:160px;}
+.generate-status.ready{color:#1b5e20;font-weight:600;}
+.generate-status.partial{color:#e65100;font-weight:600;}
+
+/* ── IMPORT BOTTOM BAR (hint + counts + action buttons) ── */
+.import-bottom{display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+  padding:8px 16px;background:#f8f9fb;border-top:1px solid #eee;}
+.import-hint{font-size:.64rem;color:#aaa;flex:1;min-width:200px;line-height:1.5;}
+.import-counts{font-size:.67rem;color:#555;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.import-counts span{display:flex;align-items:center;gap:3px;}
+.import-counts .cnt{font-weight:700;color:#1b1b1b;}
+.import-counts .cnt.blue{color:#003087;}
+.import-counts .cnt.red{color:#e0301e;}
+.action-btns{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── FILTER BAR ── */
+.fbar{background:#fff;padding:12px 28px;border-bottom:1px solid #ddd;
+  display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;}
+.fg{display:flex;flex-direction:column;gap:3px;}
+.fg label{font-size:.65rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.4px;}
+.fg select,.fg input{padding:5px 10px;border:1px solid #ccc;border-radius:6px;
+  font-size:.75rem;background:#fafafa;min-width:140px;}
+.fg select:focus,.fg input:focus{outline:2px solid #e0301e;border-color:#e0301e;}
+.btn{padding:6px 14px;background:#e0301e;color:#fff;border:none;border-radius:6px;
+  font-size:.71rem;font-weight:700;cursor:pointer;transition:background .15s;}
+.btn:hover{background:#b52617;}
+.btn.reset-data{background:#7b1fa2;}
+.btn.reset-data:hover{background:#4a0072;}
+.btn.refresh{background:#1565c0;}
+.btn.refresh:hover{background:#0d47a1;}
+.btn.refresh:disabled{background:#90a4ae;cursor:not-allowed;opacity:.7;}
+
+/* ── EMPTY STATE ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:80px 28px;text-align:center;color:#bbb;}
+.empty-state .icon{font-size:4rem;margin-bottom:16px;opacity:.4;}
+.empty-state h2{font-size:1.1rem;color:#999;font-weight:600;margin-bottom:8px;}
+.empty-state p{font-size:.8rem;max-width:420px;line-height:1.6;}
+.empty-state .arrow{font-size:2rem;margin-bottom:12px;animation:bounce .8s infinite alternate;}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+
+/* ── KPI STRIP ── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px;padding:16px 28px;}
+.kpi{background:#fff;border-radius:10px;padding:14px 16px;
+  border-top:4px solid #ccc;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.kpi .lbl{font-size:.62rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;}
+.kpi .val{font-size:1.5rem;font-weight:800;margin-top:4px;line-height:1;}
+.kpi .sub{font-size:.65rem;color:#bbb;margin-top:3px;}
+.k1{border-top-color:#003087;} .k1 .val{color:#003087;}
+.k2{border-top-color:#e0301e;} .k2 .val{color:#e0301e;}
+.k3{border-top-color:#eb8c00;} .k3 .val{color:#eb8c00;}
+.k4{border-top-color:#2e7d32;} .k4 .val{color:#2e7d32;}
+.k5{border-top-color:#6a1b9a;} .k5 .val{color:#6a1b9a;}
+.k6{border-top-color:#00695c;} .k6 .val{color:#00695c;}
+.k7{border-top-color:#1565c0;} .k7 .val{color:#1565c0;}
+.k8{border-top-color:#c62828;} .k8 .val{color:#c62828;}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:14px;padding:0 28px 14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:0 28px 14px;}
+.g1{padding:0 28px 14px;}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr;}}
+
+/* ── CARD ── */
+.card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.card h3{font-size:.8rem;font-weight:700;color:#333;margin-bottom:12px;
+  display:flex;align-items:center;gap:5px;border-bottom:1px solid #f0f0f0;padding-bottom:8px;}
+.card canvas{max-height:280px;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:2px solid #e0301e;margin-bottom:14px;flex-wrap:wrap;}
+.tab{padding:8px 18px;cursor:pointer;font-size:.76rem;font-weight:600;
+  color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.tab.active{color:#e0301e;border-bottom-color:#e0301e;background:#fff5f5;}
+.tab:hover:not(.active){color:#333;background:#f9f9f9;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── HEATMAP ── */
+.heat-wrap{overflow:auto;max-height:520px;}
+.heat-table{border-collapse:separate;border-spacing:0;font-size:.66rem;min-width:100%;}
+
+/* All th sticky to top */
+.heat-table th{
+  background:#1b1b1b;color:#fff;padding:7px 8px;
+  white-space:nowrap;position:sticky;top:0;z-index:2;text-align:center;}
+
+/* ── Frozen columns — th ── */
+/* Col 0: expand toggle */
+.heat-table th.fc-expand{
+  position:sticky;left:0;top:0;z-index:5;
+  width:22px;min-width:22px;max-width:22px;
+  background:#111;padding:0;}
+/* Col 1: Resource name */
+.heat-table th.fc-name{
+  position:sticky;left:22px;top:0;z-index:5;
+  min-width:160px;text-align:left;background:#1b1b1b;}
+/* Col 2: Shore */
+.heat-table th.fc-shore{
+  position:sticky;left:182px;top:0;z-index:5;
+  min-width:50px;background:#1b1b1b;}
+/* Col 3: Active — freeze edge, right border */
+.heat-table th.fc-active{
+  position:sticky;left:232px;top:0;z-index:5;
+  min-width:50px;background:#1b1b1b;
+  border-right:2px solid #e0301e;}
+
+/* ── Frozen columns — td ── */
+.heat-table td.fc-expand{
+  position:sticky;left:0;z-index:1;
+  width:22px;min-width:22px;max-width:22px;
+  background:#f8f8f8;padding:0 4px;}
+.heat-table td.fc-name{
+  position:sticky;left:22px;z-index:1;
+  min-width:160px;text-align:left;
+  background:#fff;font-size:.67rem;
+  white-space:nowrap;font-weight:600;}
+.heat-table td.fc-shore{
+  position:sticky;left:182px;z-index:1;
+  min-width:50px;background:#fff;text-align:center;}
+.heat-table td.fc-active{
+  position:sticky;left:232px;z-index:1;
+  min-width:50px;background:#fff;text-align:center;
+  border-right:2px solid #e0301e;}
+
+/* Row hover must not hide sticky backgrounds */
+.heat-table tr:hover td{filter:brightness(.97);}
+.heat-table tr:hover td.fc-expand,
+.heat-table tr:hover td.fc-name,
+.heat-table tr:hover td.fc-shore,
+.heat-table tr:hover td.fc-active{filter:brightness(.95);}
+
+/* Regular data cells */
+.heat-table td{
+  padding:5px 7px;border:1px solid #f0f0f0;
+  text-align:center;font-weight:600;min-width:42px;}
+
+.heat-table th.month-grp{background:#2d2d2d;color:#ffd700;font-size:.63rem;
+  letter-spacing:.3px;border-left:2px solid #e0301e;padding:5px 6px;}
+.heat-table td.month-sep{border-left:2px solid #e0301e;}
+.heat-table th.sub-col{background:#3a3a3a;color:#ccc;font-size:.6rem;font-weight:600;padding:4px 5px;}
+.heat-table td.roster-cell{background:#e3f2fd;color:#0d47a1;font-weight:700;}
+.heat-table td.flex-cell{background:#f3e5f5;color:#4a148c;font-weight:700;}
+.heat-table td.var-over{background:#ffebee;color:#b71c1c;font-weight:800;}
+.heat-table td.var-under{background:#e8f5e9;color:#1b5e20;font-weight:800;}
+.heat-table td.var-zero{background:#f9fbe7;color:#558b2f;font-weight:800;}
+.heat-table td.total-cell{background:#1b1b1b;color:#ffd700;font-weight:800;font-size:.72rem;}
+.heat-table th.total-hdr{background:#000;color:#ffd700;font-size:.68rem;}
+.heat-table thead tr.hdr-row2 th{background:#2a2a2a;font-size:.6rem;color:#bbb;
+  font-weight:500;padding:3px 5px;border-top:1px solid #444;}
+
+/* ── WBS sub-row frozen cell backgrounds ── */
+.heat-table tr.wbs-sub td.fc-expand{background:#e8edf8;}
+.heat-table tr.wbs-sub td.fc-name,
+.heat-table tr.wbs-sub td.fc-shore,
+.heat-table tr.wbs-sub td.fc-active{background:#f0f4ff;}
+.heat-table tr.wbs-sub td.fc-active{border-right:2px solid #e0301e;}
+/* Footer frozen cells */
+.heat-table tr.heat-footer td.fc-expand,
+.heat-table tr.heat-footer td.fc-name,
+.heat-table tr.heat-footer td.fc-shore,
+.heat-table tr.heat-footer td.fc-active{background:#1b1b1b;}
+.heat-table tr.heat-footer td.fc-active{border-right:2px solid #e0301e;}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:8px;border:1px solid #eee;max-height:480px;overflow-y:auto;}
+table.dt{width:100%;border-collapse:collapse;font-size:.72rem;}
+table.dt thead{position:sticky;top:0;z-index:2;}
+table.dt thead tr{background:#1b1b1b;color:#fff;}
+table.dt thead th{padding:9px 11px;text-align:left;white-space:nowrap;
+  cursor:pointer;user-select:none;font-weight:600;}
+table.dt thead th:hover{background:#333;}
+table.dt tbody tr:nth-child(even){background:#f8f9fb;}
+table.dt tbody tr:hover{background:#fff3f0;}
+table.dt tbody td{padding:7px 11px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;
+  font-size:.62rem;font-weight:700;text-transform:uppercase;}
+.ton{background:#e8f5e9;color:#1b5e20;}
+.toff{background:#e3f2fd;color:#0d47a1;}
+.tover{background:#ffebee;color:#b71c1c;}
+.tunder{background:#e8eaf6;color:#1a237e;}
+.tok{background:#f1f8e9;color:#33691e;}
+
+/* ── SEARCH ROW ── */
+.srow{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.srow input{padding:6px 12px;border:1px solid #ddd;border-radius:6px;
+  font-size:.76rem;flex:1;min-width:180px;}
+.srow input:focus{outline:2px solid #e0301e;}
+
+/* ── LEGEND ── */
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:.66rem;color:#555;}
+.leg-box{width:14px;height:14px;border-radius:3px;}
+
+/* ── KPI TOOLTIP ── */
+.kpi{position:relative;cursor:default;}
+.kpi-tip{display:none;position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:#1b1b1b;color:#fff;font-size:.68rem;line-height:1.55;padding:10px 13px;
+  border-radius:8px;width:240px;z-index:999;box-shadow:0 6px 20px rgba(0,0,0,.25);
+  border-top:3px solid #e0301e;pointer-events:none;white-space:normal;}
+.kpi-tip::before{content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-bottom-color:#e0301e;}
+.kpi:hover .kpi-tip{display:block;}
+.kpi-tip strong{color:#ffd700;display:block;margin-bottom:4px;font-size:.7rem;}
+.kpi-tip span{color:#aaa;font-size:.64rem;display:block;margin-top:5px;}
+
+/* ── WIDGET TITLE TOOLTIP ── */
+.card h3{position:relative;}
+.card h3 .wtip{
+  display:none;position:absolute;bottom:calc(100% + 10px);left:0;
+  background:#1b1b1b;color:#e0e0e0;font-size:.69rem;line-height:1.6;
+  padding:11px 14px;border-radius:8px;width:300px;z-index:500;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);border-top:3px solid #e0301e;
+  font-weight:400;white-space:normal;pointer-events:none;
+  animation:wtip-in .12s ease;}
+@keyframes wtip-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.card h3 .wtip::after{
+  content:'';position:absolute;top:100%;left:22px;
+  border:7px solid transparent;border-top-color:#e0301e;}
+.card h3:hover .wtip{display:block;}
+.card h3 .wtip strong{color:#ffd700;display:block;margin-bottom:5px;font-size:.72rem;}
+.card h3 .wtip .wsrc{color:#888;font-size:.63rem;display:block;
+  margin-top:6px;padding-top:5px;border-top:1px solid #333;}
+/* Tab tooltip — same style but on tab labels */
+.tab{position:relative;}
+.tab .wtip{
+  display:none;position:absolute;bottom:calc(100% + 10px);left:0;
+  background:#1b1b1b;color:#e0e0e0;font-size:.69rem;line-height:1.6;
+  padding:11px 14px;border-radius:8px;width:280px;z-index:500;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);border-top:3px solid #e0301e;
+  font-weight:400;white-space:normal;pointer-events:none;}
+.tab .wtip::after{
+  content:'';position:absolute;top:100%;left:22px;
+  border:7px solid transparent;border-top-color:#e0301e;}
+.tab:hover .wtip{display:block;}
+.tab .wtip strong{color:#ffd700;display:block;margin-bottom:5px;font-size:.72rem;}
+.tab .wtip .wsrc{color:#888;font-size:.63rem;display:block;
+  margin-top:6px;padding-top:5px;border-top:1px solid #333;}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:14px;font-size:.66rem;color:#aaa;
+  border-top:1px solid #ddd;background:#fff;margin-top:8px;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#f1f1f1;}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#e0301e;}
+
+/* ── FLEX MULTI-FILE CHIPS ── */
+.flex-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;min-height:0;}
+.flex-chip{display:flex;align-items:center;gap:6px;background:#fff3e0;border:1px solid #ffb300;
+  border-radius:16px;padding:4px 10px 4px 12px;font-size:.67rem;font-weight:700;color:#5d4037;
+  max-width:260px;}
+.flex-chip.loaded{background:#f1f8e9;border-color:#66bb6a;color:#1b5e20;}
+.flex-chip.error{background:#ffebee;border-color:#e53935;color:#b71c1c;}
+.flex-chip .chip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;}
+.flex-chip .chip-rm{cursor:pointer;font-size:.8rem;color:#888;margin-left:2px;
+  line-height:1;padding:1px 3px;border-radius:50%;transition:background .1s;}
+.flex-chip .chip-rm:hover{background:#ffcdd2;color:#c62828;}
+.flex-chip .chip-hrs{font-size:.62rem;color:#888;font-weight:400;white-space:nowrap;}
+.flex-add-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;
+  font-size:.73rem;font-weight:700;cursor:pointer;border:2px dashed #e0301e;
+  background:#fff5f5;color:#e0301e;transition:all .2s;white-space:nowrap;align-self:flex-start;}
+.flex-add-btn:hover{background:#ffe0dd;border-color:#b52617;}
+.flex-add-btn input[type=file]{display:none;}
+.flex-summary{font-size:.67rem;color:#888;font-style:italic;margin-top:2px;}
+.flex-summary.ok{color:#2e7d32;font-weight:600;font-style:normal;}
+
+/* ── HEATMAP EXPAND / COLLAPSE ── */
+.heat-table tr.wbs-sub{display:none;}
+.heat-table tr.wbs-sub.expanded{display:table-row;}
+.heat-table td.expand-col{cursor:pointer;text-align:center;padding:0 5px;
+  font-size:.75rem;user-select:none;color:#888;}
+.heat-table td.expand-col:hover{color:#e0301e;}
+.heat-table tr.wbs-sub td{background:#f7f9fc!important;font-size:.63rem;color:#444!important;}
+.heat-table tr.wbs-sub td.wbs-label{background:#e8edf8!important;color:#1565c0!important;
+  font-weight:700;font-size:.62rem;white-space:nowrap;}
+.heat-table tr.wbs-sub td.roster-cell{background:#c8daf5!important;color:#0d47a1!important;}
+.heat-table tr.wbs-sub td.flex-cell{background:#e1cff5!important;color:#4a148c!important;}
+.heat-table tr.resource-row.has-multi td.expand-col{color:#1565c0;}
+
+.loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;
+  align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.loading.show{display:flex;}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);
+  border-top-color:#e0301e;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:#fff;font-weight:600;font-size:.9rem;}
+
+/* ── LTA TAB ── */
+.lta-import-bar{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;
+  padding:12px 16px;background:#fffde7;border:1px solid #ffe082;border-radius:8px;
+  margin-bottom:14px;}
+.lta-import-bar .import-label{font-size:.67rem;font-weight:700;color:#5d4037;
+  text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.lta-summary{font-size:.67rem;margin-top:4px;}
+.lta-summary.ok{color:#2e7d32;font-weight:600;}
+.lta-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px;}
+.lta-kpi{background:#fff;border-radius:8px;padding:12px 14px;border-top:3px solid #ccc;
+  box-shadow:0 1px 6px rgba(0,0,0,.07);}
+.lta-kpi .lbl{font-size:.62rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;}
+.lta-kpi .val{font-size:1.35rem;font-weight:800;margin-top:3px;line-height:1;}
+.lta-kpi .sub{font-size:.62rem;color:#bbb;margin-top:2px;}
+.lta-kpi.lk1{border-top-color:#003087;} .lta-kpi.lk1 .val{color:#003087;}
+.lta-kpi.lk2{border-top-color:#e53935;} .lta-kpi.lk2 .val{color:#e53935;}
+.lta-kpi.lk3{border-top-color:#ff8f00;} .lta-kpi.lk3 .val{color:#ff8f00;}
+.lta-kpi.lk4{border-top-color:#2e7d32;} .lta-kpi.lk4 .val{color:#2e7d32;}
+.lta-kpi.lk5{border-top-color:#6a1b9a;} .lta-kpi.lk5 .val{color:#6a1b9a;}
+.lta-filter-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;}
+table.lta-tbl{width:100%;border-collapse:collapse;font-size:.71rem;}
+table.lta-tbl thead{position:sticky;top:0;z-index:2;}
+table.lta-tbl thead tr{background:#1b1b1b;color:#fff;}
+table.lta-tbl thead th{padding:8px 10px;text-align:left;white-space:nowrap;
+  cursor:pointer;user-select:none;font-weight:600;}
+table.lta-tbl thead th:hover{background:#333;}
+table.lta-tbl tbody tr:nth-child(even){background:#f8f9fb;}
+table.lta-tbl tbody tr:hover{background:#fffde7;}
+table.lta-tbl tbody td{padding:6px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+.lta-exceeded{background:#ffebee;color:#b71c1c;font-weight:800;border-radius:5px;
+  padding:3px 9px;font-size:.66rem;display:inline-block;}
+.lta-warning{background:#fff3e0;color:#e65100;font-weight:800;border-radius:5px;
+  padding:3px 9px;font-size:.66rem;display:inline-block;}
+.lta-ok{background:#e8f5e9;color:#1b5e20;font-weight:700;border-radius:5px;
+  padding:3px 9px;font-size:.66rem;display:inline-block;}
+.lta-no-data{background:#f5f5f5;color:#999;font-weight:600;border-radius:5px;
+  padding:3px 9px;font-size:.66rem;display:inline-block;}
+.lta-bar-wrap{width:100px;background:#eee;border-radius:4px;height:7px;
+  display:inline-block;vertical-align:middle;margin-right:5px;}
+.lta-bar-fill{height:7px;border-radius:4px;}
+table.lta-tbl tbody tr.lta-row-exceeded{background:#fff5f5!important;}
+table.lta-tbl tbody tr.lta-row-warning{background:#fffbf0!important;}
+.lta-demo-badge{display:inline-block;background:#fff3e0;border:1px solid #ffe082;
+  color:#e65100;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:8px;}
+.lta-section-hdr{font-size:.72rem;font-weight:700;color:#555;text-transform:uppercase;
+  letter-spacing:.4px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #eee;}
+/* CA Local checkbox */
+.lta-ca-local-chk{width:16px;height:16px;cursor:pointer;accent-color:#2e7d32;vertical-align:middle;}
+.lta-ca-local-cell{text-align:center;background:#f1f8e9;}
+table.lta-tbl tbody tr.lta-row-ca-local td{opacity:.55;background:#f9fdf5!important;}
+table.lta-tbl tbody tr.lta-row-ca-local td.lta-ca-local-cell{opacity:1;background:#e8f5e9!important;}
+table.lta-tbl tbody tr.lta-ca-local-sub td{opacity:.5;background:#f9fdf5!important;font-size:.68rem;}
+table.lta-tbl tbody tr.lta-ca-local-sub td.lta-ca-local-cell{opacity:1;background:#e8f5e9!important;}
+.lta-na-badge{background:#e8f5e9;color:#2e7d32;font-weight:700;border-radius:5px;
+  padding:3px 9px;font-size:.66rem;display:inline-block;}
+/* Month holiday tooltip */
+.lta-month-th{position:relative;cursor:default;}
+.lta-month-th .lta-hol-tip{
+  display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:#1b1b1b;color:#fff;font-size:.62rem;font-weight:400;
+  border-radius:7px;padding:8px 11px;white-space:nowrap;z-index:99;
+  box-shadow:0 4px 16px rgba(0,0,0,.35);min-width:180px;line-height:1.7;
+  border:1px solid #333;pointer-events:none;}
+.lta-month-th .lta-hol-tip::before{
+  content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-bottom-color:#333;}
+.lta-month-th:hover .lta-hol-tip{display:block;}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p id="loadingMsg">Processing file…</p>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <h1>🏗️ PROPEL SCM — Manage Resource Dashboard</h1>
+    <p>WBS: <span id="hdrWBS">—</span> &nbsp;|&nbsp; Flex ID: <span id="hdrFlexID">—</span> &nbsp;|&nbsp; Updated: <span id="ts"></span></p>
+  </div>
+  <div class="badges">
+    <span class="badge" id="badgeRes">👥 — Resources</span>
+    <span class="badge" id="badgeDateRange">📅 —</span>
+    <span class="badge" id="badgeShore">🌐 ON + OFF Shore</span>
+    <span class="badge" id="badgeWBS">⚡ WBS —</span>
+  </div>
+</div>
+
+<!-- IMPORT BAR -->
+<div class="import-bar">
+  <div class="import-grid">
+
+    <!-- ROSTER -->
+    <div class="import-section">
+      <div class="import-label"><span class="dot dot-roster"></span>SCM Resource Source File</div>
+      <div class="import-row">
+        <label class="file-btn" id="rosterBtn">
+          <input type="file" id="rosterFile" accept=".xlsx,.xls,.csv" onchange="handleRosterFile(this)"/>
+          📂 Choose Roster File
+        </label>
+      </div>
+      <div class="file-status" id="rosterStatus">No file loaded</div>
+    </div>
+
+    <!-- FLEX ETC (multi-file) -->
+    <div class="import-section">
+      <div class="import-label"><span class="dot dot-flex"></span>Flex ETC — ForecastToActualByWeek <span style="font-weight:400;color:#bbb;font-size:.62rem;text-transform:none;letter-spacing:0;margin-left:4px">(multiple WBS files supported)</span></div>
+      <div class="import-row">
+        <label class="flex-add-btn" id="flexAddBtn">
+          <input type="file" id="flexFileInput" accept=".xlsx,.xls,.csv" multiple onchange="handleFlexFilesAdded(this)"/>
+          ➕ Add Flex ETC File(s)
+        </label>
+        <span class="flex-summary" id="flexSummary">No files loaded</span>
+      </div>
+      <div class="flex-chips" id="flexChips"></div>
+    </div>
+
+    <!-- GENERATE PANEL -->
+    <div class="generate-panel">
+      <button class="btn-generate" id="generateBtn" onclick="generateDashboard()" disabled>
+        ▶ Generate Dashboard
+      </button>
+      <div class="generate-status" id="generateStatus">Upload both files<br>to enable</div>
+    </div>
+
+  </div><!-- end import-grid -->
+
+  <!-- BOTTOM BAR: hint + counts + utility buttons -->
+  <div class="import-bottom" id="importBottom">
+    <div class="import-hint">
+      ⓘ <strong>Roster:</strong> PROPEL_SCM_ROSTER_HOURS — Name, Shore, Scrum, Role, monthly hrs &nbsp;·&nbsp;
+      <strong>Flex ETC:</strong> ForecastToActualByWeek Report_&lt;WBS&gt; — WBS code read from filename (e.g. USC0195637.1.1 or 02164784001).
+    </div>
+    <div class="import-counts" id="importCounts" style="display:none">
+      <span>📋 <span class="cnt blue" id="cntRoster">—</span> resources, <span class="cnt blue" id="cntMonths">—</span> months</span>
+      <span>📊 <span class="cnt red" id="cntFlexFiles">—</span> file(s) · <span class="cnt red" id="cntFlex">—</span> resources · <span class="cnt red" id="cntWeeks">—</span> weeks</span>
+      <span>🔗 Merged: <span class="cnt" id="cntMerged">—</span></span>
+    </div>
+    <div class="action-btns">
+      <button class="btn refresh" id="refreshBtn" onclick="refreshData()" disabled title="Re-merge and redraw">🔄 Refresh</button>
+      <button class="btn reset-data" onclick="confirmResetData()" title="Clear all data">🗑 Reset</button>
+      <button class="btn" onclick="resetFilters()" title="Reset filters">↺ Filters</button>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="fbar" id="filterBar" style="display:none">
+  <div class="fg">
+    <label>🌐 Shore Type</label>
+    <select id="fShore" onchange="applyFilters()">
+      <option value="all">All</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>✅ Active Status</label>
+    <select id="fActive" onchange="applyFilters()">
+      <option value="all">All</option>
+      <option value="YES" selected>Active Only</option>
+      <option value="NO">Inactive Only</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>🧩 Scrum Team</label>
+    <select id="fScrum" onchange="applyFilters()">
+      <option value="all">All Scrums</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>🎓 Staff Class</label>
+    <select id="fClass" onchange="applyFilters()">
+      <option value="all">All Classes</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>⚠️ Variance Status</label>
+    <select id="fStatus" onchange="applyFilters()">
+      <option value="all">All</option>
+      <option value="over">Over-Allocated</option>
+      <option value="under">Under-Allocated</option>
+      <option value="ok">On Track</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>📅 Roster Month</label>
+    <select id="fMonth" onchange="applyFilters()">
+      <option value="all">All Months</option>
+    </select>
+  </div>
+</div>
+
+<!-- EMPTY STATE -->
+<div id="emptyState" class="empty-state">
+  <div class="arrow">☝️</div>
+  <div class="icon">📊</div>
+  <h2>Upload your source files, then click Generate</h2>
+  <p>Upload the <strong>SCM Resource Source File</strong> and at least one <strong>Flex ETC file</strong> above, then click <strong>▶ Generate Dashboard</strong> to build the full view.</p>
+</div>
+
+<!-- DASHBOARD CONTENT (hidden until data loaded) -->
+<div id="dashContent" style="display:none">
+
+<!-- KPI STRIP -->
+<div class="kpis">
+  <div class="kpi k1"><div class="lbl">📋 Total Roster Hrs</div>
+    <div class="val" id="kRoster">—</div><div class="sub">Planned (Roster)</div>
+    <div class="kpi-tip"><strong>Total Roster Hours</strong>Sum of all planned hours for the selected month(s) and filtered resources. Pulled from the <em>SCM Resource Source File</em> — monthly hour columns (Mar-26 → Jun-27). Represents the contractually planned capacity per resource.<span>Source: PROPEL_SCM_ROSTER_HOURS — monthly columns</span></div>
+  </div>
+  <div class="kpi k3"><div class="lbl">🔮 Forecasted Hrs</div>
+    <div class="val" id="kForecast">—</div><div class="sub">FLEX Forecast</div>
+    <div class="kpi-tip"><strong>Forecasted Hours to Date</strong>Cumulative forecast hours from the FLEX ETC report — column "Forecasted Hours to Date". Represents what the project predicted each resource would charge through the reporting period.<span>Source: ForecastToActualByWeek — "Forecasted Hours to Date" column</span></div>
+  </div>
+  <div class="kpi k2"><div class="lbl">✅ Actual Hrs</div>
+    <div class="val" id="kActual">—</div><div class="sub">Charged to Date</div>
+    <div class="kpi-tip"><strong>Actual Hours to Date</strong>Real hours charged to the WBS (USC0171161.1.1) by each resource through the latest reporting week. Pulled from the FLEX ETC report — column "Actual Hours to Date".<span>Source: ForecastToActualByWeek — "Actual Hours to Date" column</span></div>
+  </div>
+  <div class="kpi k4"><div class="lbl">🔄 ETC Remaining</div>
+    <div class="val" id="kETC">—</div><div class="sub">Hours Left</div>
+    <div class="kpi-tip"><strong>Estimate to Complete (ETC)</strong>Hours still expected to be charged from today through project end. Pulled from "Total ETC Hours Remaining" in the FLEX report. Use this to assess remaining workload and budget burn risk.<span>Source: ForecastToActualByWeek — "Total ETC Hours Remaining" column</span></div>
+  </div>
+  <div class="kpi k5"><div class="lbl">📉 Variance</div>
+    <div class="val" id="kVar">—</div><div class="sub">Actual − Forecast</div>
+    <div class="kpi-tip"><strong>Hours Variance (Actual − Forecast)</strong>Difference between what was actually charged vs. what was forecasted. Positive = over-burn (charged more than forecast). Negative = under-burn. Calculated as: Actual Hours to Date minus Forecasted Hours to Date.<span>Formula: Actual Hrs − Forecasted Hrs · Source: FLEX ETC report</span></div>
+  </div>
+  <div class="kpi k6"><div class="lbl">📈 Utilization %</div>
+    <div class="val" id="kUtil">—</div><div class="sub">Act / Forecast</div>
+    <div class="kpi-tip"><strong>Utilization Rate</strong>Percentage of forecasted hours that have been actually consumed. 100% means perfectly on track. Above 100% means over-utilized (burning faster than forecast). Below 100% means under-utilized.<span>Formula: (Actual Hrs ÷ Forecasted Hrs) × 100 · Source: FLEX ETC report</span></div>
+  </div>
+  <div class="kpi k7"><div class="lbl">👤 Active Resources</div>
+    <div class="val" id="kRes">—</div><div class="sub">Active in view</div>
+    <div class="kpi-tip"><strong>Active Resource Count</strong>Number of resources currently shown in the dashboard where ACTIVE = YES. Inactive resources (ACTIVE = NO) are shown separately in parentheses when visible. Filter by "Active Status" above to toggle.<span>Source: PROPEL_SCM_ROSTER_HOURS — "ACTIVE" column</span></div>
+  </div>
+  <div class="kpi k8"><div class="lbl">🚨 Over / Under</div>
+    <div class="val" id="kOU">—</div><div class="sub">Resources flagged</div>
+    <div class="kpi-tip"><strong>Over / Under Allocated Resources</strong>Count of resources whose actual hours deviate from forecast by more than ±4 hours. Over = charged significantly more than forecast (risk of budget overrun). Under = charged significantly less (possible resource underutilization).<span>Formula: if |Actual − Forecast| &gt; 4 hrs → flagged · Source: FLEX ETC report</span></div>
+  </div>
+</div>
+
+<!-- ROW 1 : Weekly + Variance Trend side-by-side -->
+<div class="g2">
+  <div class="card">
+    <h3>📅 Weekly Forecast vs Actual Hours <span style="font-size:.65rem;color:#888;font-weight:400">(Current month + prior 3 months)</span>
+  <span class="wtip"><strong>Weekly Forecast vs Actual Hours</strong>
+Side-by-side bar chart comparing what was forecasted vs what was actually charged each week. The orange line shows the weekly variance (Actual − Forecast). Scoped to the current calendar month plus the prior 3 months so the chart stays readable and focused on recent activity.
+<span class="wsrc">Source: ForecastToActualByWeek — weekly "Forecast Hours" &amp; "Actual Hours" columns · Filtered by system date</span></span></h3>
+    <canvas id="cWeekly"></canvas>
+  </div>
+  <div class="card">
+    <h3>📉 Weekly Variance Trend (Actual − Forecast) <span style="font-size:.65rem;color:#888;font-weight:400">(Current + prior month)</span>
+  <span class="wtip"><strong>Weekly Variance Trend</strong>
+Line chart showing week-by-week burn deviation: Actual hours charged minus Forecast hours. Points above zero (red) indicate over-burn that week; below zero (blue) indicate under-burn. Scoped to current month + 1 prior month for near-term trend visibility.
+<span class="wsrc">Formula: Actual Hrs − Forecast Hrs per week · Source: ForecastToActualByWeek weekly columns · Filtered by system date</span></span></h3>
+    <canvas id="cVarTrend"></canvas>
+  </div>
+</div>
+
+<!-- ROW 2 : Scrum | Staff Class | Shore Planned -->
+<div class="g3">
+  <div class="card">
+    <h3>🧩 Roster Hours by Scrum Team
+  <span class="wtip"><strong>Roster Hours by Scrum Team</strong>
+Horizontal bar chart showing total forecasted hours aggregated by each Scrum workstream (e.g. Indirect Procurement, Sourcing &amp; Contracts, Accounts Payable). Useful for understanding which workstreams carry the heaviest planned resource load.
+<span class="wsrc">Source: ForecastToActualByWeek — "Forecasted Hours to Date" summed by SCRUM column from PROPEL_SCM_ROSTER_HOURS</span></span></h3>
+    <canvas id="cScrum"></canvas>
+  </div>
+  <div class="card">
+    <h3>🎓 Forecast Hours by Staff Class
+  <span class="wtip"><strong>Forecast Hours by Staff Class</strong>
+Pie chart breaking down total forecasted hours by staff grade/band (e.g. Senior Manager, Manager, AC Senior). Shows the seniority mix of the resource pool and helps identify whether the team is top-heavy or balanced.
+<span class="wsrc">Source: ForecastToActualByWeek — "Forecasted Hours to Date" grouped by Staff Class column</span></span></h3>
+    <canvas id="cClass"></canvas>
+  </div>
+  <div class="card">
+    <h3>🌐 Roster Hours by Shore Type - Planned
+  <span class="wtip"><strong>Roster Hours by Shore Type — Planned</strong>
+Doughnut chart comparing total planned hours between ONSHORE and OFFSHORE resources. Based on the Roster file's monthly hour columns summed across all months in scope. Reflects planned capacity split, not actuals.
+<span class="wsrc">Source: PROPEL_SCM_ROSTER_HOURS — monthly hour columns summed per resource, grouped by SHORE_TYPE</span></span></h3>
+    <canvas id="cShore"></canvas>
+  </div>
+</div>
+
+<!-- ROW 3 -->
+<div class="g1">
+  <div class="card">
+    <h3>📊 Resource-Level Variance — Actual vs Forecast
+  <span class="wtip"><strong>Resource-Level Variance</strong>
+Horizontal bar chart ranking every resource by their variance (Actual Hours − Forecasted Hours). Red bars = over-burn (charged more than forecast, budget risk). Blue bars = under-burn (charged less, potential underutilization). Green = on track (within ±4 hrs).
+<span class="wsrc">Formula: Actual Hours to Date − Forecasted Hours to Date per resource · Source: ForecastToActualByWeek</span></span></h3>
+    <canvas id="cResVar" style="max-height:440px;"></canvas>
+  </div>
+</div>
+
+<!-- ROW 4 -->
+<div class="g1">
+  <div class="card">
+    <h3 id="monthlyChartTitle">📆 Monthly Planned Hours by Resource
+  <span class="wtip" id="monthlyChartTip"><strong>Monthly Planned Hours by Resource</strong>
+Stacked bar chart showing total roster-planned hours per month, split by ONSHORE (blue) vs OFFSHORE (red). Each bar represents the combined contractual capacity for that month. Covers the full date range imported from the Roster file.
+<span class="wsrc">Source: PROPEL_SCM_ROSTER_HOURS — monthly hour columns (e.g. Mar-26 → Jun-27) grouped by SHORE_TYPE</span></span></h3>
+    <canvas id="cMonthly" style="max-height:320px;"></canvas>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="g1">
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('tHeat',this)">🔥 Utilization Heatmap
+  <span class="wtip"><strong>Utilization Heatmap</strong>
+Weekly actual hours per resource, colour-coded by intensity. Each month group shows: weekly actuals | Roster Planned | Flex Actual | Variance (Act−Plan).<br><br>
+<strong>▶ Expand</strong> any resource row to reveal per-WBS code breakdown (when multiple Flex ETC files are loaded). Individual WBS sub-rows show that WBS code's contribution only. Footer totals are computed at the resource level — WBS sub-rows are excluded to prevent double-counting.
+<span class="wsrc">Weekly actuals: ForecastToActualByWeek · Monthly planned: PROPEL_SCM_ROSTER_HOURS</span></span></div>
+      <div class="tab" onclick="switchTab('tRoster',this)">📆 Roster Monthly Hours
+  <span class="wtip"><strong>Roster Monthly Hours</strong>
+Tabular view of each resource's planned hours month-by-month as defined in the SCM Resource Source File. Each cell shows the contracted capacity for that resource in that month. Row totals are the sum of all monthly planned hours across the full roster date range.
+<span class="wsrc">Source: PROPEL_SCM_ROSTER_HOURS — monthly hour columns per resource row</span></span></div>
+      <div class="tab" onclick="switchTab('tDetail',this)">📋 Resource Detail Table
+  <span class="wtip"><strong>Resource Detail Table</strong>
+Full sortable, searchable table combining data from both source files for every resource. Columns include identity info (Name, Email, PGE ID), Roster attributes (Scrum, Role, Shore, Active, Staff Class), and FLEX metrics (Roster Hrs, Forecast, Actual, ETC, Variance, Utilization %). Click any column header to sort.
+<span class="wsrc">Identity &amp; roster: PROPEL_SCM_ROSTER_HOURS · Hours metrics: ForecastToActualByWeek</span></span></div>
+      <div class="tab" onclick="switchTab('tLTA',this)">🏠 LTA Information (ONSHORE)
+  <span class="wtip"><strong>LTA — Long-Term Assignment Tracker</strong>
+Tracks California (SF Bay Area) presence days for all ONSHORE resources. When a consultant spends ≥ 50% of working days in California, it triggers CA state tax nexus under the SF tax code.<br><br>
+<strong style="color:#e53935">🚨 LTA Exceeded</strong>: CA days ≥ 50% of total days<br>
+<strong style="color:#ff8f00">⚠ Approaching LTA</strong>: CA days 40–49% of total days<br>
+<strong style="color:#2e7d32">✓ OK</strong>: CA days &lt; 40% of total days<br><br>
+Upload the LTA tracking file or use demo data. File format: Name + monthly CA days + Local days columns.
+<span class="wsrc">Tax code: SF / CA · Threshold: 50% CA presence · ONSHORE resources only</span></span></div>
+    </div>
+
+    <div class="tab-panel active" id="tHeat">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
+        <div class="legend" style="margin-bottom:0;flex-wrap:wrap;">
+          <div class="leg-item"><div class="leg-box" style="background:#f5f5f5;border:1px solid #ddd;"></div>0 hrs (weekly)</div>
+          <div class="leg-item"><div class="leg-box" style="background:#fff3e0;"></div>&lt;20 hrs</div>
+          <div class="leg-item"><div class="leg-box" style="background:#ffe082;"></div>20–31 hrs</div>
+          <div class="leg-item"><div class="leg-box" style="background:#ffb300;"></div>32–39 hrs</div>
+          <div class="leg-item"><div class="leg-box" style="background:#66bb6a;"></div>40 hrs ✓</div>
+          <div class="leg-item"><div class="leg-box" style="background:#e53935;"></div>&gt;40 hrs ⚡</div>
+          <div class="leg-item" style="margin-left:10px;border-left:1px solid #eee;padding-left:10px">
+            <div class="leg-box" style="background:#e3f2fd;border:1px solid #90caf9;"></div>Roster Planned</div>
+          <div class="leg-item"><div class="leg-box" style="background:#f3e5f5;border:1px solid #ce93d8;"></div>Flex Actual</div>
+          <div class="leg-item"><div class="leg-box" style="background:#ffebee;"></div>Over</div>
+          <div class="leg-item"><div class="leg-box" style="background:#e8f5e9;"></div>Under</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.66rem;color:#555;border-left:1px solid #eee;padding-left:14px;flex-wrap:wrap;flex-shrink:0;">
+          <span style="background:#e8f0fe;border:1px solid #1565c0;border-radius:4px;padding:2px 8px;font-weight:800;color:#1565c0;font-size:.72rem">▶</span>
+          <span>Click to expand per-WBS breakdown &nbsp;·&nbsp; Footer totals = resource-level only (no double-counting)</span>
+          <span style="color:#aaa;font-size:.62rem">— = single WBS, no breakdown</span>
+        </div>
+      </div>
+      <div class="heat-wrap">
+        <table class="heat-table" id="heatTable"></table>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tRoster">
+      <div class="tw">
+        <table class="dt" id="rosterTable">
+          <thead><tr id="rosterHead"></tr></thead>
+          <tbody id="rosterBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tDetail">
+      <div class="srow">
+        <input id="srch" type="text" placeholder="🔍 Search name, role, scrum, email…" oninput="searchTable()"/>
+        <span id="rowCount" style="font-size:.7rem;color:#888;white-space:nowrap;"></span>
+      </div>
+      <div class="tw">
+        <table class="dt" id="detailTable">
+          <thead>
+            <tr>
+              <th onclick="srt(0)">#</th>
+              <th onclick="srt(1)">Name ↕</th>
+              <th onclick="srt(2)">PwC Email</th>
+              <th onclick="srt(3)">PGE ID</th>
+              <th onclick="srt(4)">Scrum ↕</th>
+              <th onclick="srt(5)">Role ↕</th>
+              <th onclick="srt(6)">Shore ↕</th>
+              <th onclick="srt(7)">Active ↕</th>
+              <th onclick="srt(8)">Staff Class ↕</th>
+              <th onclick="srt(9)">Roster Hrs ↕</th>
+              <th onclick="srt(10)">Forecast Hrs ↕</th>
+              <th onclick="srt(11)">Actual Hrs ↕</th>
+              <th onclick="srt(12)">ETC Rem ↕</th>
+              <th onclick="srt(13)">Variance ↕</th>
+              <th onclick="srt(14)">Util % ↕</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="detailBody"></tbody>
+        </table>
+      </div>
+    </div><!-- end tDetail -->
+
+    <!-- ══ LTA TAB ══ -->
+    <div class="tab-panel" id="tLTA">
+
+      <!-- Import bar -->
+      <div class="lta-import-bar">
+        <div style="flex:1;min-width:220px;">
+          <div class="import-label" style="color:#5d4037;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="background:#ff8f00;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+            LTA Tracking File &nbsp;<span style="font-weight:400;color:#aaa;font-size:.62rem;text-transform:none">(optional — demo data pre-loaded)</span>
+          </div>
+          <div class="import-row">
+            <label class="file-btn" id="ltaFileBtn">
+              <input type="file" id="ltaFileInput" accept=".xlsx,.xls,.csv" onchange="handleLTAFile(this)"/>
+              📂 Choose LTA File (.xlsx / .csv)
+            </label>
+          </div>
+          <div class="lta-summary" id="ltaSummary" style="font-size:.67rem;margin-top:5px;color:#888;font-style:italic">No file loaded — showing demo data</div>
+          <div style="font-size:.62rem;color:#aaa;margin-top:4px;line-height:1.5">
+            Expected columns: <strong>EMPLOYEE_NAME</strong> + per-month pairs: <strong>[MON_YY]_CA_DAYS</strong> &amp; <strong>[MON_YY]_LOCAL_DAYS</strong>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-shrink:0;flex-wrap:wrap;">
+          <button class="btn" style="background:#ff8f00" onclick="loadLTADemo()">📊 Reload Demo</button>
+          <button class="btn reset-data" onclick="resetLTA()">🗑 Clear LTA</button>
+          <button class="btn" style="background:#1565c0" onclick="downloadLTASample('xlsx')" title="Download sample LTA file in Excel format">⬇ Sample .xlsx</button>
+          <button class="btn" style="background:#37474f" onclick="downloadLTASample('csv')" title="Download sample LTA file in CSV format">⬇ Sample .csv</button>
+          <div style="font-size:.62rem;color:#777;line-height:1.7;padding:4px 8px;background:#fff;border-radius:6px;border:1px solid #eee;">
+            <strong>Tax code:</strong> SF / CA &nbsp;|&nbsp; <strong>Nexus trigger:</strong> ≥ 50% days in CA<br>
+            <span style="color:#e53935;font-weight:700">🚨 Exceeded</span> ≥50% &nbsp;·&nbsp;
+            <span style="color:#ff8f00;font-weight:700">⚠ Approaching</span> 40–49% &nbsp;·&nbsp;
+            <span style="color:#2e7d32;font-weight:700">✓ OK</span> &lt;40%
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI strip -->
+      <div class="lta-kpis">
+        <div class="lta-kpi lk1"><div class="lbl">👤 Onshore Tracked</div><div class="val" id="ltaKTotal">—</div><div class="sub">resources</div></div>
+        <div class="lta-kpi lk2"><div class="lbl">🚨 LTA Exceeded</div><div class="val" id="ltaKExceeded">—</div><div class="sub">≥ 50% CA days</div></div>
+        <div class="lta-kpi lk3"><div class="lbl">⚠ Approaching LTA</div><div class="val" id="ltaKWarning">—</div><div class="sub">40–49% CA days</div></div>
+        <div class="lta-kpi lk4"><div class="lbl">✓ Within Limit</div><div class="val" id="ltaKOK">—</div><div class="sub">&lt; 40% CA days</div></div>
+        <div class="lta-kpi" style="border-top-color:#2e7d32"><div class="lbl">🏠 CA Local</div><div class="val" id="ltaKCALocal" style="color:#2e7d32">—</div><div class="sub">LTA not applicable</div></div>
+        <div class="lta-kpi lk5"><div class="lbl">📅 Avg CA %</div><div class="val" id="ltaKAvg">—</div><div class="sub">excl. CA Local</div></div>
+      </div>
+
+      <!-- Filters -->
+      <div class="lta-filter-row">
+        <div class="fg"><label>LTA Status</label>
+          <select id="ltaFStatus" onchange="renderLTATable()">
+            <option value="all">All Statuses</option>
+            <option value="exceeded">🚨 Exceeded</option>
+            <option value="warning">⚠ Approaching</option>
+            <option value="ok">✓ OK</option>
+            <option value="ca-local">🏠 CA Local (N/A)</option>
+          </select>
+        </div>
+        <div class="fg"><label>View Month</label>
+          <select id="ltaFMonth" onchange="renderLTATable()"><option value="all">YTD Cumulative</option></select>
+        </div>
+        <div class="fg"><label>Search</label>
+          <input type="text" id="ltaSearch" placeholder="🔍 Name…" oninput="renderLTATable()"
+            style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;font-size:.75rem;min-width:150px"/>
+        </div>
+      </div>
+
+      <!-- Main summary table -->
+      <div class="tw" style="max-height:400px;margin-bottom:16px">
+        <table class="lta-tbl">
+          <thead><tr id="ltaHead"></tr></thead>
+          <tbody id="ltaBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Monthly breakdown mini-cards -->
+      <div class="lta-section-hdr">📅 Monthly CA vs Local Days — Per Resource</div>
+      <div id="ltaMonthBreakdown" style="overflow-x:auto"></div>
+
+    </div><!-- end tLTA -->
+
+  </div><!-- end tabs card inner -->
+</div><!-- end tabs card -->
+
+</div><!-- end dashContent -->
+
+<div class="footer" id="footerBar" style="display:none">
+  PROPEL SCM Manage Resource Dashboard &nbsp;|&nbsp; WBS: <span id="footerWBS">—</span> &nbsp;|&nbsp;
+  PwC Internal Use Only &nbsp;|&nbsp; <span id="ts2"></span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════ -->
+<script>
+/* ── State ── */
+let R = [];         // master resource array (merged)
+let FD = [];        // filtered data
+let WEEKS = [];     // week labels (union of all flex files, sorted)
+let MONTHS = [];    // month labels from roster file
+let rosterLoaded = false;
+let flexLoaded = false;
+let sortDir = 1, lastCol = -1;
+let charts = {};
+
+/* ── Multi-file Flex state ── */
+/* Each entry: { fname, resourceCount, weekCount, flexMap, weekDates } */
+let _flexFiles = [];   // array of parsed file objects
+/* Aggregated combined maps (rebuilt on every add/remove) */
+/* window._flexMap    — combined, keyed by lowercase name */
+/* window._weekDates  — combined sorted deduplicated full date strings */
+
+/* ── Project metadata (read from files) ── */
+let _metaWBSCodes = [];   // unique WBS codes: from Flex filenames (primary) + Roster fallback
+let _metaFlexIDs  = [];   // unique Flex IDs across all loaded Flex files
+
+/* ── Timestamp ── */
+const nowStr = () => new Date().toLocaleString('en-US',{
+  month:'numeric',day:'numeric',year:'numeric',
+  hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+document.getElementById('ts').textContent  = nowStr();
+document.getElementById('ts2').textContent = nowStr();
+
+/* ── Colors ── */
+const C = {red:'#e0301e',blue:'#003087',orange:'#eb8c00',green:'#2e7d32',
+           purple:'#6a1b9a',teal:'#00695c',amber:'#f57f17',grey:'#78909c'};
+const PALETTE=['#003087','#e0301e','#eb8c00','#2e7d32','#6a1b9a',
+               '#00695c','#f57f17','#1565c0','#c62828','#4e342e',
+               '#37474f','#558b2f','#ad1457','#0277bd'];
+
+/* ── Helpers ── */
+const f1  = n => isNaN(n)||n===''?'—':Number(n).toLocaleString('en-US',{maximumFractionDigits:1});
+const sm  = arr => (arr||[]).reduce((a,b)=>a+(+b||0),0);
+const vc  = v => v>4?C.red:v<-4?C.blue:C.green;
+const hc  = v => {
+  if(!v||v===0) return '#f5f5f5';
+  if(v<20) return '#fff3e0';
+  if(v<32) return '#ffe082';
+  if(v<40) return '#ffb300';
+  if(v===40) return '#66bb6a';
+  return '#e53935';
+};
+const htxt = v => (!v||v===0)?'#bbb':v>=40?'#fff':'#333';
+
+/* ════════════════════════════════════════════════════
+   HEADER METADATA — WBS & FLEX ID
+════════════════════════════════════════════════════ */
+
+/* Scan pre-header rows of the Roster AoA for a WBS/project code.
+   Looks for:  "WBS: USC…" | a cell matching /USC\d{7,}/ | "Project Code" label */
+function _extractWBSFromRoster(aoa, headerRowIdx){
+  const WBS_RE = /\b(USC\d[\w.]{4,}|[A-Z]{2,4}\d{6,}[\w.]*)\b/i;
+  for(let i=0; i<headerRowIdx; i++){
+    const row = aoa[i]||[];
+    for(let j=0; j<row.length; j++){
+      const cell = String(row[j]||'').trim();
+      if(!cell) continue;
+      /* "WBS" label → check same cell or next cell for value */
+      if(/^wbs[:\s]/i.test(cell)){
+        const rest = cell.replace(/^wbs[:\s]*/i,'').trim();
+        if(rest) return rest;
+        const next = String(row[j+1]||'').trim();
+        if(next) return next;
+      }
+      /* "Project Code" / "WBS Code" label */
+      if(/project.?code|wbs.?code|wbs.?id/i.test(cell)){
+        const next = String(row[j+1]||'').trim();
+        if(next) return next;
+      }
+      /* Direct pattern match anywhere in cell */
+      const m = cell.match(WBS_RE);
+      if(m) return m[1];
+    }
+  }
+  /* Also try matching the filename itself — e.g. CONAMER1000364 */
+  return null;
+}
+
+/* Scan row 0 (and row 1) of a Flex AoA for a Flex/Project ID.
+   The standard FLEX export puts the project/engagement ID in row 1 cells.
+   Looks for numeric IDs ≥5 digits, or "Flex ID" / "Project ID" labels. */
+function _extractFlexIDFromFile(aoa){
+  const FLEX_ID_RE = /\b(\d{5,})\b/;
+  for(let i=0; i<Math.min(aoa.length,3); i++){
+    const row = aoa[i]||[];
+    for(let j=0; j<row.length; j++){
+      const cell = String(row[j]||'').trim();
+      if(!cell) continue;
+      /* "Flex ID" / "Project ID" / "Engagement ID" label */
+      if(/flex.?id|project.?id|engagement.?id/i.test(cell)){
+        /* Value may be in same cell after colon, or adjacent cell */
+        const colon = cell.match(/[:\s]+(\d{4,})/);
+        if(colon) return colon[1];
+        const next = String(row[j+1]||'').trim();
+        if(next && FLEX_ID_RE.test(next)) return next.match(FLEX_ID_RE)[1];
+      }
+      /* Standalone numeric ID in its own cell (≥5 digits) */
+      if(/^\d{5,}$/.test(cell)) return cell;
+    }
+  }
+  return null;
+}
+
+/* Update all header / badge / footer elements from current metadata state */
+function updateHeaderMeta(){
+  const wbs     = _metaWBSCodes.length ? _metaWBSCodes.join(', ') : '—';
+  const flexIDs = _metaFlexIDs.length  ? _metaFlexIDs.join(', ')  : '—';
+
+  /* Subtitle line */
+  const hdrWBS    = document.getElementById('hdrWBS');
+  const hdrFlex   = document.getElementById('hdrFlexID');
+  if(hdrWBS)  hdrWBS.textContent  = wbs;
+  if(hdrFlex) hdrFlex.textContent = flexIDs;
+
+  /* WBS badge */
+  const badgeWBS = document.getElementById('badgeWBS');
+  if(badgeWBS) badgeWBS.textContent = `⚡ WBS ${wbs}`;
+
+  /* Footer */
+  const footerWBS = document.getElementById('footerWBS');
+  if(footerWBS) footerWBS.textContent = wbs;
+}
+
+function showLoading(msg='Processing…'){
+  document.getElementById('loadingMsg').textContent=msg;
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function hideLoading(){document.getElementById('loadingOverlay').classList.remove('show');}
+
+/* ════════════════════════════════════════════════════
+   FILE PARSING — ROSTER
+════════════════════════════════════════════════════ */
+function handleRosterFile(input){
+  if(!input.files[0]) return;
+  const file = input.files[0];
+  showLoading('Reading Roster file…');
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+      parseRosterAoA(aoa, file.name);
+    } catch(err) {
+      hideLoading();
+      setStatus('rosterStatus','❌ Error: '+err.message,'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseRosterAoA(aoa, fname){
+  if(!aoa||aoa.length<2){hideLoading();setStatus('rosterStatus','❌ Empty file','err');return;}
+
+  /* ── Find header row: first row containing NAME or RESOURCE_LOADING_ID or PWC_EMAIL ── */
+  let headerRowIdx = -1, headerRow = null;
+  for(let i=0; i<Math.min(aoa.length,10); i++){
+    const row = aoa[i]||[];
+    if(row.some(v => v && /^(name|resource_loading_id|pwc_email|employee.?name)$/i.test(String(v).trim()))){
+      headerRow = row; headerRowIdx = i; break;
+    }
+  }
+  /* Broader fallback — any row with "name" */
+  if(!headerRow){
+    for(let i=0; i<Math.min(aoa.length,10); i++){
+      const row = aoa[i]||[];
+      if(row.some(v => v && /name/i.test(String(v)))){
+        headerRow = row; headerRowIdx = i; break;
+      }
+    }
+  }
+  if(!headerRow){ hideLoading(); setStatus('rosterStatus','❌ Could not detect header row','err'); return; }
+
+  /* ── Extract WBS from pre-header rows of Roster (fallback only — Flex filenames are primary) ── */
+  if(headerRowIdx > 0){
+    const found = _extractWBSFromRoster(aoa, headerRowIdx);
+    if(found && !_metaWBSCodes.includes(found)){
+      _metaWBSCodes.push(found); updateHeaderMeta();
+    }
+  }
+  /* Also try filename fallback */
+  if(_metaWBSCodes.length === 0){
+    const fnMatch = fname.match(/(USC[\w.]{4,})/i);
+    if(fnMatch && !_metaWBSCodes.includes(fnMatch[1])){
+      _metaWBSCodes.push(fnMatch[1]); updateHeaderMeta();
+    }
+  }
+
+  /* ── Map column indices by exact header name (with fuzzy fallback) ── */
+  const ci = {};
+  headerRow.forEach((h, idx) => {
+    if(h===null||h===undefined) return;
+    const s = String(h).toUpperCase().trim();
+    /* Exact matches first (covers PROPEL_SCM_ROSTER_HOURS format) */
+    if(s==='NAME'||s==='EMPLOYEE NAME'||s==='RESOURCE NAME') ci.name = idx;
+    else if(s==='PGE_ID'||s==='PGE ID')                     ci.pge  = idx;
+    else if(s==='PWC_EMAIL'||s==='EMAIL'||s==='PWC EMAIL')   ci.email= idx;
+    else if(s==='SHORE_TYPE'||s==='SHORE TYPE'||s==='SHORE') ci.shore= idx;
+    else if(s==='SCRUM'||s==='SCRUM TEAM'||s==='TEAM')       ci.scrum= idx;
+    else if(s==='ROLE'||s==='TITLE'||s==='POSITION')         ci.role = idx;
+    else if(s==='ACTIVE'||s==='IS ACTIVE'||s==='STATUS')                   ci.active = idx;
+    else if(s==='STAFF CLASS'||s==='STAFF_CLASS'||s==='GRADE'||s==='BAND') ci.sclass= idx;
+    /* Fuzzy fallbacks for non-standard headers */
+    else if(!ci.name  && /name|resource|employee/i.test(s))  ci.name = idx;
+    else if(!ci.pge   && /pge|worker.?id/i.test(s))          ci.pge  = idx;
+    else if(!ci.email && /email|mail/i.test(s))               ci.email= idx;
+    else if(!ci.shore && /shore/i.test(s))                    ci.shore= idx;
+    else if(!ci.scrum && /scrum|team|squad/i.test(s))         ci.scrum= idx;
+    else if(!ci.role  && /role|title|position/i.test(s))      ci.role = idx;
+    else if(!ci.sclass&& /class|grade|band|level/i.test(s))  ci.sclass= idx;
+  });
+
+  /* ── Detect month columns ── 
+     Handles both Mon-YY (Mar-26), YY-Mon (26-Mar), Mon YYYY (Mar 2026), YYYY-MM-DD etc */
+  const monthColIndices = [];
+  const monthColLabels  = [];
+  const fixedCols = new Set(Object.values(ci));
+  headerRow.forEach((h, idx) => {
+    if(h===null||h===undefined||fixedCols.has(idx)) return;
+    const s = String(h).trim();
+    if(isMonthCol(s)){
+      monthColIndices.push(idx);
+      monthColLabels.push(normalizeMonthLabel(s));
+    }
+  });
+
+  MONTHS = monthColLabels;
+
+  /* ── Parse data rows ── */
+  const rosterMap  = {}; // key = normalized-lowercase name
+  const rosterKeys = []; // preserve insertion order (matches roster row order)
+
+  for(let i=headerRowIdx+1; i<aoa.length; i++){
+    const row = aoa[i]||[];
+    if(!row.some(v=>v!==null&&v!==undefined)) continue; // fully blank row
+
+    const rawName = ci.name !== undefined ? row[ci.name] : null;
+    const name    = String(rawName||'').trim();
+    if(!name) continue;
+    if(/^(total|grand total|->)/i.test(name)) continue;
+
+    const key = normName(name);
+    rosterMap[key] = {
+      name,                                       // preserve original casing from file
+      serialId:  String(row[0]||'').trim(),
+      loadingId: String(row[1]||'').trim(),
+      pge:    ci.pge   !== undefined ? String(row[ci.pge]  ||'N/A').trim() : 'N/A',
+      email:  ci.email !== undefined ? String(row[ci.email]||'').trim()    : '',
+      shore:  normalizeShore(ci.shore!==undefined ? String(row[ci.shore]||'').trim() : ''),
+      scrum:  ci.scrum !== undefined ? String(row[ci.scrum]||'').trim()    : '',
+      role:   ci.role  !== undefined ? String(row[ci.role] ||'').trim()    : '',
+      active: ci.active !== undefined ? String(row[ci.active]||'YES').trim().toUpperCase() : 'YES',
+      sclass: ci.sclass!== undefined ? String(row[ci.sclass]||'').trim()   : '',
+      rosterHrs: monthColIndices.map(colIdx => +row[colIdx]||0)
+    };
+    rosterKeys.push(key);
+  }
+
+  const count = rosterKeys.length;
+  if(count===0){ hideLoading(); setStatus('rosterStatus','❌ No resources found — check Name column exists','err'); return; }
+
+  window._rosterMap  = rosterMap;
+  window._rosterKeys = rosterKeys; // ordered list — dashboard shows ONLY these resources
+  window._rosterFname = fname;
+  rosterLoaded = true;
+  hideLoading();
+  setStatus('rosterStatus', `✅ ${count} resources loaded from ${fname} (${MONTHS.length} months)`, 'ok');
+  document.getElementById('rosterBtn').classList.add('loaded');
+  updateImportCounts();
+  tryMerge();
+}
+
+/* Normalize a name for matching: uppercase, collapse spaces, strip punctuation */
+function normName(n){
+  return String(n).toUpperCase().trim().replace(/\s+/g,' ').replace(/[^A-Z0-9 ]/g,'');
+}
+
+function isMonthCol(k){
+  /* Mon-YY  or  YY-Mon  or  Mon YYYY  or  Mon-YYYY */
+  return /^[a-z]{3}-\d{2,4}$/i.test(k)   ||   // Mar-26, Mar-2026
+         /^\d{2}-[a-z]{3}$/i.test(k)      ||   // 26-Mar  ← PROPEL roster format
+         /^[a-z]{3}\s+\d{4}$/i.test(k)    ||   // Mar 2026
+         /^[a-z]+\s+\d{4}$/i.test(k)      ||   // March 2026
+         /^\d{1,2}\/\d{4}$/.test(k);           // 3/2026
+}
+
+function normalizeMonthLabel(k){
+  k = String(k).trim();
+  /* Handle YY-Mon (26-Mar) → Mar-26 */
+  const m1 = k.match(/^(\d{2})-([a-z]{3})$/i);
+  if(m1) return m1[2].charAt(0).toUpperCase()+m1[2].slice(1).toLowerCase()+'-'+m1[1];
+  /* Already Mon-YY */
+  if(/^[a-z]{3}-\d{2}$/i.test(k)) return k.charAt(0).toUpperCase()+k.slice(1).toLowerCase();
+  /* Mon-YYYY or Mon YYYY */
+  const m2 = k.match(/^([a-z]{3,})[\s\-](\d{2,4})$/i);
+  if(m2){
+    const mon = m2[1].slice(0,3);
+    const yr  = m2[2].length===4 ? m2[2].slice(2) : m2[2];
+    return mon.charAt(0).toUpperCase()+mon.slice(1).toLowerCase()+'-'+yr;
+  }
+  return k;
+}
+
+function normalizeShore(s){
+  if(/on/i.test(s)&&!/off/i.test(s)) return 'ONSHORE';
+  if(/off/i.test(s)) return 'OFFSHORE';
+  return s.toUpperCase()||'ONSHORE';
+}
+
+/* ════════════════════════════════════════════════════
+   FILE PARSING — FLEX ETC  (MULTI-FILE)
+   Structure of ForecastToActualByWeek_Report.xlsx:
+   Row 1: Flex ID header
+   Row 2: Week dates at every 4th col starting at col 9
+   Row 3: Column headers (Staff Class, Employee Name, Budget, Forecast, Actual, ETC…)
+   Row 4+: Data rows; group-header rows start with "->" — skip them
+   Weekly cols per week (4 cols): Actual, Forecast, Variance, Variance%
+   So: week[i] Actual = col (9 + i*4), Forecast = col (9 + i*4 + 1)
+════════════════════════════════════════════════════ */
+
+/* Called when user picks one or more files via the file input */
+function handleFlexFilesAdded(input){
+  if(!input.files||!input.files.length) return;
+  const files = Array.from(input.files);
+  /* Reset input so same files can be re-added after remove if needed */
+  input.value = '';
+
+  let pending = files.length;
+  files.forEach(file => {
+    /* Skip duplicates already loaded (same filename) */
+    if(_flexFiles.some(f => f.fname === file.name)){
+      pending--;
+      if(pending===0) _aggregateFlexAndMerge();
+      return;
+    }
+    showLoading(`Reading ${file.name}…`);
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb  = XLSX.read(e.target.result, {type:'array'});
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        const aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+        const result = _parseSingleFlex(aoa, file.name);
+        if(result){
+          _flexFiles.push(result);
+        }
+      } catch(err){
+        console.warn('Flex parse error:', file.name, err.message);
+      }
+      pending--;
+      if(pending===0){
+        hideLoading();
+        _aggregateFlexAndMerge();
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/* Parse a single Flex ETC file → returns a file object or null */
+function _parseSingleFlex(aoa, fname){
+  if(!aoa || aoa.length < 3) return null;
+
+  /* Extract Flex ID from top rows before parsing the rest */
+  const flexID = _extractFlexIDFromFile(aoa);
+
+  /* Step 1: Find week-date row */
+  let weekRow = null, weekRowIdx = -1;
+  for(let i=0; i<Math.min(aoa.length,5); i++){
+    const row = aoa[i];
+    const dateCount = (row||[]).filter(v => v && /\d{1,2}\/\d{1,2}\/\d{4}/.test(String(v))).length;
+    if(dateCount >= 3){ weekRow = row; weekRowIdx = i; break; }
+  }
+
+  /* Step 2: Find header row */
+  let headerRow = null, headerRowIdx = -1;
+  for(let i=0; i<Math.min(aoa.length,6); i++){
+    const row = aoa[i]||[];
+    if(row.some(v => v && /employee name/i.test(String(v)))){
+      headerRow = row; headerRowIdx = i; break;
+    }
+  }
+  if(!headerRow){ headerRow = aoa[2]||[]; headerRowIdx = 2; }
+
+  /* Step 3: Map column indices */
+  const ci = {};
+  headerRow.forEach((h, idx) => {
+    if(!h) return;
+    const s = String(h).toLowerCase();
+    if(/employee name|resource name|worker name/.test(s)) ci.name = idx;
+    else if(/staff class/.test(s) && ci.sclass === undefined) ci.sclass = idx;
+    else if(/total original budgeted/.test(s)) ci.budget = idx;
+    else if(/forecasted hours to date|forecast.*to date/.test(s)) ci.forecast = idx;
+    else if(/actual hours to date|actual.*to date/.test(s)) ci.actual = idx;
+    else if(/total etc|etc hours remaining/.test(s)) ci.etc = idx;
+  });
+
+  /* Step 4: Extract week positions */
+  const weekPositions = [];
+  if(weekRow){
+    weekRow.forEach((v, idx) => {
+      if(v && /\d{1,2}\/\d{1,2}\/\d{4}/.test(String(v))){
+        const label   = normalizeWeekLabel(String(v));
+        const rawDate = String(v);
+        weekPositions.push({ label, rawDate, actualCol: idx, forecastCol: idx+1 });
+      }
+    });
+  }
+
+  /* Step 5: Parse data rows */
+  const dataStartRow = Math.max(headerRowIdx, weekRowIdx) + 1;
+  const flexMap = {};
+
+  for(let i=dataStartRow; i<aoa.length; i++){
+    const row = aoa[i];
+    if(!row) continue;
+    const rawName = row[ci.name !== undefined ? ci.name : 1];
+    const name    = String(rawName||'').trim();
+    if(!name) continue;
+    if(name.startsWith('->')) continue;
+    if(/^(total|grand total|project total)/i.test(name)) continue;
+
+    const wa  = weekPositions.map(w => +row[w.actualCol]  || 0);
+    const wf  = weekPositions.map(w => +row[w.forecastCol]|| 0);
+    const key = name.toLowerCase();
+
+    if(flexMap[key]){
+      /* Same resource appears twice in same file — accumulate */
+      flexMap[key].flex.budget   += +row[ci.budget]  || 0;
+      flexMap[key].flex.forecast += +row[ci.forecast] || 0;
+      flexMap[key].flex.actual   += +row[ci.actual]   || 0;
+      flexMap[key].flex.etc      += +row[ci.etc]      || 0;
+      wa.forEach((v,wi) => { flexMap[key].wa[wi] = (flexMap[key].wa[wi]||0)+v; });
+      wf.forEach((v,wi) => { flexMap[key].wf[wi] = (flexMap[key].wf[wi]||0)+v; });
+    } else {
+      flexMap[key] = {
+        name,
+        sclass: String(row[ci.sclass !== undefined ? ci.sclass : 0]||'').trim(),
+        flex:{ budget:+row[ci.budget]||0, forecast:+row[ci.forecast]||0,
+               actual:+row[ci.actual]||0, etc:+row[ci.etc]||0 },
+        wa, wf
+      };
+    }
+  }
+
+  const count = Object.keys(flexMap).length;
+  if(count === 0) return null;
+
+  return {
+    fname,
+    flexID,              // extracted from top rows (may be null)
+    resourceCount: count,
+    weekCount:     weekPositions.length,
+    weekPositions, // [{label, rawDate, actualCol, forecastCol}]
+    flexMap
+  };
+}
+
+/* Aggregate all loaded flex files into window._flexMap / window._weekDates / WEEKS,
+   then rebuild the UI chip list and trigger merge */
+function _aggregateFlexAndMerge(){
+  if(_flexFiles.length === 0){
+    window._flexMap   = null;
+    window._weekDates = null;
+    flexLoaded = false;
+    WEEKS = [];
+    _metaFlexIDs  = [];
+    _metaWBSCodes = [];
+    updateHeaderMeta();
+    _renderFlexChips();
+    updateImportCounts();
+    if(rosterLoaded) tryMerge();
+    return;
+  }
+
+  /* ── 1. Build union of all week positions, sorted by date ── */
+  const weekDateSet = {}; // rawDate → {label, rawDate}
+  _flexFiles.forEach(f => {
+    f.weekPositions.forEach(wp => {
+      if(!weekDateSet[wp.rawDate]) weekDateSet[wp.rawDate] = { label: wp.label, rawDate: wp.rawDate };
+    });
+  });
+
+  /* Sort by actual date value */
+  const allWeeks = Object.values(weekDateSet).sort((a, b) => {
+    const da = _parseDateStr(a.rawDate), db = _parseDateStr(b.rawDate);
+    return (da||0) - (db||0);
+  });
+
+  WEEKS = allWeeks.map(w => w.label);
+  window._weekDates = allWeeks.map(w => w.rawDate);
+
+  /* Build a lookup: rawDate → global week index */
+  const weekIdx = {};
+  allWeeks.forEach((w, gi) => { weekIdx[w.rawDate] = gi; });
+
+  /* ── 2. Aggregate flex data across all files ── */
+  const combined = {}; // key = lowercase name
+
+  _flexFiles.forEach((f, fileIdx) => {
+    /* Build a per-file local→global week index map */
+    const localToGlobal = f.weekPositions.map(wp => weekIdx[wp.rawDate] ?? -1);
+
+    Object.entries(f.flexMap).forEach(([key, fd]) => {
+      if(!combined[key]){
+        combined[key] = {
+          name:     fd.name,
+          sclass:   fd.sclass,
+          flex:     { budget: 0, forecast: 0, actual: 0, etc: 0 },
+          wa:       new Array(WEEKS.length).fill(0),
+          wf:       new Array(WEEKS.length).fill(0),
+          wbsSplit: []   // [{wbsCode, fname, wa[], wf[], flex{}}]
+        };
+      }
+      const c = combined[key];
+      c.flex.budget   += fd.flex.budget;
+      c.flex.forecast += fd.flex.forecast;
+      c.flex.actual   += fd.flex.actual;
+      c.flex.etc      += fd.flex.etc;
+
+      /* Map weekly hours into the global week array */
+      const splitWa = new Array(WEEKS.length).fill(0);
+      const splitWf = new Array(WEEKS.length).fill(0);
+      fd.wa.forEach((v, li) => {
+        const gi = localToGlobal[li];
+        if(gi >= 0){ c.wa[gi] = (c.wa[gi]||0) + v; splitWa[gi] = (splitWa[gi]||0) + v; }
+      });
+      fd.wf.forEach((v, li) => {
+        const gi = localToGlobal[li];
+        if(gi >= 0){ c.wf[gi] = (c.wf[gi]||0) + v; splitWf[gi] = (splitWf[gi]||0) + v; }
+      });
+
+      /* Store this file's contribution as a WBS split entry */
+      const _wbsRaw = f.fname.match(/ForecastToActualByWeek Report_(.+?)\.xlsx?$/i)?.[1]
+                   || f.fname.match(/ForecastToActualByWeek Report_(.+)$/i)?.[1]
+                   || f.fname.match(/_(.+?)\.xlsx?$/i)?.[1]
+                   || f.fname.replace(/\.xlsx?$/i,'');
+      const wbsCode = _wbsRaw.replace(/\.xlsx?$/i,'');
+      c.wbsSplit.push({
+        wbsCode,
+        fname:   f.fname,
+        wa:      splitWa,
+        wf:      splitWf,
+        flex:    { budget: fd.flex.budget, forecast: fd.flex.forecast,
+                   actual: fd.flex.actual, etc: fd.flex.etc }
+      });
+    });
+  });
+
+  window._flexMap = combined;
+  flexLoaded = true;
+
+  /* Rebuild unique Flex ID and WBS code lists from all loaded files.
+     WBS is read from each filename: "ForecastToActualByWeek Report_USC0195637.1.1.xlsx" */
+  _metaFlexIDs = [...new Set(_flexFiles.map(f => f.flexID).filter(Boolean))];
+  const wbsFromFiles = _flexFiles
+    .map(f => {
+      const raw = f.fname.match(/ForecastToActualByWeek Report_(.+?)\.xlsx?$/i)?.[1]
+               || f.fname.match(/ForecastToActualByWeek Report_(.+)$/i)?.[1]
+               || f.fname.match(/_(.+?)\.xlsx?$/i)?.[1]
+               || null;
+      return raw ? raw.replace(/\.xlsx?$/i,'') : null;
+    })
+    .filter(Boolean);
+  /* Merge with any WBS already found from Roster, keep unique, preserve Flex-file codes first */
+  const rosterWBS = _metaWBSCodes.filter(w => !wbsFromFiles.includes(w));
+  _metaWBSCodes = [...new Set([...wbsFromFiles, ...rosterWBS])];
+  updateHeaderMeta();
+
+  _renderFlexChips();
+  updateImportCounts();
+  tryMerge();
+}
+
+/* Helper: parse "M/D/YYYY" → numeric timestamp */
+function _parseDateStr(s){
+  const m = String(s).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return new Date(+m[3], +m[1]-1, +m[2]).getTime();
+  return null;
+}
+
+/* Remove one flex file by index, re-aggregate */
+function removeFlexFile(idx){
+  _flexFiles.splice(idx, 1);
+  _aggregateFlexAndMerge();
+}
+
+/* Render the chip list for loaded Flex files */
+function _renderFlexChips(){
+  const container = document.getElementById('flexChips');
+  const summary   = document.getElementById('flexSummary');
+  if(!container) return;
+
+  if(_flexFiles.length === 0){
+    container.innerHTML = '';
+    summary.textContent = 'No files loaded';
+    summary.className   = 'flex-summary';
+    return;
+  }
+
+  const totalRes   = Object.keys(window._flexMap || {}).length;
+  const totalWeeks = WEEKS.length;
+  summary.textContent = `✅ ${_flexFiles.length} file${_flexFiles.length>1?'s':''} loaded — ${totalRes} resources, ${totalWeeks} weeks (aggregated)`;
+  summary.className   = 'flex-summary ok';
+
+  container.innerHTML = _flexFiles.map((f, i) => `
+    <div class="flex-chip loaded" title="${f.fname}">
+      <span class="chip-name">📄 ${f.fname}</span>
+      <span class="chip-hrs">${f.resourceCount}R / ${f.weekCount}W</span>
+      <span class="chip-rm" onclick="removeFlexFile(${i})" title="Remove this file">✕</span>
+    </div>
+  `).join('');
+}
+
+function normalizeWeekLabel(k){
+  k = String(k).trim();
+  /* Strip year: 11/3/2025 → 11/3 */
+  const m = k.match(/^(\d{1,2}\/\d{1,2})(\/\d{2,4})?$/);
+  if(m) return m[1];
+  /* Handle full date like 11/3/2025 */
+  const m2 = k.match(/^(\d{1,2})\/(\d{1,2})\/\d{4}$/);
+  if(m2) return m2[1]+'/'+m2[2];
+  return k;
+}
+
+/* ════════════════════════════════════════════════════
+   MERGE  —  Roster is the MASTER list.
+   Only resources present in the Roster file appear.
+   Flex data is joined by normalized name match.
+   NOTE: tryMerge() only builds data arrays — it does NOT render the dashboard.
+         Call generateDashboard() to render.
+════════════════════════════════════════════════════ */
+function tryMerge(){
+  if(!rosterLoaded && !flexLoaded) return;
+
+  const rMap  = window._rosterMap  || {};
+  const rKeys = window._rosterKeys || Object.keys(rMap);
+  const fMap  = window._flexMap    || {};
+
+  /* Build flex lookup keyed by normalized name */
+  const flexLookup = {};
+  Object.values(fMap).forEach(fl => {
+    flexLookup[normName(fl.name)] = fl;
+  });
+
+  R = [];
+
+  if(rosterLoaded){
+    rKeys.forEach(rKey => {
+      const ro = rMap[rKey];
+      if(!ro) return;
+
+      /* Match flex entry by normalized name */
+      let fl = flexLookup[normName(ro.name)];
+      if(!fl){
+        /* Partial fallback: match first + last token */
+        const roW = normName(ro.name).split(' ');
+        fl = Object.values(fMap).find(f => {
+          const fW = normName(f.name).split(' ');
+          return roW.length>=2 && fW.length>=2 &&
+                 roW[roW.length-1]===fW[fW.length-1] &&
+                 roW[0]===fW[0];
+        });
+      }
+
+      const maxW = WEEKS.length;
+      const wf = fl ? (fl.wf||[]).concat(Array(Math.max(0,maxW-(fl.wf||[]).length)).fill(0)) : Array(maxW).fill(0);
+      const wa = fl ? (fl.wa||[]).concat(Array(Math.max(0,maxW-(fl.wa||[]).length)).fill(0)) : Array(maxW).fill(0);
+
+      R.push({
+        name:      ro.name,
+        serialId:  ro.serialId  || '',
+        loadingId: ro.loadingId || '',
+        pge:       ro.pge   || 'N/A',
+        email:     ro.email || '',
+        shore:     ro.shore || 'ONSHORE',
+        scrum:     ro.scrum || '',
+        role:      ro.role  || '',
+        active:    ro.active || 'YES',
+        sclass:    ro.sclass || (fl ? fl.sclass||'' : ''),
+        rosterHrs: ro.rosterHrs || Array(MONTHS.length).fill(0),
+        flex:{
+          budget:   fl ? fl.flex.budget   : 0,
+          forecast: fl ? fl.flex.forecast : 0,
+          actual:   fl ? fl.flex.actual   : 0,
+          etc:      fl ? fl.flex.etc      : 0
+        },
+        wf, wa,
+        wbsSplit:  fl ? (fl.wbsSplit||[]) : [],
+        flexMatched: !!fl
+      });
+    });
+  } else {
+    /* Only flex loaded — show all flex resources */
+    Object.values(fMap).forEach(fl => {
+      const maxW = WEEKS.length;
+      R.push({
+        name: fl.name, serialId:'', loadingId:'',
+        pge:'N/A', email:'', shore:'ONSHORE', scrum:'', role:'', sclass:fl.sclass||'',
+        rosterHrs: Array(MONTHS.length).fill(0),
+        flex:{ budget:fl.flex.budget, forecast:fl.flex.forecast, actual:fl.flex.actual, etc:fl.flex.etc },
+        wf:(fl.wf||[]).slice(0,maxW), wa:(fl.wa||[]).slice(0,maxW), flexMatched:true
+      });
+    });
+  }
+
+  FD = [...R];
+  updateImportCounts();
+  _updateGenerateBtn();
+}
+
+/* ── Generate Dashboard button logic ── */
+function _updateGenerateBtn(){
+  const btn = document.getElementById('generateBtn');
+  const st  = document.getElementById('generateStatus');
+  if(!btn||!st) return;
+
+  const hasRoster = rosterLoaded;
+  const hasFlex   = flexLoaded;
+  const ready     = hasRoster && hasFlex;
+  const rosterOnly= hasRoster && !hasFlex;
+  const flexOnly  = !hasRoster && hasFlex;
+
+  btn.disabled = !ready;
+
+  if(ready){
+    st.textContent = `✅ ${R.length} resources ready\nClick to generate`;
+    st.className   = 'generate-status ready';
+    st.innerHTML   = `✅ <strong>${R.length} resources</strong> ready — click to generate`;
+  } else if(rosterOnly){
+    st.innerHTML   = '⏳ Add at least one<br>Flex ETC file';
+    st.className   = 'generate-status partial';
+  } else if(flexOnly){
+    st.innerHTML   = '⏳ Add SCM Roster<br>file to continue';
+    st.className   = 'generate-status partial';
+  } else {
+    st.innerHTML   = 'Upload both files<br>to enable';
+    st.className   = 'generate-status';
+  }
+}
+
+function generateDashboard(){
+  if(!rosterLoaded || !flexLoaded){
+    alert('Please load both the SCM Roster file and at least one Flex ETC file before generating.');
+    return;
+  }
+  showLoading('Building dashboard…');
+  setTimeout(()=>{
+    FD = [...R];
+    initFilters();
+    updateBadges();
+    renderAll();
+    document.getElementById('emptyState').style.display  = 'none';
+    document.getElementById('dashContent').style.display = 'block';
+    document.getElementById('footerBar').style.display   = 'block';
+    document.getElementById('filterBar').style.display   = 'flex';
+    const now = new Date().toLocaleString('en-US',{month:'numeric',day:'numeric',year:'numeric',
+      hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+    const ts=document.getElementById('ts'); if(ts) ts.textContent=now;
+    const ts2=document.getElementById('ts2'); if(ts2) ts2.textContent=now;
+    hideLoading();
+  }, 80);
+}
+
+/* ════════════════════════════════════════════════════
+   BADGES & FILTERS
+════════════════════════════════════════════════════ */
+function updateBadges(){
+  document.getElementById('badgeRes').textContent = `👥 ${R.length} Resources`;
+
+  /* Date range from roster months */
+  if(MONTHS.length>0){
+    document.getElementById('badgeDateRange').textContent = `📅 ${MONTHS[0]} – ${MONTHS[MONTHS.length-1]}`;
+  } else if(WEEKS.length>0){
+    document.getElementById('badgeDateRange').textContent = `📅 Wk ${WEEKS[0]} – ${WEEKS[WEEKS.length-1]}`;
+  }
+
+  const shores = [...new Set(R.map(r=>r.shore))];
+  document.getElementById('badgeShore').textContent = shores.includes('ONSHORE')&&shores.includes('OFFSHORE')
+    ? '🌐 ON + OFF Shore' : '🌐 '+(shores[0]||'');
+}
+
+function initFilters(){
+  const sel = id => document.getElementById(id);
+
+  /* Shore */
+  const shores = [...new Set(R.map(r=>r.shore))].sort();
+  sel('fShore').innerHTML='<option value="all">All</option>';
+  shores.forEach(s=>{const o=new Option(s,s);sel('fShore').add(o);});
+
+  /* Scrum */
+  const scrums = [...new Set(R.map(r=>r.scrum).filter(Boolean))].sort();
+  sel('fScrum').innerHTML='<option value="all">All Scrums</option>';
+  scrums.forEach(s=>{const o=new Option(s,s);sel('fScrum').add(o);});
+
+  /* Class */
+  const classes = [...new Set(R.map(r=>r.sclass).filter(Boolean))].sort();
+  sel('fClass').innerHTML='<option value="all">All Classes</option>';
+  classes.forEach(c=>{const o=new Option(c,c);sel('fClass').add(o);});
+
+  /* Month — always from SCM Roster (authoritative full range).
+     Each option shows the roster month; a ✓ suffix indicates flex data covers it. */
+  const MON3={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  function mlParse(s){
+    const m=String(s).match(/^([a-z]{3})-(\d{2})$/i);
+    if(!m)return null;
+    const mo=MON3[m[1].toLowerCase()];
+    if(mo===undefined)return null;
+    const yr=+m[2]+(+m[2]<50?2000:1900);
+    return {year:yr,month0:mo};
+  }
+  function mKey(year,month0){return year+'-'+String(month0+1).padStart(2,'0');}
+
+  /* Build set of month keys covered by Flex weeks */
+  const flexMonthKeys = new Set();
+  (window._weekDates||[]).forEach(d=>{
+    const m=String(d).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m) flexMonthKeys.add(m[3]+'-'+String(+m[1]).padStart(2,'0'));
+  });
+
+  sel('fMonth').innerHTML='<option value="all">All Months (Roster)</option>';
+  MONTHS.forEach(ml=>{
+    const p=mlParse(ml);
+    const covered = p ? flexMonthKeys.has(mKey(p.year,p.month0)) : false;
+    const label   = covered ? `${ml} ✓` : `${ml}`;
+    const o=new Option(label, ml);
+    if(covered) o.style.fontWeight='700';
+    sel('fMonth').add(o);
+  });
+
+  /* Monthly chart title */
+  if(MONTHS.length>0){
+    document.getElementById('monthlyChartTitle').textContent =
+      `📆 Monthly Planned Hours by Resource (${MONTHS[0]} → ${MONTHS[MONTHS.length-1]})`;
+  }
+}
+
+function applyFilters(){
+  const fs  = document.getElementById('fShore').value;
+  const fc  = document.getElementById('fScrum').value;
+  const fl  = document.getElementById('fClass').value;
+  const fst = document.getElementById('fStatus').value;
+
+  const fa  = document.getElementById('fActive').value;
+  FD = R.filter(r=>{
+    const v = r.flex.actual - r.flex.forecast;
+    if(fs!=='all' && r.shore!==fs) return false;
+    if(fc!=='all' && r.scrum!==fc) return false;
+    if(fl!=='all' && r.sclass!==fl) return false;
+    if(fa!=='all' && (r.active||'YES')!==fa) return false;
+    if(fst==='over'  && v<=4)  return false;
+    if(fst==='under' && v>=-4) return false;
+    if(fst==='ok'    && Math.abs(v)>4) return false;
+    return true;
+  });
+  renderAll();
+}
+
+function resetFilters(){
+  ['fShore','fScrum','fClass','fStatus','fMonth'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='all';
+  });
+  const fAel=document.getElementById('fActive');
+  if(fAel) fAel.value='YES';
+  FD = [...R];
+  if(R.length>0) renderAll();
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER ALL
+════════════════════════════════════════════════════ */
+function renderAll(){
+  updateKPIs();
+  drawWeekly();
+  drawShore();
+  drawScrum();
+  drawClass();
+  drawVarTrend();
+  drawResVar();
+  drawMonthly();
+  buildHeatmap();
+  buildRosterTable();
+  buildDetailTable();
+}
+
+/* ── KPIs ── */
+function updateKPIs(){
+  const selMonth = document.getElementById('fMonth').value; // e.g. "Mar-26" or "all"
+  const mi = MONTHS.indexOf(selMonth); // index into rosterHrs array (-1 = all)
+
+  /* Build set of week indices that fall in the selected roster month */
+  let weekIdxSet = null; // null = all weeks
+  if(mi >= 0 && selMonth !== 'all'){
+    weekIdxSet = _getWeekIndicesForMonth(selMonth);
+  }
+
+  let roster=0,fcast=0,act=0,etc=0;
+  FD.forEach(r=>{
+    /* Roster hours: exact month column if selected, else sum all */
+    roster += mi>=0 ? (r.rosterHrs[mi]||0) : sm(r.rosterHrs);
+
+    if(weekIdxSet !== null){
+      /* Distribute Flex forecast/actual via weekly arrays scoped to this month */
+      const wActual   = weekIdxSet.reduce((s,wi)=>s+(r.wa[wi]||0),0);
+      const wForecast = weekIdxSet.reduce((s,wi)=>s+(r.wf[wi]||0),0);
+      fcast += wForecast;
+      act   += wActual;
+      /* ETC not available weekly — scale proportionally from total */
+      const totalFcast = r.flex.forecast || 0;
+      etc += totalFcast>0 ? r.flex.etc*(wForecast/totalFcast) : 0;
+    } else {
+      fcast += r.flex.forecast;
+      act   += r.flex.actual;
+      etc   += r.flex.etc;
+    }
+  });
+
+  fcast = +fcast.toFixed(1);
+  act   = +act.toFixed(1);
+  etc   = +etc.toFixed(1);
+
+  const vari = +(act - fcast).toFixed(1);
+  const util = fcast>0 ? ((act/fcast)*100).toFixed(1) : 0;
+  let over=0,under=0,activeCount=0,inactiveCount=0;
+  FD.forEach(r=>{
+    let rv,ra;
+    if(weekIdxSet!==null){
+      ra=weekIdxSet.reduce((s,wi)=>s+(r.wa[wi]||0),0);
+      rv=weekIdxSet.reduce((s,wi)=>s+(r.wf[wi]||0),0);
+    } else { ra=r.flex.actual; rv=r.flex.forecast; }
+    const v=ra-rv;
+    if(v>4)over++; else if(v<-4)under++;
+    if((r.active||'YES')==='YES') activeCount++; else inactiveCount++;
+  });
+
+  set('kRoster',   f1(roster));
+  set('kForecast', f1(fcast));
+  set('kActual',   f1(act));
+  set('kETC',      f1(etc));
+  const ve = document.getElementById('kVar');
+  ve.textContent = (vari>=0?'+':'')+f1(vari);
+  ve.style.color = vc(vari);
+  set('kUtil',  util+'%');
+  set('kRes',   activeCount+(inactiveCount>0?' ('+inactiveCount+' inactive)':''));
+  set('kOU',    over+' / '+under);
+}
+
+/* Return array of global week indices whose dates fall in a given roster month label e.g. "Mar-26" */
+function _getWeekIndicesForMonth(monthLabel){
+  const MON3={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  const m=String(monthLabel).match(/^([a-z]{3})-(\d{2})$/i);
+  if(!m) return [];
+  const mo=MON3[m[1].toLowerCase()];
+  const yr=+m[2]+(+m[2]<50?2000:1900);
+  if(mo===undefined) return [];
+  const indices=[];
+  (window._weekDates||[]).forEach((d,wi)=>{
+    const dm=String(d).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(!dm)return;
+    if(+dm[3]===yr && +dm[1]-1===mo) indices.push(wi);
+  });
+  return indices;
+}
+function set(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
+
+/* ── Chart helper ── */
+function mkChart(id,cfg){
+  if(charts[id]) charts[id].destroy();
+  const el=document.getElementById(id);
+  if(!el) return;
+  charts[id] = new Chart(el.getContext('2d'), cfg);
+}
+const BASE = {
+  responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}}},
+  scales:{}
+};
+
+/* ── Weekly — current month + prior 3 months only ── */
+function getWeekMonthFilter(numMonthsBack){
+  /* Returns a Set of week indices whose dates fall within the window */
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth() - numMonthsBack, 1);
+  const endOf  = new Date(now.getFullYear(), now.getMonth() + 1, 0); // last day of current month
+  const dates  = window._weekDates || WEEKS;
+  const indices = new Set();
+  dates.forEach((d, wi) => {
+    const parsed = parseWeekDate(d);
+    if(parsed && parsed >= cutoff && parsed <= endOf) indices.add(wi);
+  });
+  return indices;
+}
+
+function parseWeekDate(s){
+  /* Parse "11/3/2025" or "11/3" (assumes current year if no year) */
+  s = String(s).trim();
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/);
+  if(!m) return null;
+  const yr = m[3] ? +m[3] : new Date().getFullYear();
+  return new Date(yr, +m[1]-1, +m[2]);
+}
+
+function drawWeekly(){
+  if(!WEEKS.length) return;
+  const allowed = getWeekMonthFilter(3); // current month + prior 3
+  const filtIdx = WEEKS.map((_,i)=>i).filter(i => allowed.size===0 || allowed.has(i));
+  const labels  = filtIdx.map(i=>'Wk '+WEEKS[i]);
+  const fData   = filtIdx.map(wi=>{ let s=0; FD.forEach(r=>s+=r.wf[wi]||0); return +s.toFixed(1); });
+  const aData   = filtIdx.map(wi=>{ let s=0; FD.forEach(r=>s+=r.wa[wi]||0); return +s.toFixed(1); });
+  const vData   = filtIdx.map((_,ii)=>+(aData[ii]-fData[ii]).toFixed(1));
+  mkChart('cWeekly',{
+    data:{
+      labels,
+      datasets:[
+        {type:'bar',label:'Forecast Hrs',data:fData,backgroundColor:'rgba(0,48,135,0.75)',borderRadius:3,yAxisID:'y'},
+        {type:'bar',label:'Actual Hrs',data:aData,backgroundColor:'rgba(224,48,30,0.8)',borderRadius:3,yAxisID:'y'},
+        {type:'line',label:'Variance',data:vData,borderColor:C.orange,backgroundColor:'transparent',
+          pointRadius:4,pointBackgroundColor:vData.map(v=>v>0?C.red:v<0?C.blue:C.green),
+          tension:.3,yAxisID:'y2',borderWidth:2}
+      ]
+    },
+    options:{...BASE,
+      scales:{
+        y:{beginAtZero:true,title:{display:true,text:'Hours'},grid:{color:'#f0f0f0'}},
+        y2:{beginAtZero:false,position:'right',title:{display:true,text:'Variance'},grid:{display:false}}
+      }
+    }
+  });
+}
+
+/* ── Shore ── */
+function drawShore(){
+  const on  = FD.filter(r=>r.shore==='ONSHORE').reduce((s,r)=>s+sm(r.rosterHrs),0);
+  const off = FD.filter(r=>r.shore==='OFFSHORE').reduce((s,r)=>s+sm(r.rosterHrs),0);
+  mkChart('cShore',{
+    type:'doughnut',
+    data:{labels:['ONSHORE','OFFSHORE'],datasets:[{data:[on,off],
+      backgroundColor:[C.blue,C.red],borderWidth:3,hoverOffset:10}]},
+    options:{...BASE,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:c=>`${c.label}: ${f1(c.raw)} hrs`}}
+      }
+    }
+  });
+}
+
+/* ── Scrum ── */
+function drawScrum(){
+  const map={};
+  FD.forEach(r=>{ if(r.scrum) map[r.scrum]=(map[r.scrum]||0)+r.flex.forecast; });
+  const labs=Object.keys(map).sort((a,b)=>map[b]-map[a]);
+  mkChart('cScrum',{
+    type:'bar',
+    data:{labels:labs,datasets:[{label:'Forecast Hrs',data:labs.map(k=>map[k]),
+      backgroundColor:PALETTE.slice(0,labs.length),borderRadius:4}]},
+    options:{...BASE,indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'#f0f0f0'}}}
+    }
+  });
+}
+
+/* ── Staff Class ── */
+function drawClass(){
+  const map={};
+  FD.forEach(r=>{ if(r.sclass) map[r.sclass]=(map[r.sclass]||0)+r.flex.forecast; });
+  mkChart('cClass',{
+    type:'pie',
+    data:{labels:Object.keys(map),datasets:[{data:Object.values(map),
+      backgroundColor:PALETTE.slice(0,Object.keys(map).length)}]},
+    options:{...BASE,plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}
+  });
+}
+
+/* ── Weekly Variance Trend — current month + prior month only ── */
+function drawVarTrend(){
+  if(!WEEKS.length) return;
+  const allowed = getWeekMonthFilter(1); // current month + 1 prior month
+  const filtIdx = WEEKS.map((_,i)=>i).filter(i => allowed.size===0 || allowed.has(i));
+  const labels  = filtIdx.map(i=>'Wk '+WEEKS[i]);
+  const vd = filtIdx.map(wi=>{
+    let f=0,a=0;
+    FD.forEach(r=>{f+=r.wf[wi]||0;a+=r.wa[wi]||0;});
+    return +(a-f).toFixed(1);
+  });
+  const now = new Date();
+  const subtitle = `${now.toLocaleString('default',{month:'short'})} ${now.getFullYear()} + prior month`;
+  mkChart('cVarTrend',{
+    type:'line',
+    data:{labels,datasets:[{
+      label:'Variance (Actual − Forecast)',data:vd,borderColor:C.red,
+      backgroundColor:'rgba(224,48,30,0.08)',fill:true,tension:.3,borderWidth:2,
+      pointRadius:5,
+      pointBackgroundColor:vd.map(v=>v>0?C.red:v<0?C.blue:C.green),
+      pointBorderColor:'#fff',pointBorderWidth:1.5
+    }]},
+    options:{...BASE,
+      plugins:{
+        ...BASE.plugins,
+        title:{display:true,text:subtitle,font:{size:9},color:'#999',padding:{bottom:4}},
+        tooltip:{callbacks:{
+          label: ctx => `Variance: ${ctx.raw>0?'+':''}${ctx.raw} hrs`,
+          afterLabel: ctx => ctx.raw>0?'⚠ Over-burn this week':ctx.raw<0?'✓ Under-burn this week':'✓ On target'
+        }}
+      },
+      scales:{y:{title:{display:true,text:'Variance Hrs'},grid:{color:'#f0f0f0'},
+        ticks:{callback:v=>(v>0?'+':'')+v}}}
+    }
+  });
+}
+
+/* ── Resource Variance ── */
+function drawResVar(){
+  const sorted=[...FD].sort((a,b)=>(a.flex.actual-a.flex.forecast)-(b.flex.actual-b.flex.forecast));
+  const vals=sorted.map(r=>+(r.flex.actual-r.flex.forecast).toFixed(1));
+  mkChart('cResVar',{
+    type:'bar',
+    data:{labels:sorted.map(r=>r.name),datasets:[{
+      label:'Variance (Actual – Forecast)',data:vals,borderRadius:4,
+      backgroundColor:vals.map(v=>v>4?'rgba(224,48,30,0.8)':v<-4?'rgba(0,48,135,0.8)':'rgba(46,125,50,0.8)')
+    }]},
+    options:{...BASE,indexAxis:'y',
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`Variance: ${c.raw>0?'+':''}${c.raw} hrs`}}},
+      scales:{x:{title:{display:true,text:'Hours'},grid:{color:'#f0f0f0'}}}
+    }
+  });
+}
+
+/* ── Monthly Stacked ── */
+function drawMonthly(){
+  if(!MONTHS.length) return;
+  const onData  = MONTHS.map((_,mi)=>FD.filter(r=>r.shore==='ONSHORE').reduce((s,r)=>s+(r.rosterHrs[mi]||0),0));
+  const offData = MONTHS.map((_,mi)=>FD.filter(r=>r.shore==='OFFSHORE').reduce((s,r)=>s+(r.rosterHrs[mi]||0),0));
+  mkChart('cMonthly',{
+    type:'bar',
+    data:{labels:MONTHS,datasets:[
+      {label:'ONSHORE', data:onData, backgroundColor:'rgba(0,48,135,0.8)', borderRadius:3},
+      {label:'OFFSHORE',data:offData,backgroundColor:'rgba(224,48,30,0.8)',borderRadius:3}
+    ]},
+    options:{...BASE,
+      scales:{
+        x:{stacked:true},
+        y:{stacked:true,beginAtZero:true,title:{display:true,text:'Planned Hours'},grid:{color:'#f0f0f0'}}
+      }
+    }
+  });
+}
+
+/* ── Heatmap ── */
+function buildHeatmap(){
+  const t = document.getElementById('heatTable');
+  if(!WEEKS.length && !MONTHS.length){
+    t.innerHTML='<tr><td style="padding:20px;color:#aaa">No data available. Import source files to generate heatmap.</td></tr>';
+    return;
+  }
+
+  /* ── Month / week mapping (same as before) ── */
+  const weekDates = window._weekDates || [];
+  const MON3 = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+
+  function wdParse(s){
+    const m=String(s).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m) return {year:+m[3],month0:+m[1]-1};
+    const m2=String(s).match(/^(\d{1,2})\/(\d{1,2})$/);
+    if(m2) return {year:new Date().getFullYear(),month0:+m2[1]-1};
+    return null;
+  }
+  function mlParse(s){
+    const m=String(s).match(/^([a-z]{3})-(\d{2})$/i);
+    if(!m) return null;
+    const mo=MON3[m[1].toLowerCase()];
+    if(mo===undefined) return null;
+    return {year:+m[2]+(+m[2]<50?2000:1900), month0:mo};
+  }
+  function mKey(year,month0){ return year+'-'+String(month0+1).padStart(2,'0'); }
+  const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function mLabel(k){ const[yr,mo]=k.split('-').map(Number); return MONTH_NAMES[mo-1]+'-'+String(yr).slice(2); }
+
+  const weekMonthMap={};
+  weekDates.forEach((d,wi)=>{ const p=wdParse(d); if(p) weekMonthMap[wi]=p; });
+
+  const monthKeySet=new Set();
+  Object.values(weekMonthMap).forEach(p=>monthKeySet.add(mKey(p.year,p.month0)));
+  MONTHS.forEach(ml=>{ const p=mlParse(ml); if(p) monthKeySet.add(mKey(p.year,p.month0)); });
+
+  const allMonthKeys=[...monthKeySet].sort();
+
+  const monthWeekIndices={};
+  allMonthKeys.forEach(k=>{monthWeekIndices[k]=[];});
+  Object.entries(weekMonthMap).forEach(([wi,p])=>{
+    const k=mKey(p.year,p.month0);
+    if(monthWeekIndices[k]) monthWeekIndices[k].push(+wi);
+  });
+
+  const rosterMonthIdx={};
+  MONTHS.forEach((ml,mi)=>{ const p=mlParse(ml); if(p) rosterMonthIdx[mKey(p.year,p.month0)]=mi; });
+
+  /* ── Header (frozen cols use fc- classes) ── */
+  let hr1=`<tr>
+    <th class="fc-expand" rowspan="2"></th>
+    <th class="fc-name"   rowspan="2">Resource</th>
+    <th class="fc-shore"  rowspan="2">Shore</th>
+    <th class="fc-active" rowspan="2">Active</th>`;
+  let hr2=`<tr>`;
+
+  allMonthKeys.forEach(k=>{
+    const wis=monthWeekIndices[k];
+    const span=wis.length+3;
+    hr1+=`<th class="month-grp month-sep" colspan="${span}">${mLabel(k)}</th>`;
+    wis.forEach(wi=>{
+      hr2+=`<th class="sub-col month-sep" style="min-width:38px">Wk<br>${WEEKS[wi]||''}</th>`;
+    });
+    hr2+=`<th class="sub-col" style="min-width:52px;background:#1a237e">Roster<br>Planned</th>`;
+    hr2+=`<th class="sub-col" style="min-width:52px;background:#4a148c">Flex<br>Actual</th>`;
+    hr2+=`<th class="sub-col" style="min-width:52px;background:#3e2723">Variance<br>(Act−Plan)</th>`;
+  });
+  hr1+=`<th class="total-hdr" rowspan="2" style="min-width:60px">Flex Total<br>(All Weeks)</th></tr>`;
+  hr2+=`</tr>`;
+
+  /* ── Helper: build month cells ──
+     wa[]       = weekly actuals (aggregated across all WBS files for summary row,
+                  or single-WBS for sub-rows)
+     rosterHrs[]= monthly planned from roster ([] for sub-rows)
+     isSubRow   = true for WBS sub-rows (smaller font, no roster column)
+
+     Zero-suppression rules:
+       • Weekly cell  → blank if wa[wi] === 0 (no hours charged that week)
+       • Flex Actual  → blank if sum of weekly actuals for month === 0
+       • Roster       → blank if rosterVal === 0
+       • Variance     → blank if both flexActual and rosterVal are 0
+  ── */
+  function buildMonthCells(wa, rosterHrs, isSubRow){
+    let cells='';
+    allMonthKeys.forEach(k=>{
+      const wis=monthWeekIndices[k];
+      const mi=rosterMonthIdx[k];
+      wis.forEach((wi,pos)=>{
+        const v=+(wa[wi]||0);
+        const sepClass=pos===0?' month-sep':'';
+        const display = v>0 ? v : '';
+        if(isSubRow){
+          /* Sub-rows always have a light background — use dark text regardless of value.
+             Slightly tint the background to match the heat scale but keep it pale. */
+          const subBg = v>0 ? (v>=40?'#c8e6c9':v>=32?'#fff8e1':v>=20?'#fff3e0':'#fafafa') : '#f7f9fc';
+          const subTxt = v>0 ? (v>=40?'#1b5e20':v>=32?'#e65100':v>=20?'#bf360c':'#444') : '#bbb';
+          cells+=`<td class="${sepClass}" style="background:${subBg};color:${subTxt};font-size:.63rem;font-weight:700">${display}</td>`;
+        } else {
+          const bg = v>0 ? `background:${hc(v)};color:${htxt(v)}` : 'background:#f9f9f9;color:#ccc';
+          cells+=`<td class="${sepClass}" style="${bg}">${display}</td>`;
+        }
+      });
+      const rosterVal = (mi!==undefined) ? (rosterHrs[mi]||0) : 0;
+      /* flexActual = sum of weekly actuals in this month from wa[] */
+      const flexActual = +wis.reduce((s,wi)=>s+(wa[wi]||0),0).toFixed(1);
+      const variance   = +(flexActual - rosterVal).toFixed(1);
+      const varClass   = variance>0?'var-over':variance<0?'var-under':'var-zero';
+      const varSign    = variance>0?'+':'';
+      /* Blank cells when no data */
+      cells+=`<td class="roster-cell">${rosterVal>0?rosterVal:''}</td>`;
+      cells+=`<td class="flex-cell">${flexActual>0?flexActual:''}</td>`;
+      cells+=`<td class="${varClass}">${(flexActual>0||rosterVal>0)?varSign+f1(variance):''}</td>`;
+    });
+    return cells;
+  }
+
+  /* ── Data rows ── */
+  let rows='';
+  FD.forEach((r,ri)=>{
+    const isActive=(r.active||'YES')==='YES';
+    const rowStyle=isActive?'':'opacity:.55;background:#fafafa;';
+    const inactiveLbl=isActive?'':' <span style="color:#c62828;font-size:.58rem">(Inactive)</span>';
+    const splits=r.wbsSplit||[];
+    const hasMulti=splits.length>1;
+    const expandId=`hm-exp-${ri}`;
+
+    /* Resource summary row — wa[] is already summed across all WBS files */
+    const resourceCells=buildMonthCells(r.wa, r.rosterHrs, false);
+    /* Grand total = sum of all weekly actuals; blank if zero */
+    const grandTotal=+sm(r.wa).toFixed(1);
+
+    rows+=`<tr class="resource-row${hasMulti?' has-multi':''}" id="${expandId}-row" style="${rowStyle}">
+      <td class="fc-expand expand-col" id="${expandId}-btn" ${hasMulti?`onclick="hmToggle(${ri})" title="Expand WBS breakdown"`:''} style="${hasMulti?'cursor:pointer':'cursor:default;color:#ddd'}">${hasMulti?'▶':'—'}</td>
+      <td class="fc-name">${r.name}${inactiveLbl}</td>
+      <td class="fc-shore"><span class="tag ${r.shore==='ONSHORE'?'ton':'toff'}">${r.shore==='ONSHORE'?'ON':'OFF'}</span></td>
+      <td class="fc-active"><span class="tag ${isActive?'tok':'tover'}" style="font-size:.6rem">${isActive?'YES':'NO'}</span></td>
+      ${resourceCells}
+      <td class="total-cell">${grandTotal>0?grandTotal:''}</td>
+    </tr>`;
+
+    /* WBS sub-rows — one per flex file; wa[] is that file's contribution only */
+    splits.forEach((sp,si)=>{
+      const subCells=buildMonthCells(sp.wa, [], true);
+      const subTotal=+sm(sp.wa).toFixed(1);
+      rows+=`<tr class="wbs-sub" id="${expandId}-sub-${si}">
+        <td class="fc-expand" style="border-right:2px solid #e0301e"></td>
+        <td class="fc-name wbs-label" title="${sp.fname}">
+          <span style="color:#999;font-size:.6rem;font-weight:400;margin-right:4px">└</span>${sp.wbsCode}
+        </td>
+        <td class="fc-shore"></td>
+        <td class="fc-active"></td>
+        ${subCells}
+        <td class="total-cell" style="background:#1a237e;font-size:.63rem">${subTotal>0?subTotal:''}</td>
+      </tr>`;
+    });
+  });
+
+  /* ── Footer (totals at resource level only — no double-counting) ── */
+  let footerCells='';
+  allMonthKeys.forEach(k=>{
+    const wis=monthWeekIndices[k];
+    const mi=rosterMonthIdx[k];
+    wis.forEach((wi,pos)=>{
+      const total=+FD.reduce((s,r)=>s+(r.wa[wi]||0),0).toFixed(1);
+      const sepClass=pos===0?' month-sep':'';
+      footerCells+=`<td class="${sepClass}" style="background:#263238;color:#eceff1;font-weight:800;font-size:.65rem">${total>0?total:''}</td>`;
+    });
+    const rTotal=mi!==undefined?+FD.reduce((s,r)=>s+(r.rosterHrs[mi]||0),0).toFixed(1):0;
+    const fTotal=+FD.reduce((s,r)=>wis.reduce((ss,wi)=>ss+(r.wa[wi]||0),0),0).toFixed(1);
+    const vTotal=+(fTotal-rTotal).toFixed(1);
+    const vCls=vTotal>0?'var-over':vTotal<0?'var-under':'var-zero';
+    const vSign=vTotal>0?'+':'';
+    footerCells+=`<td style="background:#0d47a1;color:#fff;font-weight:800;font-size:.65rem">${rTotal>0?rTotal:''}</td>`;
+    footerCells+=`<td style="background:#4a148c;color:#fff;font-weight:800;font-size:.65rem">${fTotal>0?fTotal:''}</td>`;
+    footerCells+=`<td class="${vCls}" style="font-size:.65rem;font-weight:800">${(fTotal>0||rTotal>0)?vSign+f1(vTotal):''}</td>`;
+  });
+
+  const grandFlexTotal=+FD.reduce((s,r)=>s+sm(r.wa),0).toFixed(1);
+  const footerRow=`<tr class="heat-footer" style="position:sticky;bottom:0;z-index:2;">
+    <td class="fc-expand" style="background:#1b1b1b"></td>
+    <td class="fc-name" style="background:#1b1b1b;color:#ffd700;font-weight:800;font-size:.68rem">TOTAL</td>
+    <td class="fc-shore" style="background:#1b1b1b"></td>
+    <td class="fc-active" style="background:#1b1b1b"></td>
+    ${footerCells}
+    <td class="total-cell">${grandFlexTotal>0?grandFlexTotal:''}</td>
+  </tr>`;
+
+  t.innerHTML=`<thead>${hr1}${hr2}</thead><tbody>${rows}${footerRow}</tbody>`;
+}
+
+/* Toggle expand/collapse for a resource's WBS sub-rows */
+function hmToggle(ri){
+  const btn=document.getElementById(`hm-exp-${ri}-btn`);
+  const subs=document.querySelectorAll(`[id^="hm-exp-${ri}-sub-"]`);
+  if(!subs.length) return;
+  const isOpen=subs[0].classList.contains('expanded');
+  subs.forEach(s=>s.classList.toggle('expanded',!isOpen));
+  if(btn){
+    btn.textContent=isOpen?'▶':'▼';
+    btn.title=isOpen?'Expand WBS breakdown':'Collapse WBS breakdown';
+    btn.style.color=isOpen?'#1565c0':'#e0301e';
+  }
+}
+
+/* ── Roster Table ── */
+function buildRosterTable(){
+  const hd=document.getElementById('rosterHead');
+  const bd=document.getElementById('rosterBody');
+  let hh=`<th>#</th><th>Name</th><th>PGE ID</th><th>Shore</th><th>Active</th><th>Scrum</th><th>Role</th>`;
+  MONTHS.forEach(m=>hh+=`<th>${m}</th>`);
+  hh+=`<th>Total</th>`;
+  hd.innerHTML=hh;
+  let bh='';
+  FD.forEach((r,i)=>{
+    const tot=sm(r.rosterHrs);
+    const isActiveR=(r.active||'YES')==='YES';
+    bh+=`<tr style="${isActiveR?'':'opacity:.6;'}"><td>${i+1}</td><td><strong>${r.name}</strong></td>
+      <td style="font-size:.68rem;color:#888">${r.pge}</td>
+      <td><span class="tag ${r.shore==='ONSHORE'?'ton':'toff'}">${r.shore}</span></td>
+      <td style="text-align:center"><span class="tag ${isActiveR?'tok':'tover'}">${isActiveR?'YES':'NO'}</span></td>
+      <td style="font-size:.68rem">${r.scrum}</td>
+      <td style="font-size:.67rem">${r.role}</td>`;
+    r.rosterHrs.forEach(v=>{
+      const bg=v>=176?'#e8f5e9':v>=160?'#fff9c4':'#fff3e0';
+      bh+=`<td style="background:${bg};font-weight:600;text-align:center">${v||''}</td>`;
+    });
+    bh+=`<td style="font-weight:800;color:#003087;text-align:center">${f1(tot)}</td></tr>`;
+  });
+  bd.innerHTML=bh;
+}
+
+/* ── Detail Table ── */
+function buildDetailTable(){
+  const bd=document.getElementById('detailBody');
+  let h='';
+  FD.forEach((r,i)=>{
+    const v    = +(r.flex.actual-r.flex.forecast).toFixed(1);
+    const u    = r.flex.forecast>0?((r.flex.actual/r.flex.forecast)*100).toFixed(1):0;
+    const stat = v>4  ? `<span class="tag tover">Over</span>`
+               : v<-4 ? `<span class="tag tunder">Under</span>`
+               : `<span class="tag tok">On Track</span>`;
+    h+=`<tr>
+      <td>${i+1}</td>
+      <td><strong>${r.name}</strong></td>
+      <td style="font-size:.66rem;color:#888">${r.email}</td>
+      <td style="font-size:.68rem;color:#666">${r.pge}</td>
+      <td style="font-size:.68rem">${r.scrum}</td>
+      <td style="font-size:.67rem">${r.role}</td>
+      <td><span class="tag ${r.shore==='ONSHORE'?'ton':'toff'}">${r.shore}</span></td>
+      <td style="text-align:center"><span class="tag ${(r.active||'YES')==='YES'?'tok':'tover'}">${r.active||'YES'}</span></td>
+      <td style="font-size:.68rem">${r.sclass}</td>
+      <td style="font-weight:700;color:#003087">${f1(sm(r.rosterHrs))}</td>
+      <td style="font-weight:700;color:#eb8c00">${f1(r.flex.forecast)}</td>
+      <td style="font-weight:700;color:#e0301e">${f1(r.flex.actual)}</td>
+      <td>${f1(r.flex.etc)}</td>
+      <td style="font-weight:700;color:${vc(v)}">${v>0?'+':''}${f1(v)}</td>
+      <td style="font-weight:700">${u}%</td>
+      <td>${stat}</td>
+    </tr>`;
+  });
+  bd.innerHTML=h;
+  document.getElementById('rowCount').textContent = FD.length+' resources shown';
+}
+
+/* ── Search ── */
+function searchTable(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  document.querySelectorAll('#detailBody tr').forEach(row=>{
+    row.style.display=row.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+
+/* ── Sort ── */
+function srt(col){
+  if(lastCol===col) sortDir*=-1; else sortDir=1;
+  lastCol=col;
+  const keys=[null,'name','email','pge','scrum','role','shore','active','sclass',
+               '_roster','_forecast','_actual','_etc','_var','_util'];
+  if(col<1||col>14) return;
+  const k=keys[col];
+  FD.sort((a,b)=>{
+    let va,vb;
+    if(k==='_roster')  {va=sm(a.rosterHrs);vb=sm(b.rosterHrs);}
+    else if(k==='_forecast'){va=a.flex.forecast;vb=b.flex.forecast;}
+    else if(k==='_actual')  {va=a.flex.actual;  vb=b.flex.actual;}
+    else if(k==='_etc')     {va=a.flex.etc;     vb=b.flex.etc;}
+    else if(k==='_var')     {va=a.flex.actual-a.flex.forecast;vb=b.flex.actual-b.flex.forecast;}
+    else if(k==='_util')    {va=a.flex.forecast>0?a.flex.actual/a.flex.forecast:0;
+                              vb=b.flex.forecast>0?b.flex.actual/b.flex.forecast:0;}
+    else {va=a[k]||'';vb=b[k]||'';}
+    return va<vb?-sortDir:va>vb?sortDir:0;
+  });
+  buildDetailTable();
+}
+
+/* ── Tabs ── */
+function switchTab(panelId,el){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+  el.classList.add('active');
+  /* Auto-load LTA demo on first open if no data yet */
+  if(panelId==='tLTA' && !_ltaTabOpened && !_ltaData.length && R.length){
+    _ltaTabOpened=true;
+    loadLTADemo();
+  }
+}
+
+/* ── Status helper ── */
+function setStatus(id,msg,type){
+  const el=document.getElementById(id);
+  el.textContent=msg;
+  el.className='file-status'+(type?' '+type:'');
+}
+
+/* ── Import counts bar ── */
+function updateImportCounts(){
+  const rMap  = window._rosterMap || {};
+  const fMap  = window._flexMap   || {};
+  const rCnt  = Object.keys(rMap).length;
+  const fCnt  = Object.keys(fMap).length;
+  const fFiles= _flexFiles.length;
+  const mCnt  = MONTHS.length;
+  const wCnt  = WEEKS.length;
+  const mrgCnt= R.length;
+
+  const bar = document.getElementById('importCounts');
+  if(rCnt>0||fCnt>0) bar.style.display='flex'; else bar.style.display='none';
+
+  const s = id => document.getElementById(id);
+  s('cntRoster').textContent    = rCnt   || '—';
+  s('cntMonths').textContent    = mCnt   || '—';
+  s('cntFlexFiles').textContent = fFiles || '—';
+  s('cntFlex').textContent      = fCnt   || '—';
+  s('cntWeeks').textContent     = wCnt   || '—';
+  s('cntMerged').textContent    = mrgCnt || '—';
+
+  /* Enable Refresh only when dashboard has been generated */
+  const btn = document.getElementById('refreshBtn');
+  const dashVisible = document.getElementById('dashContent').style.display !== 'none';
+  btn.disabled = !dashVisible || !(rosterLoaded || flexLoaded);
+
+  _updateGenerateBtn();
+}
+
+/* ── Refresh Data — re-merge loaded files and redraw ── */
+function refreshData(){
+  if(!rosterLoaded && !flexLoaded){
+    alert('No files loaded yet. Please import source files first.');
+    return;
+  }
+  showLoading('Refreshing dashboard…');
+  setTimeout(()=>{
+    tryMerge();
+    FD = [...R];
+    initFilters();
+    updateBadges();
+    renderAll();
+    const now = new Date().toLocaleString('en-US',{month:'numeric',day:'numeric',year:'numeric',
+      hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+    const ts=document.getElementById('ts'); if(ts) ts.textContent=now;
+    const ts2=document.getElementById('ts2'); if(ts2) ts2.textContent=now;
+    hideLoading();
+  }, 80);
+}
+
+/* ── Confirm Reset Data ── */
+function confirmResetData(){
+  const hasData = rosterLoaded || flexLoaded;
+  const msg = hasData
+    ? 'This will clear ALL loaded data (both source files) and return to the import screen.\n\nAre you sure you want to reset?'
+    : 'Nothing is loaded yet.';
+  if(!hasData){ alert(msg); return; }
+  if(confirm(msg)) resetAllData();
+}
+
+/* ── Reset All Data — wipe everything, return to empty state ── */
+function resetAllData(){
+  /* Clear state */
+  R = []; FD = []; WEEKS = []; MONTHS = [];
+  rosterLoaded = false; flexLoaded = false;
+  sortDir = 1; lastCol = -1;
+  _flexFiles = [];
+  _metaWBSCodes = [];
+  _metaFlexIDs  = [];
+  _ltaData=[]; _ltaMonths=[]; _ltaIsDemo=false; _ltaTabOpened=false; _ltaSortCol=-1; _ltaSortDir=1;
+  _ltaCALocal.clear();
+  window._rosterMap  = null;
+  window._rosterKeys = null;
+  window._flexMap    = null;
+  window._weekDates  = null;
+  window._rosterFname= null;
+
+  /* Destroy all charts */
+  Object.values(charts).forEach(c=>{ try{ c.destroy(); }catch(e){} });
+  charts = {};
+
+  /* Reset file inputs */
+  const ri = document.getElementById('rosterFile');
+  const fi = document.getElementById('flexFileInput');
+  if(ri) ri.value = '';
+  if(fi) fi.value = '';
+
+  /* Reset roster button */
+  document.getElementById('rosterBtn').classList.remove('loaded');
+
+  /* Reset flex chip UI */
+  _renderFlexChips();
+
+  /* Reset status text */
+  setStatus('rosterStatus','No file loaded','');
+
+  /* Reset badges */
+  document.getElementById('badgeRes').textContent       = '👥 — Resources';
+  document.getElementById('badgeDateRange').textContent = '📅 —';
+  document.getElementById('badgeShore').textContent     = '🌐 ON + OFF Shore';
+  updateHeaderMeta(); // resets WBS/FlexID to '—'
+
+  /* Reset counts bar */
+  document.getElementById('importCounts').style.display = 'none';
+  ['cntRoster','cntMonths','cntFlexFiles','cntFlex','cntWeeks','cntMerged'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent='—';
+  });
+
+  /* Disable refresh button, reset generate button */
+  document.getElementById('refreshBtn').disabled = true;
+  _updateGenerateBtn();
+
+  /* Hide dashboard, show empty state */
+  document.getElementById('dashContent').style.display = 'none';
+  document.getElementById('filterBar').style.display   = 'none';
+  document.getElementById('footerBar').style.display   = 'none';
+  document.getElementById('emptyState').style.display  = 'block';
+
+  /* Clear table bodies */
+  ['detailBody','rosterBody','heatTable'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML='';
+  });
+  const rh = document.getElementById('rosterHead'); if(rh) rh.innerHTML='';
+
+  /* Reset KPI values */
+  ['kRoster','kForecast','kActual','kETC','kVar','kUtil','kRes','kOU'].forEach(id=>{
+    const el=document.getElementById(id); if(el){ el.textContent='—'; el.style.color=''; }
+  });
+
+  /* Reset filter dropdowns to base state */
+  ['fShore','fScrum','fClass','fStatus','fMonth'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML='<option value="all">—</option>';
+  });
+  const fa=document.getElementById('fActive'); if(fa){ fa.value='YES'; }
+}
+
+/* ════════════════════════════════════════════════════
+   LTA — LONG-TERM ASSIGNMENT TRACKER
+   Onshore resources only. Tracks CA (SF Bay Area) vs
+   Local office days per month. Threshold: ≥50% CA = LTA exceeded.
+   Warning: 40–49% CA = approaching LTA.
+════════════════════════════════════════════════════ */
+
+let _ltaData  = [];
+let _ltaMonths= [];   // fiscal-sorted month labels
+let _ltaIsDemo= false;
+let _ltaSortCol=-1, _ltaSortDir=1;
+let _ltaCALocal = new Set();
+
+/* ════════════════════════════════════════════════════
+   BUSINESS DAYS ENGINE
+   US Federal public holidays (observed) per year.
+   Weekends always excluded. Returns net working days.
+════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════
+   US FEDERAL PUBLIC HOLIDAYS — OBSERVED DATES
+   Source: 5 USC § 6103 — 11 statutory federal holidays.
+   Observed date rules:
+     • Holiday falls Saturday → observed Friday before
+     • Holiday falls Sunday  → observed Monday after
+   Verified against OPM schedule for 2024–2027.
+   Working days = Mon–Fri minus observed federal holidays.
+════════════════════════════════════════════════════ */
+const _US_HOLIDAYS={
+  /* 2024 — 251 working days */
+  2024:[
+    '2024-01-01', // New Year's Day                (Mon — actual)
+    '2024-01-15', // Martin Luther King Jr. Day     (Mon — 3rd Mon Jan)
+    '2024-02-19', // Washington's Birthday          (Mon — 3rd Mon Feb)
+    '2024-05-27', // Memorial Day                   (Mon — last Mon May)
+    '2024-06-19', // Juneteenth National Indep. Day (Wed — actual)
+    '2024-07-04', // Independence Day               (Thu — actual)
+    '2024-09-02', // Labor Day                      (Mon — 1st Mon Sep)
+    '2024-10-14', // Columbus Day                   (Mon — 2nd Mon Oct)
+    '2024-11-11', // Veterans Day                   (Mon — actual)
+    '2024-11-28', // Thanksgiving Day               (Thu — 4th Thu Nov)
+    '2024-12-25', // Christmas Day                  (Wed — actual)
+  ],
+  /* 2025 — 250 working days */
+  2025:[
+    '2025-01-01', // New Year's Day                (Wed — actual)
+    '2025-01-20', // Martin Luther King Jr. Day     (Mon — 3rd Mon Jan)
+    '2025-02-17', // Washington's Birthday          (Mon — 3rd Mon Feb)
+    '2025-05-26', // Memorial Day                   (Mon — last Mon May)
+    '2025-06-19', // Juneteenth National Indep. Day (Thu — actual)
+    '2025-07-04', // Independence Day               (Fri — actual)
+    '2025-09-01', // Labor Day                      (Mon — 1st Mon Sep)
+    '2025-10-13', // Columbus Day                   (Mon — 2nd Mon Oct)
+    '2025-11-11', // Veterans Day                   (Tue — actual)
+    '2025-11-27', // Thanksgiving Day               (Thu — 4th Thu Nov)
+    '2025-12-25', // Christmas Day                  (Thu — actual)
+  ],
+  /* 2026 — 250 working days */
+  2026:[
+    '2026-01-01', // New Year's Day                (Thu — actual)
+    '2026-01-19', // Martin Luther King Jr. Day     (Mon — 3rd Mon Jan)
+    '2026-02-16', // Washington's Birthday          (Mon — 3rd Mon Feb)
+    '2026-05-25', // Memorial Day                   (Mon — last Mon May)
+    '2026-06-19', // Juneteenth National Indep. Day (Fri — actual)
+    '2026-07-03', // Independence Day observed      (Fri — Jul 4 falls Sat → observed Fri Jul 3)
+    '2026-09-07', // Labor Day                      (Mon — 1st Mon Sep)
+    '2026-10-12', // Columbus Day                   (Mon — 2nd Mon Oct)
+    '2026-11-11', // Veterans Day                   (Wed — actual)
+    '2026-11-26', // Thanksgiving Day               (Thu — 4th Thu Nov)
+    '2026-12-25', // Christmas Day                  (Fri — actual)
+  ],
+  /* 2027 — 250 working days */
+  2027:[
+    '2027-01-01', // New Year's Day                (Fri — actual)
+    '2027-01-18', // Martin Luther King Jr. Day     (Mon — 3rd Mon Jan)
+    '2027-02-15', // Washington's Birthday          (Mon — 3rd Mon Feb)
+    '2027-05-31', // Memorial Day                   (Mon — last Mon May)
+    '2027-06-18', // Juneteenth observed            (Fri — Jun 19 falls Sat → observed Fri Jun 18)
+    '2027-07-05', // Independence Day observed      (Mon — Jul 4 falls Sun → observed Mon Jul 5)
+    '2027-09-06', // Labor Day                      (Mon — 1st Mon Sep)
+    '2027-10-11', // Columbus Day                   (Mon — 2nd Mon Oct)
+    '2027-11-11', // Veterans Day                   (Thu — actual)
+    '2027-11-25', // Thanksgiving Day               (Thu — 4th Thu Nov)
+    '2027-12-24', // Christmas observed             (Fri — Dec 25 falls Sat → observed Fri Dec 24)
+  ],
+};
+const _MON3={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+
+function _parseML(monthLabel){
+  const m=String(monthLabel).match(/^([a-z]{3})-(\d{2})$/i);
+  if(!m) return null;
+  const mo=_MON3[m[1].toLowerCase()];
+  const yr=+m[2]+(+m[2]<50?2000:1900);
+  return {mo,yr};
+}
+
+function _bizDays(monthLabel){
+  const p=_parseML(monthLabel);
+  if(!p) return 20;
+  const {mo,yr}=p;
+  const holidays=new Set((_US_HOLIDAYS[yr]||[]));
+  const days=new Date(yr,mo+1,0).getDate();
+  let count=0;
+  for(let d=1;d<=days;d++){
+    const dt=new Date(yr,mo,d);
+    if(dt.getDay()===0||dt.getDay()===6) continue;
+    const iso=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(holidays.has(iso)) continue;
+    count++;
+  }
+  return count||20;
+}
+
+/* Names for the 11 US Federal holidays in date order */
+const _HOL_NAMES={
+  '01-01':'New Year\'s Day','01-15':'MLK Day','01-18':'MLK Day','01-19':'MLK Day',
+  '01-20':'MLK Day','02-15':'Presidents\' Day','02-16':'Presidents\' Day',
+  '02-17':'Presidents\' Day','02-19':'Presidents\' Day','05-25':'Memorial Day',
+  '05-26':'Memorial Day','05-27':'Memorial Day','05-31':'Memorial Day',
+  '06-18':'Juneteenth (obs.)','06-19':'Juneteenth','07-03':'Independence Day (obs.)',
+  '07-04':'Independence Day','07-05':'Independence Day (obs.)','09-01':'Labor Day',
+  '09-02':'Labor Day','09-06':'Labor Day','09-07':'Labor Day','10-11':'Columbus Day',
+  '10-12':'Columbus Day','10-13':'Columbus Day','10-14':'Columbus Day',
+  '11-11':'Veterans Day','11-25':'Thanksgiving','11-26':'Thanksgiving',
+  '11-27':'Thanksgiving','11-28':'Thanksgiving','12-24':'Christmas (obs.)',
+  '12-25':'Christmas Day',
+};
+
+/* Build holiday tooltip HTML for a given month label e.g. "Jul-25" */
+function _monthHolidayTip(monthLabel){
+  const p=_parseML(monthLabel);
+  if(!p) return '';
+  const {mo,yr}=p;
+  const hols=(_US_HOLIDAYS[yr]||[]).filter(d=>{
+    const dm=String(d).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return dm && +dm[2]-1===mo;
+  });
+  if(!hols.length) return `<span class="lta-hol-tip">🎉 No federal holidays this month</span>`;
+  const lines=hols.map(d=>{
+    const md=d.slice(5); // MM-DD
+    const name=_HOL_NAMES[md]||'Federal Holiday';
+    const dt=new Date(d+'T12:00:00Z');
+    const dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getUTCDay()];
+    return `📅 ${d.slice(5).replace('-','/')} ${dow} — ${name}`;
+  }).join('<br>');
+  return `<span class="lta-hol-tip">🇺🇸 <strong>Federal Holidays</strong><br>${lines}</span>`;
+}
+const _FISCAL_OFF={jul:0,aug:1,sep:2,oct:3,nov:4,dec:5,jan:6,feb:7,mar:8,apr:9,may:10,jun:11};
+function _fiscalOrder(ml){
+  const p=_parseML(ml); if(!p) return 9999;
+  const fy=p.mo>=6?p.yr+1:p.yr;   // Jul (mo=6) starts next FY
+  const fmo=_FISCAL_OFF[String(ml).slice(0,3).toLowerCase()]??99;
+  return fy*100+fmo;
+}
+function _sortFiscal(months){return [...months].sort((a,b)=>_fiscalOrder(a)-_fiscalOrder(b));}
+
+/* ── Rolling 10-month cumulative ──
+   upToMonth: a month label or 'all'.
+   Sums the 10 most recent months up to and including upToMonth
+   (or all months if 'all'). Uses biz days as denominator. */
+function _ltaCompute(res, upToMonth){
+  const allSorted=_sortFiscal(res.months.map(m=>m.label));
+  let subset;
+  if(!upToMonth||upToMonth==='all'){
+    subset=allSorted;
+  } else {
+    const idx=allSorted.indexOf(upToMonth);
+    const start=Math.max(0,idx-9); // up to 10 months back
+    subset=allSorted.slice(start,idx+1);
+  }
+  let totalCA=0,totalLocal=0,totalBiz=0;
+  subset.forEach(ml=>{
+    const md=res.months.find(m=>m.label===ml);
+    if(!md) return;
+    totalCA   +=md.caDays;
+    totalLocal+=md.localDays;
+    totalBiz  +=_bizDays(ml);
+  });
+  const totalDays=totalCA+totalLocal;
+  const caPct=totalBiz>0?+((totalCA/totalBiz)*100).toFixed(1):null;
+  return {caDays:totalCA,localDays:totalLocal,totalDays,bizDays:totalBiz,caPct,months:subset};
+}
+
+/* Per-month individual stat against biz days */
+function _ltaMonthStat(res, ml){
+  const md=res.months.find(m=>m.label===ml);
+  const biz=_bizDays(ml);
+  if(!md||(!md.caDays&&!md.localDays)) return {caDays:0,localDays:0,bizDays:biz,caPct:null};
+  const caPct=biz>0?+((md.caDays/biz)*100).toFixed(1):null;
+  return {caDays:md.caDays,localDays:md.localDays,bizDays:biz,caPct};
+}
+
+/* Per-month compact flag */
+function _monthFlag(caPct){
+  if(caPct===null) return `<span style="color:#bbb;font-size:.59rem">—</span>`;
+  if(caPct>=50)    return `<span style="color:#b71c1c;font-weight:800;font-size:.6rem">🚨 &gt;50%</span>`;
+  if(caPct>=40)    return `<span style="color:#e65100;font-weight:800;font-size:.6rem">⚠ 40–49%</span>`;
+  return             `<span style="color:#2e7d32;font-weight:700;font-size:.6rem">✓ &lt;40%</span>`;
+}
+
+/* ── LTA status helpers ── */
+function ltaStatus(caPct, isCALocal){
+  if(isCALocal)      return 'ca-local';
+  if(caPct===null)   return 'no-data';
+  if(caPct>=50)      return 'exceeded';
+  if(caPct>=40)      return 'warning';
+  return 'ok';
+}
+function ltaStatusBadge(status){
+  if(status==='ca-local') return `<span class="lta-na-badge">🏠 CA Local — N/A</span>`;
+  if(status==='exceeded') return `<span class="lta-exceeded">🚨 ≥50% Exceeded</span>`;
+  if(status==='warning')  return `<span class="lta-warning">⚠ 40–49% Approaching</span>`;
+  if(status==='ok')       return `<span class="lta-ok">✓ &lt;40% OK</span>`;
+  return `<span class="lta-no-data">— No Data</span>`;
+}
+function ltaBarHtml(caPct){
+  if(caPct===null) return '';
+  const pct=Math.min(caPct,100);
+  const col=caPct>=50?'#e53935':caPct>=40?'#ff8f00':'#43a047';
+  return `<span class="lta-bar-wrap"><span class="lta-bar-fill" style="width:${pct}%;background:${col}"></span></span>`;
+}
+
+/* ── DEMO DATA — generated from onshore resources in R ── */
+function loadLTADemo(){
+  const onshore = R.filter(r=>r.shore==='ONSHORE');
+  if(!onshore.length){
+    alert('No onshore resources found in the roster. Please generate the dashboard first.');
+    return;
+  }
+
+  /* Use roster months or fallback to last 6 months */
+  const demoMonths = MONTHS.length ? MONTHS.slice(-6) : ['Nov-25','Dec-25','Jan-26','Feb-26','Mar-26','Apr-26'];
+
+  /* Seed-based pseudo-random for reproducible demo */
+  function rng(seed){ let s=seed*9301+49297; return (s%233280)/233280; }
+
+  _ltaData = onshore.map((r,ri)=>{
+    const months = demoMonths.map((ml,mi)=>{
+      /* Give each resource a characteristic pattern */
+      const base  = 0.25 + (ri%5)*0.07;   // base CA tendency 25–53%
+      const noise = rng(ri*31+mi*7)*0.20 - 0.10;
+      const rawPct= Math.max(0, Math.min(1, base+noise));
+      const workingDays = [20,18,20,20,21,20][mi] || 20;
+      const caDays   = Math.round(workingDays * rawPct);
+      const localDays= workingDays - caDays;
+      return {label:ml, caDays, localDays};
+    });
+    return { name:r.name, shore:'ONSHORE', months };
+  });
+
+  _ltaMonths  = _sortFiscal(demoMonths);
+  _ltaIsDemo  = true;
+  document.getElementById('ltaSummary').textContent  = `✅ Demo data loaded — ${_ltaData.length} onshore resources, ${_ltaMonths.length} months`;
+  document.getElementById('ltaSummary').className    = 'lta-summary ok';
+  document.getElementById('ltaFileBtn').classList.remove('loaded');
+  _initLTAFilters();
+  renderLTATable();
+}
+
+/* ── FILE UPLOAD ── */
+function handleLTAFile(input){
+  if(!input.files[0]) return;
+  const file=input.files[0];
+  showLoading('Reading LTA file…');
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+      _parseLTAFile(aoa, file.name);
+    }catch(err){
+      hideLoading();
+      alert('Error reading LTA file: '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function _parseLTAFile(aoa, fname){
+  if(!aoa||aoa.length<2){ hideLoading(); alert('LTA file appears empty.'); return; }
+
+  /* Find header row */
+  let hdr=null, hdrIdx=0;
+  for(let i=0;i<Math.min(aoa.length,5);i++){
+    if((aoa[i]||[]).some(v=>v&&/name/i.test(String(v)))){
+      hdr=aoa[i]; hdrIdx=i; break;
+    }
+  }
+  if(!hdr){ hdr=aoa[0]; hdrIdx=0; }
+
+  /* Detect name column — accepts EMPLOYEE_NAME, NAME, Employee Name, Name */
+  let nameCol=0;
+  hdr.forEach((h,i)=>{ if(h&&/employee_name|^name$/i.test(String(h).trim())) nameCol=i; });
+  /* Fallback: any column containing "name" */
+  if(nameCol===0) hdr.forEach((h,i)=>{ if(i>0&&h&&/name/i.test(String(h))) nameCol=i; });
+
+  /* Detect month pairs — supports both formats:
+       New:  NOV_25_CA_DAYS / NOV_25_LOCAL_DAYS  (uppercase, underscores)
+       Old:  Nov-25 CA Days / Nov-25 Local Days  (legacy, mixed case, spaces/hyphens)
+     IMPORTANT: CA detection uses suffix/word-boundary match only —
+     do NOT use a bare /ca/i test because "LOCAL" contains "CA". */
+  const MON_RE=/([A-Za-z]{3}[_\-]?\d{2})/;
+  const monthMap={};
+  hdr.forEach((h,i)=>{
+    if(i===nameCol||!h) return;
+    const s=String(h).trim();
+    const mMatch=s.match(MON_RE);
+    if(!mMatch) return;
+    /* Normalise the month token: NOV_25 or NOV-25 → Nov-25 */
+    const rawToken=mMatch[1].replace(/_/g,'-');
+    const ml=normalizeMonthLabel(rawToken);
+    if(!monthMap[ml]) monthMap[ml]={caCol:null,localCol:null};
+    /* Match CA column: ends with _CA_DAYS, _CA, or " CA Days" / " CA"
+       Must NOT match if "LOCAL" or "local" precedes it */
+    const isCA  = /_CA_DAYS$/i.test(s) || /\bCA\s*Days$/i.test(s) || /\bCA$/i.test(s);
+    const isLocal = /_LOCAL_DAYS$/i.test(s) || /\bLocal\s*Days$/i.test(s) || /\bLocal$/i.test(s)
+                 || /\bNON.?CA/i.test(s) || /\bHome$/i.test(s) || /\bOffice$/i.test(s);
+    if(isCA)    monthMap[ml].caCol   = i;
+    if(isLocal) monthMap[ml].localCol= i;
+  });
+
+  const rawMonths = _sortFiscal(Object.keys(monthMap));
+
+  /* Validate each month pair — both caCol AND localCol must be detected.
+     Skip incomplete pairs and console.warn so the user can debug their file. */
+  const months = rawMonths.filter(ml=>{
+    const mc=monthMap[ml];
+    const ok = mc.caCol!==null && mc.localCol!==null;
+    if(!ok){
+      console.warn(`LTA parser: skipping month "${ml}" — `+
+        (mc.caCol===null?'CA_DAYS column not found. ':'') +
+        (mc.localCol===null?'LOCAL_DAYS column not found.':''));
+    }
+    return ok;
+  });
+
+  if(!months.length){ hideLoading(); alert('No valid month columns found.\nExpected column names like: NOV_25_CA_DAYS and NOV_25_LOCAL_DAYS'); return; }
+
+  const parsed=[];
+
+  for(let i=hdrIdx+1;i<aoa.length;i++){
+    const row=aoa[i]||[];
+    const name=String(row[nameCol]||'').trim();
+    if(!name) continue;
+    const mData=months.map(ml=>{
+      const mc=monthMap[ml];
+      return {
+        label:   ml,
+        caDays:  +(row[mc.caCol]||0),
+        localDays:+(row[mc.localCol]||0)
+      };
+    });
+    /* Match from R just for shore confirmation */
+    parsed.push({
+      name,
+      shore: 'ONSHORE',
+      months: mData
+    });
+  }
+
+  if(!parsed.length){ hideLoading(); alert('No data rows found in LTA file.'); return; }
+
+  _ltaData   = parsed;
+  _ltaMonths = _sortFiscal(months);
+  _ltaIsDemo = false;
+  hideLoading();
+  document.getElementById('ltaSummary').textContent =
+    `✅ ${fname} — ${parsed.length} resources, ${months.length} months`;
+  document.getElementById('ltaSummary').className='lta-summary ok';
+  document.getElementById('ltaFileBtn').classList.add('loaded');
+  _initLTAFilters();
+  renderLTATable();
+}
+
+/* ── Init filters ── */
+function _initLTAFilters(){
+  const mon=document.getElementById('ltaFMonth');
+  if(mon){
+    mon.innerHTML='<option value="all">Rolling 10-Month Cumulative (All)</option>';
+    _ltaMonths.forEach(m=>{
+      const biz=_bizDays(m);
+      mon.add(new Option(`${m}  (${biz} biz days)`, m));
+    });
+  }
+}
+
+/* ── Render LTA KPIs + main table + monthly breakdown ── */
+function renderLTATable(){
+  if(!_ltaData.length) return;
+
+  const fStatus = document.getElementById('ltaFStatus')?.value||'all';
+  const fMonth  = document.getElementById('ltaFMonth')?.value||'all';
+  const fSearch = (document.getElementById('ltaSearch')?.value||'').toLowerCase();
+
+  /* Compute stats for every resource — CA Local resources get status overridden */
+  const computed = _ltaData.map(r=>{
+    const isCALocal = _ltaCALocal.has(r.name);
+    const {caDays,localDays,totalDays,caPct} = isCALocal
+      ? {caDays:0,localDays:0,totalDays:0,caPct:null}
+      : _ltaCompute(r, fMonth);
+    const status = ltaStatus(caPct, isCALocal);
+    return {...r, caDays, localDays, totalDays, caPct, status, isCALocal};
+  });
+
+  /* KPIs — exclude CA Local from LTA counts */
+  const nonLocal  = computed.filter(r=>!r.isCALocal);
+  const exceeded  = nonLocal.filter(r=>r.status==='exceeded').length;
+  const warning   = nonLocal.filter(r=>r.status==='warning').length;
+  const ok        = nonLocal.filter(r=>r.status==='ok').length;
+  const caLocal   = computed.filter(r=>r.isCALocal).length;
+  const validPcts = nonLocal.map(r=>r.caPct).filter(v=>v!==null);
+  const avgPct    = validPcts.length ? (validPcts.reduce((s,v)=>s+v,0)/validPcts.length).toFixed(1)+'%' : '—';
+
+  document.getElementById('ltaKTotal').textContent    = computed.length;
+  document.getElementById('ltaKExceeded').textContent = exceeded;
+  document.getElementById('ltaKWarning').textContent  = warning;
+  document.getElementById('ltaKOK').textContent       = ok;
+  document.getElementById('ltaKCALocal').textContent  = caLocal;
+  document.getElementById('ltaKAvg').textContent      = avgPct;
+
+  /* Filter rows */
+  let rows = computed.filter(r=>{
+    if(fStatus==='ca-local' && !r.isCALocal) return false;
+    if(fStatus!=='all' && fStatus!=='ca-local' && r.status!==fStatus) return false;
+    if(fSearch && !r.name.toLowerCase().includes(fSearch)) return false;
+    return true;
+  });
+
+  /* Sort */
+  if(_ltaSortCol>=0){
+    rows.sort((a,b)=>{
+      const vals=[
+        [a.name,        b.name],
+        [a.isCALocal?1:0, b.isCALocal?1:0],
+        [a.caDays,      b.caDays],
+        [a.localDays,   b.localDays],
+        [a.totalDays,   b.totalDays],
+        [a.caPct??-1,   b.caPct??-1],
+        [a.status,      b.status],
+      ][_ltaSortCol]||[0,0];
+      const v=vals[0]>vals[1]?1:vals[0]<vals[1]?-1:0;
+      return v*_ltaSortDir;
+    });
+  }
+
+  /* Always push CA Local rows to the bottom — they are exempt from LTA
+     and should not compete visually with resources that need monitoring */
+  const activeRows  = rows.filter(r=>!r.isCALocal);
+  const caLocalRows = rows.filter(r=> r.isCALocal);
+
+  /* Build header */
+  const demoBadge = _ltaIsDemo ? `<span class="lta-demo-badge">DEMO</span>` : '';
+  const sa = ci => _ltaSortCol===ci?(_ltaSortDir===1?' ▲':' ▼'):'';
+  const showMonthCols = fMonth==='all';
+  const totalCols = 7 + (showMonthCols ? _ltaMonths.length : 0);
+
+  document.getElementById('ltaHead').innerHTML = `
+    <th onclick="ltaSort(0)" style="padding:8px 10px;min-width:160px">Name${demoBadge}${sa(0)}</th>
+    <th onclick="ltaSort(1)" style="padding:8px 10px;text-align:center;min-width:90px">🏠 CA Local${sa(1)}<br><span style="font-size:.58rem;font-weight:400;color:#aaa">click to toggle</span></th>
+    <th onclick="ltaSort(2)" style="padding:8px 10px;text-align:center">CA Days${sa(2)}</th>
+    <th onclick="ltaSort(3)" style="padding:8px 10px;text-align:center">Local Days${sa(3)}</th>
+    <th onclick="ltaSort(4)" style="padding:8px 10px;text-align:center">Biz Days${sa(4)}</th>
+    <th onclick="ltaSort(5)" style="padding:8px 10px;text-align:center">CA %<br><span style="font-size:.56rem;font-weight:400;color:#aaa">vs Biz Days</span>${sa(5)}</th>
+    <th onclick="ltaSort(6)" style="padding:8px 10px">LTA Status${sa(6)}</th>
+    ${showMonthCols ? _ltaMonths.map(m=>{const biz=_bizDays(m);return `<th class="lta-month-th" style="padding:6px 4px;text-align:center;font-size:.6rem;cursor:default;background:#2d2d2d;color:#ffd700;min-width:80px;white-space:nowrap">${m}<br><span style="color:#90a4ae;font-size:.55rem;font-weight:400">${biz} biz days</span>${_monthHolidayTip(m)}</th>`;}).join('') : ''}`;
+
+  /* Build body */
+  const tbody = document.getElementById('ltaBody');
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="${totalCols}" style="text-align:center;padding:24px;color:#aaa">No resources match the current filters.</td></tr>`;
+    _renderLTAMonthBreakdown(computed);
+    return;
+  }
+
+  function buildRow(r){
+    const rowCls  = r.isCALocal ? 'lta-row-ca-local'
+                  : r.status==='exceeded' ? 'lta-row-exceeded'
+                  : r.status==='warning'  ? 'lta-row-warning' : '';
+    const chkd    = r.isCALocal ? 'checked' : '';
+    const pctStr  = r.isCALocal ? '—' : r.caPct!==null ? r.caPct+'%' : '—';
+    const bar     = r.isCALocal ? '' : ltaBarHtml(r.caPct);
+    const pctCol  = r.isCALocal ? '#999'
+                  : r.caPct===null ? '#999'
+                  : r.caPct>=50 ? '#e53935'
+                  : r.caPct>=40 ? '#e65100' : '#2e7d32';
+
+    let cells = `
+      <td><strong>${r.name}</strong></td>
+      <td class="lta-ca-local-cell">
+        <input type="checkbox" class="lta-ca-local-chk" ${chkd}
+          title="${r.isCALocal ? 'CA Local — LTA not applicable. Uncheck to track.' : 'Check if this resource is based in California — LTA will not apply'}"
+          onchange="ltaToggleCALocal('${r.name.replace(/'/g,"\\'")}', this.checked)"/>
+        ${r.isCALocal ? '<span style="font-size:.62rem;color:#2e7d32;font-weight:700;display:block;margin-top:2px">CA Based</span>' : ''}
+      </td>
+      <td style="font-weight:700;color:${r.isCALocal?'#bbb':'#e53935'};text-align:center">${r.isCALocal?'—':r.caDays}</td>
+      <td style="font-weight:700;color:${r.isCALocal?'#bbb':'#1565c0'};text-align:center">${r.isCALocal?'—':r.localDays}</td>
+      <td style="text-align:center;color:#555">${r.isCALocal?'—':(r.bizDays||'—')}</td>
+      <td style="text-align:center">${bar}<strong style="color:${pctCol}">${pctStr}</strong></td>
+      <td>${ltaStatusBadge(r.status)}</td>`;
+
+    if(showMonthCols){
+      _ltaMonths.forEach(ml=>{
+        if(r.isCALocal){
+          cells+=`<td style="text-align:center;font-size:.66rem;color:#bbb">—</td>`;
+        } else {
+          const {caDays,bizDays,caPct}=_ltaMonthStat(r,ml);
+          const col=caPct===null?'#bbb':caPct>=50?'#e53935':caPct>=40?'#e65100':'#2e7d32';
+          const bg =caPct>=50?'background:#fff5f5':caPct>=40?'background:#fffbf0':'';
+          cells+=`<td style="text-align:center;font-size:.65rem;${bg}">
+            <div style="font-weight:800;color:${col}">${caPct!==null?caPct+'%':'—'}</div>
+            <div style="font-size:.57rem;color:#999">${caDays}/${bizDays}</div>
+            <div>${_monthFlag(caPct)}</div>
+          </td>`;
+        }
+      });
+    }
+    return `<tr class="${rowCls}">${cells}</tr>`;
+  }
+
+  let html = activeRows.map(buildRow).join('');
+
+  /* Divider + collapsed CA Local section — only shown when at least one CA Local exists */
+  if(caLocalRows.length){
+    const colSpan = totalCols;
+    html += `<tr>
+      <td colspan="${colSpan}" style="
+        background:#e8f5e9;border-top:2px solid #2e7d32;border-bottom:1px solid #c8e6c9;
+        padding:5px 12px;font-size:.67rem;font-weight:700;color:#2e7d32;
+        cursor:pointer;user-select:none;" onclick="ltaToggleCALocalSection(this)">
+        🏠 CA Local Resources — LTA Not Applicable &nbsp;
+        <span id="ltaCALocalToggleLabel">(${caLocalRows.length} resource${caLocalRows.length>1?'s':''} — click to expand)</span>
+        <span style="float:right;font-size:.8rem" id="ltaCALocalToggleIcon">▼</span>
+      </td>
+    </tr>`;
+    html += caLocalRows.map(r=>`<tr class="lta-ca-local-sub" style="display:none">${buildRow(r).replace(/^<tr[^>]*>/,'')}`).join('');
+  }
+
+  tbody.innerHTML = html;
+  _renderLTAMonthBreakdown(computed);
+}
+
+/* Toggle CA Local flag — fires on checkbox change, re-renders immediately */
+function ltaToggleCALocal(name, checked){
+  if(checked) _ltaCALocal.add(name);
+  else        _ltaCALocal.delete(name);
+  renderLTATable();
+}
+
+/* Expand / collapse the CA Local section at the bottom of the table */
+function ltaToggleCALocalSection(dividerCell){
+  const tbody   = dividerCell.closest('tbody');
+  const subs    = tbody.querySelectorAll('tr.lta-ca-local-sub');
+  const icon    = document.getElementById('ltaCALocalToggleIcon');
+  const label   = document.getElementById('ltaCALocalToggleLabel');
+  const isOpen  = subs.length && subs[0].style.display !== 'none';
+  subs.forEach(r=>r.style.display = isOpen ? 'none' : '');
+  if(icon)  icon.textContent  = isOpen ? '▼' : '▲';
+  if(label) label.textContent = isOpen
+    ? `(${subs.length} resource${subs.length>1?'s':''} — click to expand)`
+    : `(${subs.length} resource${subs.length>1?'s':''} — click to collapse)`;
+}
+
+/* ── Monthly breakdown — fiscal sorted, biz days header, per-month flags ── */
+function _renderLTAMonthBreakdown(computed){
+  const container=document.getElementById('ltaMonthBreakdown');
+  if(!container||!_ltaMonths.length) return;
+
+  const fSearch=(document.getElementById('ltaSearch')?.value||'').toLowerCase();
+  const rows=computed.filter(r=>!fSearch||r.name.toLowerCase().includes(fSearch));
+
+  /* Biz days per month (shared across all resources) */
+  const bizPerMonth=_ltaMonths.map(ml=>({ml,biz:_bizDays(ml)}));
+
+  let html=`
+  <div style="font-size:.63rem;color:#888;margin-bottom:6px;font-style:italic">
+    📌 Rolling 10-month window — CA% calculated as <strong>CA Days ÷ Business Days</strong>
+    (excludes weekends &amp; US Federal holidays). Months sorted by fiscal year (Jul = FY start).
+  </div>
+  <div style="overflow-x:auto"><table class="lta-tbl" style="font-size:.64rem;border-collapse:separate;border-spacing:0">
+    <thead>
+      <tr>
+        <th rowspan="3" style="min-width:160px;position:sticky;left:0;background:#1b1b1b;z-index:3;vertical-align:middle">Resource</th>
+        <th rowspan="3" style="position:sticky;left:160px;background:#1b1b1b;z-index:3;min-width:96px;text-align:center;vertical-align:middle">
+          Rolling<br>10M CA%<br><span style="font-size:.58rem;font-weight:400;color:#aaa">vs Biz Days</span>
+        </th>
+        <th rowspan="3" style="position:sticky;left:256px;background:#1b1b1b;z-index:3;min-width:110px;text-align:center;vertical-align:middle">Status</th>`;
+
+  /* Month group headers — with holiday tooltip on hover */
+  _ltaMonths.forEach(ml=>{
+    html+=`<th colspan="3" class="lta-month-th" style="background:#2d2d2d;color:#ffd700;border-left:2px solid #e0301e;text-align:center;min-width:132px;padding:5px 4px">
+      ${ml}${_monthHolidayTip(ml)}
+    </th>`;
+  });
+  html+=`</tr>
+      <tr>`;
+  /* Biz days sub-header — with holiday list on hover */
+  _ltaMonths.forEach(ml=>{
+    const biz=_bizDays(ml);
+    html+=`<th colspan="3" class="lta-month-th" style="background:#263238;color:#b0bec5;font-size:.58rem;font-weight:600;border-left:2px solid #e0301e;text-align:center;padding:3px 2px">
+      📅 ${biz} Biz Days${_monthHolidayTip(ml)}
+    </th>`;
+  });
+  html+=`</tr>
+      <tr>`;
+  /* Column sub-headers: CA Days | Local | CA% / Flag */
+  _ltaMonths.forEach(()=>{
+    html+=`<th style="background:#37474f;color:#ccc;font-size:.58rem;font-weight:600;border-left:2px solid #e0301e;text-align:center;padding:3px 4px;white-space:nowrap">CA Days</th>
+           <th style="background:#37474f;color:#ccc;font-size:.58rem;font-weight:600;text-align:center;padding:3px 4px">Local</th>
+           <th style="background:#37474f;color:#ccc;font-size:.58rem;font-weight:600;text-align:center;padding:3px 4px;white-space:nowrap">CA% / Status</th>`;
+  });
+  html+=`</tr>
+    </thead><tbody>`;
+
+  rows.forEach(r=>{
+    const rowBg=r.isCALocal?'#f9fdf5':r.status==='exceeded'?'#fff5f5':r.status==='warning'?'#fffbf0':'#fff';
+    /* Rolling 10M cumulative */
+    const rolling=r.isCALocal?{caPct:null,bizDays:0}:_ltaCompute(r,'all');
+    const rCol=r.isCALocal?'#2e7d32':rolling.caPct===null?'#999':rolling.caPct>=50?'#e53935':rolling.caPct>=40?'#ff8f00':'#2e7d32';
+    const rTxt=r.isCALocal?'N/A':rolling.caPct!==null?rolling.caPct+'%<br><span style="font-size:.58rem;color:#aaa">'+rolling.bizDays+' biz</span>':'—';
+
+    html+=`<tr>
+      <td style="font-weight:600;position:sticky;left:0;background:${rowBg};z-index:1;white-space:nowrap">${r.name}</td>
+      <td style="text-align:center;font-weight:800;color:${rCol};position:sticky;left:160px;background:${rowBg};z-index:1">${rTxt}</td>
+      <td style="text-align:center;position:sticky;left:256px;background:${rowBg};z-index:1">${ltaStatusBadge(r.status)}</td>`;
+
+    _ltaMonths.forEach(ml=>{
+      if(r.isCALocal){
+        html+=`<td style="text-align:center;color:#bbb;border-left:2px solid #e0e0e0;background:#f9fdf5">—</td>
+               <td style="text-align:center;color:#bbb;background:#f9fdf5">—</td>
+               <td style="text-align:center;background:#f9fdf5"><span style="color:#2e7d32;font-size:.6rem;font-weight:700">N/A</span></td>`;
+      } else {
+        const {caDays,localDays,bizDays,caPct}=_ltaMonthStat(r,ml);
+        const col=caPct===null?'#bbb':caPct>=50?'#b71c1c':caPct>=40?'#e65100':'#2e7d32';
+        const cellBg=caPct>=50?'#fff5f5':caPct>=40?'#fff8f0':'';
+        const pctTxt=caPct!==null?caPct+'%':'—';
+        /* Show CA days / biz days fraction */
+        const frac=caDays?`${caDays}/${bizDays}`:'0/'+bizDays;
+        html+=`<td style="text-align:center;font-weight:700;color:#c62828;border-left:2px solid #e0e0e0;background:${cellBg}">${caDays||''}</td>
+               <td style="text-align:center;color:#1565c0;background:${cellBg}">${localDays||''}</td>
+               <td style="text-align:center;background:${cellBg}">
+                 <div style="font-weight:800;color:${col};font-size:.67rem">${pctTxt}</div>
+                 <div style="font-size:.57rem;color:#999">${frac}</div>
+                 <div>${_monthFlag(caPct)}</div>
+               </td>`;
+      }
+    });
+    html+=`</tr>`;
+  });
+
+  /* Biz days totals footer */
+  html+=`<tr style="position:sticky;bottom:0;z-index:2">
+    <td style="font-weight:800;font-size:.65rem;color:#ffd700;background:#1b1b1b;position:sticky;left:0;z-index:3">BIZ DAYS</td>
+    <td style="background:#1b1b1b;position:sticky;left:160px;z-index:3"></td>
+    <td style="background:#1b1b1b;position:sticky;left:256px;z-index:3"></td>`;
+  _ltaMonths.forEach(ml=>{
+    const biz=_bizDays(ml);
+    html+=`<td colspan="3" style="text-align:center;font-weight:800;color:#ffd700;background:#263238;border-left:2px solid #e0301e;font-size:.65rem">${biz} days</td>`;
+  });
+  html+=`</tr></tbody></table></div>`;
+  container.innerHTML=html;
+}
+
+function ltaSort(col){
+  if(_ltaSortCol===col) _ltaSortDir*=-1;
+  else{ _ltaSortCol=col; _ltaSortDir=-1; }
+  renderLTATable();
+}
+
+function resetLTA(){
+  _ltaData=[]; _ltaMonths=[]; _ltaIsDemo=false; _ltaSortCol=-1; _ltaSortDir=1;
+  _ltaCALocal.clear();
+  ['ltaKTotal','ltaKExceeded','ltaKWarning','ltaKOK','ltaKCALocal','ltaKAvg'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent='—';
+  });
+  const s=document.getElementById('ltaSummary');
+  if(s){ s.textContent='No file loaded'; s.className='lta-summary'; }
+  const hd=document.getElementById('ltaHead'); if(hd) hd.innerHTML='';
+  const bd=document.getElementById('ltaBody'); if(bd) bd.innerHTML='';
+  const mb=document.getElementById('ltaMonthBreakdown'); if(mb) mb.innerHTML='';
+  document.getElementById('ltaFileBtn')?.classList.remove('loaded');
+  /* Reset file input value — critical: allows same file to be re-selected
+     after clearing, as onchange only fires when the value changes */
+  const fi=document.getElementById('ltaFileInput');
+  if(fi) fi.value='';
+}
+
+/* ── Download LTA sample file ── */
+function downloadLTASample(fmt){
+  /* Build 6 sample months */
+  const sampleMonths = ['Nov-25','Dec-25','Jan-26','Feb-26','Mar-26','Apr-26'];
+  const sampleResources = [
+    {name:'John Smith',      scrum:'STP',role:'Senior Consultant'},
+    {name:'Sarah Johnson',   scrum:'ITD',role:'Manager'},
+    {name:'Michael Chen',    scrum:'STP',role:'Consultant'},
+    {name:'Emily Davis',     scrum:'PG', role:'Senior Manager'},
+    {name:'Robert Wilson',   scrum:'ITD',role:'Consultant'},
+    {name:'Jennifer Taylor', scrum:'STP',role:'Associate'},
+    {name:'David Martinez',  scrum:'PG', role:'Senior Consultant'},
+    {name:'Lisa Anderson',   scrum:'ITD',role:'Manager'},
+  ];
+  /* Working days per month */
+  const wdays = {'Nov-25':18,'Dec-25':17,'Jan-26':22,'Feb-26':19,'Mar-26':21,'Apr-26':22};
+
+  /* Build header row */
+  const headers = ['EMPLOYEE_NAME'];
+  sampleMonths.forEach(m=>{
+    const mk = m.replace(/-/g,'_');
+    headers.push(`${mk}_CA_DAYS`);
+    headers.push(`${mk}_LOCAL_DAYS`);
+  });
+
+  /* Build data rows */
+  const patterns = [0.55, 0.42, 0.30, 0.51, 0.38, 0.25, 0.47, 0.60];
+  const dataRows = sampleResources.map((res,ri)=>{
+    const row = [res.name];
+    sampleMonths.forEach(m=>{
+      const wd    = wdays[m]||20;
+      const ratio = Math.min(1, Math.max(0, patterns[ri] + (Math.sin(ri+m.length)*0.08)));
+      const ca    = Math.round(wd * ratio);
+      const local = wd - ca;
+      row.push(ca, local);
+    });
+    return row;
+  });
+
+  const allRows = [headers, ...dataRows];
+
+  if(fmt==='csv'){
+    /* CSV download */
+    const csv = allRows.map(row =>
+      row.map(v => (String(v).includes(',') ? `"${v}"` : v)).join(',')
+    ).join('\r\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    _triggerDownload(blob, 'LTA_Sample_Template.csv');
+
+  } else {
+    /* XLSX download using SheetJS */
+    const wb  = XLSX.utils.book_new();
+    const ws  = XLSX.utils.aoa_to_sheet(allRows);
+
+    /* Column widths */
+    ws['!cols'] = [
+      {wch:24},
+      ...sampleMonths.flatMap(()=>[{wch:12},{wch:12}])
+    ];
+
+    /* Style header row bold (basic) */
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for(let C=range.s.c; C<=range.e.c; C++){
+      const addr = XLSX.utils.encode_cell({r:0, c:C});
+      if(!ws[addr]) continue;
+      ws[addr].s = {font:{bold:true}, fill:{fgColor:{rgb:'1B1B1B'}}, font:{color:{rgb:'FFFFFF'},bold:true}};
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, 'LTA Template');
+
+    /* Add an Instructions sheet */
+    const instrRows = [
+      ['LTA Tracking File — Instructions'],
+      [''],
+      ['Column','Description'],
+      ['EMPLOYEE_NAME','Resource full name (must match SCM Roster exactly for auto-linking)'],
+      ['[MON_YY]_CA_DAYS','Working days in California (SF Bay Area) — e.g. NOV_25_CA_DAYS, MAR_26_CA_DAYS'],
+      ['[MON_YY]_LOCAL_DAYS','Working days at home / local office — e.g. NOV_25_LOCAL_DAYS, MAR_26_LOCAL_DAYS'],
+      [''],
+      ['LTA Thresholds (SF / CA Tax Code)'],
+      ['🚨 Exceeded','CA Days ≥ 50% of total working days — CA state tax nexus triggered'],
+      ['⚠ Approaching','CA Days 40–49% of total working days — monitor closely'],
+      ['✓ OK','CA Days < 40% of total working days — within safe limit'],
+      ['🏠 CA Local','Resource is California-based — check the CA Local checkbox; LTA is not applicable'],
+      [''],
+      ['Notes'],
+      ['1','Add as many months as needed — columns are auto-detected'],
+      ['2','Month format: MON_YY in uppercase with underscores (e.g. MAR_26, APR_26)'],
+      ['3','CA_DAYS + LOCAL_DAYS should sum to working days in that month'],
+      ['4','Only ONSHORE resources are included in LTA tracking'],
+      ['5','Use the CA Local checkbox in the dashboard to mark California-based resources'],
+    ];
+    const wsInstr = XLSX.utils.aoa_to_sheet(instrRows);
+    wsInstr['!cols'] = [{wch:20},{wch:76}];
+    XLSX.utils.book_append_sheet(wb, wsInstr, 'Instructions');
+
+    const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const blob  = new Blob([wbout], {type:'application/octet-stream'});
+    _triggerDownload(blob, 'LTA_Sample_Template.xlsx');
+  }
+}
+
+function _triggerDownload(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href    = url;
+  a.download= filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+
+/* Auto-load demo when LTA tab is first opened (handled in switchTab) */
+let _ltaTabOpened=false;
+
+</script>
+</body>
+</html>
