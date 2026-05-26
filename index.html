@@ -523,7 +523,7 @@ table.lta-tbl tbody tr.lta-ca-local-sub td.lta-ca-local-cell{opacity:1;backgroun
   <span class="ds-mode-badge local" id="dsModeBadge">📁 Local File Import</span>
   <span class="ds-gh-url" id="dsGhUrlHint" style="display:none">
     Repo: <a href="https://kpwcite.github.io/pge-propel-scm-resources-dashboard/" target="_blank">kpwcite.github.io/pge-propel-scm-resources-dashboard</a>
-    &nbsp;·&nbsp; manifest: <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:.62rem">data/manifest.json</code>
+    &nbsp;·&nbsp; manifest: <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:.62rem">manifest.json</code>
   </span>
 </div>
 
@@ -565,9 +565,9 @@ table.lta-tbl tbody tr.lta-ca-local-sub td.lta-ca-local-cell{opacity:1;backgroun
   <!-- GH BOTTOM BAR -->
   <div class="gh-import-bottom">
     <div class="gh-hint">
-      ☁️ <strong>GitHub Live mode</strong> — files are fetched directly from the repository.
-      Add new Flex WBS files to <code style="background:#d4edda;padding:1px 5px;border-radius:3px">data/</code> and update
-      <code style="background:#d4edda;padding:1px 5px;border-radius:3px">data/manifest.json</code>, then click <strong>Refresh Manifest</strong>.
+      ☁️ <strong>GitHub Live mode</strong> — files are fetched directly from the repository root (<code style="background:#d4edda;padding:1px 4px;border-radius:3px">main</code> branch).
+      Upload new Flex WBS files to the repo root and add an entry to
+      <code style="background:#d4edda;padding:1px 5px;border-radius:3px">manifest.json</code>, then click <strong>Refresh Manifest</strong>.
     </div>
     <div class="import-counts" id="ghImportCounts" style="display:none">
       <span>📋 <span class="cnt blue" id="ghCntRoster">—</span> resources, <span class="cnt blue" id="ghCntMonths">—</span> months</span>
@@ -1001,7 +1001,7 @@ let charts = {};
 /* ── Data Source Mode ── */
 let _dsMode = 'local';   // 'local' | 'github'
 const GH_BASE = 'https://kpwcite.github.io/pge-propel-scm-resources-dashboard/';
-const GH_MANIFEST = GH_BASE + 'data/manifest.json';
+const GH_MANIFEST = GH_BASE + 'manifest.json';
 let _ghManifest = null;          // parsed manifest object
 let _ghFlexPending = 0;          // count of flex files still loading
 let _ghRosterLoaded = false;
@@ -2507,7 +2507,7 @@ function confirmResetData(){
 /* ════════════════════════════════════════════════════
    DATA SOURCE MODE — LOCAL vs GITHUB LIVE
 
-   MANIFEST FORMAT (data/manifest.json in your repo):
+   MANIFEST FORMAT (manifest.json in repo root — main branch):
    {
      "roster": {
        "file": "PROPEL_SCM_ROSTER_HOURS.xlsx",
@@ -2523,8 +2523,7 @@ function confirmResetData(){
      }
    }
 
-   All files must be placed in the "data/" folder of your GitHub Pages repo.
-   flex_files entries can also be plain strings: "ForecastToActualByWeek Report_USC0171161.1.1.xlsx"
+   All files must be uploaded to the root of the main branch in your GitHub Pages repo.
    Add new WBS files to flex_files and click "Refresh Manifest" — no page reload needed.
 ════════════════════════════════════════════════════ */
 
@@ -2735,7 +2734,7 @@ async function ghFetchRoster(fname){
   try {
     stEl.textContent = '⌛ Loading…';
     stEl.className   = 'gh-status loading';
-    const path = fname.includes('/') ? fname : 'data/' + fname;
+    const path = fname;
     const aoa = await _ghFetchXLSX(path);
     parseRosterAoA(aoa, fname);
     _ghRosterLoaded = true;
@@ -2758,7 +2757,7 @@ async function ghFetchFlexFile(fname){
   if(statusEl){ statusEl.textContent = '⌛ Loading…'; statusEl.className = 'gfi-status loading'; }
   if(itemEl)  { itemEl.className = 'gh-flex-item'; }
   try {
-    const path = fname.includes('/') ? fname : 'data/' + fname;
+    const path = fname;
     const aoa  = await _ghFetchXLSX(path);
     /* Skip duplicates already loaded */
     if(!_flexFiles.some(f => f.fname === fname)){
@@ -2782,7 +2781,7 @@ async function ghFetchFlexFile(fname){
 /* ── Fetch LTA file from GitHub ── */
 async function ghFetchLTA(fname){
   try {
-    const path = fname.includes('/') ? fname : 'data/' + fname;
+    const path = fname;
     const aoa  = await _ghFetchXLSX(path);
     _parseLTAFile(aoa, fname);
     const ltaSum = document.getElementById('ltaSummary');

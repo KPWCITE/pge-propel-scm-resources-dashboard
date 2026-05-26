@@ -1,0 +1,49 @@
+{
+  "_comment": "PROPEL SCM Resource Dashboard — GitHub Pages Data Manifest",
+  "_instructions": [
+    "All files (including this manifest.json) live in the root of the 'main' branch.",
+    "Repo: https://github.com/kpwcite/pge-propel-scm-resources-dashboard",
+    "Pages URL: https://kpwcite.github.io/pge-propel-scm-resources-dashboard/",
+    "To add a new Flex WBS file: upload the .xlsx to main, add an entry to flex_files here, then click Refresh Manifest in the dashboard."
+  ],
+
+  "roster": {
+    "file": "PROPEL_SCM_ROSTER_HOURS.xlsx",
+    "description": "SCM Workforce Roster — Name, Shore, Scrum, Role, monthly planned hours"
+  },
+
+  "flex_files": [
+    {
+      "file": "ForecastToActualByWeek Report_USC0195637.1.1.xlsx",
+      "wbs": "USC0195637.1.1",
+      "description": "Propel SCM WBS USC0195637.1.1"
+    },
+    {
+      "file": "ForecastToActualByWeek Report_USC0042623.1.1.xlsx",
+      "wbs": "USC0042623.1.1",
+      "description": "Propel SCM WBS USC0042623.1.1"
+    },
+    {
+      "file": "ForecastToActualByWeek Report_USC0171161.1.1.xlsx",
+      "wbs": "USC0171161.1.1",
+      "description": "Propel SCM WBS USC0171161.1.1"
+    },
+    {
+      "file": "ForecastToActualByWeek Report_02164784001.xlsx",
+      "wbs": "02164784001",
+      "description": "Propel SCM WBS 02164784001"
+    }
+  ],
+
+  "lta": {
+    "file": "LTA_SCM_ONSHORE_DATA.csv",
+    "description": "Long-Term Assignment CA days tracker — ONSHORE resources only",
+    "enabled": true
+  },
+
+  "_meta": {
+    "program": "PG&E Propel Supply Chain",
+    "last_updated": "2025-07",
+    "maintained_by": "PwC SCM PMO"
+  }
+}
