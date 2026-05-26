@@ -2719,12 +2719,34 @@ async function ghLoadAllFiles(){
 
 /* ── Fetch a single file from GitHub as ArrayBuffer → parse with XLSX ── */
 async function _ghFetchXLSX(path){
-  const url = GH_BASE + path + '?cb=' + Date.now();
+  /* Encode each path segment separately to handle spaces & special chars */
+  const encodedPath = path.split('/').map(s => encodeURIComponent(s)).join('/');
+  const url = GH_BASE + encodedPath + '?cb=' + Date.now();
   const res = await fetch(url);
-  if(!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+  if(!res.ok) throw new Error(`HTTP ${res.status} — file not found in repo: ${path}`);
   const buf = await res.arrayBuffer();
   const wb  = XLSX.read(buf, {type:'array'});
   const ws  = wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+}
+
+/* ── Fetch CSV or XLSX from GitHub (auto-detects by extension) ── */
+async function _ghFetchFile(path){
+  const encodedPath = path.split('/').map(s => encodeURIComponent(s)).join('/');
+  const url = GH_BASE + encodedPath + '?cb=' + Date.now();
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`HTTP ${res.status} — file not found in repo: ${path}`);
+  const buf = await res.arrayBuffer();
+  /* CSV: parse as text then via XLSX */
+  if(/\.csv$/i.test(path)){
+    const text = new TextDecoder('utf-8').decode(buf);
+    const wb   = XLSX.read(text, {type:'string'});
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  }
+  /* XLSX / XLS */
+  const wb = XLSX.read(buf, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
   return XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
 }
 
@@ -2734,8 +2756,7 @@ async function ghFetchRoster(fname){
   try {
     stEl.textContent = '⌛ Loading…';
     stEl.className   = 'gh-status loading';
-    const path = fname;
-    const aoa = await _ghFetchXLSX(path);
+    const aoa = await _ghFetchFile(fname);
     parseRosterAoA(aoa, fname);
     _ghRosterLoaded = true;
     stEl.textContent = '✅ Loaded';
@@ -2757,8 +2778,7 @@ async function ghFetchFlexFile(fname){
   if(statusEl){ statusEl.textContent = '⌛ Loading…'; statusEl.className = 'gfi-status loading'; }
   if(itemEl)  { itemEl.className = 'gh-flex-item'; }
   try {
-    const path = fname;
-    const aoa  = await _ghFetchXLSX(path);
+    const aoa  = await _ghFetchFile(fname);
     /* Skip duplicates already loaded */
     if(!_flexFiles.some(f => f.fname === fname)){
       const result = _parseSingleFlex(aoa, fname);
@@ -2778,11 +2798,10 @@ async function ghFetchFlexFile(fname){
   }
 }
 
-/* ── Fetch LTA file from GitHub ── */
+/* ── Fetch LTA file from GitHub (CSV or XLSX, auto-detected) ── */
 async function ghFetchLTA(fname){
   try {
-    const path = fname;
-    const aoa  = await _ghFetchXLSX(path);
+    const aoa = await _ghFetchFile(fname);
     _parseLTAFile(aoa, fname);
     const ltaSum = document.getElementById('ltaSummary');
     if(ltaSum){ ltaSum.textContent = `✅ Loaded from GitHub: ${fname}`; ltaSum.style.color='#2e7d32'; ltaSum.style.fontStyle='normal'; }
@@ -2790,6 +2809,8 @@ async function ghFetchLTA(fname){
     if(ltaGhHint) ltaGhHint.textContent = `✅ LTA loaded from GitHub: ${fname}`;
   } catch(err){
     console.warn('GH LTA fetch error:', err.message);
+    const ltaGhHint = document.getElementById('ltaGhHint');
+    if(ltaGhHint){ ltaGhHint.textContent = `⚠ LTA not loaded: ${err.message}`; ltaGhHint.style.color='#e65100'; }
   }
 }
 
