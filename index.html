@@ -410,6 +410,85 @@ table.lta-tbl tbody tr.lta-ca-local-sub td.lta-ca-local-cell{opacity:1;backgroun
   content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
   border:5px solid transparent;border-bottom-color:#333;}
 .lta-month-th:hover .lta-hol-tip{display:block;}
+
+/* ── DATA SOURCE TOGGLE ── */
+.ds-toggle-wrap{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 16px;background:#f0f2f5;border-bottom:1px solid #dde0e8;
+  justify-content:flex-end;flex-wrap:wrap;gap:8px;}
+.ds-toggle-wrap .ds-label{font-size:.68rem;font-weight:700;color:#555;
+  text-transform:uppercase;letter-spacing:.5px;}
+.ds-toggle-wrap .ds-mode-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:12px;font-size:.67rem;font-weight:700;
+  border:1.5px solid transparent;transition:all .2s;}
+.ds-mode-badge.local{background:#e3f2fd;border-color:#1565c0;color:#0d47a1;}
+.ds-mode-badge.github{background:#e8f5e9;border-color:#2e7d32;color:#1b5e20;}
+/* Toggle pill */
+.ds-pill{display:flex;align-items:center;background:#e0e0e0;border-radius:20px;
+  padding:3px;gap:0;cursor:pointer;user-select:none;border:1.5px solid #ccc;transition:background .2s;}
+.ds-pill-opt{padding:4px 13px;border-radius:16px;font-size:.68rem;font-weight:700;
+  color:#888;transition:all .2s;white-space:nowrap;}
+.ds-pill-opt.active.local{background:#1565c0;color:#fff;box-shadow:0 2px 6px rgba(21,101,192,.4);}
+.ds-pill-opt.active.github{background:#2e7d32;color:#fff;box-shadow:0 2px 6px rgba(46,125,50,.4);}
+.ds-gh-url{font-size:.62rem;color:#888;font-style:italic;margin-left:4px;}
+.ds-gh-url a{color:#1565c0;text-decoration:none;}
+.ds-gh-url a:hover{text-decoration:underline;}
+/* GitHub mode import panel */
+.gh-import-panel{background:#fff;border-bottom:2px solid #2e7d32;padding:14px 28px 12px;
+  display:none;flex-direction:column;gap:0;}
+.gh-import-panel.active{display:flex;}
+.gh-import-grid{display:grid;grid-template-columns:1fr 1.8fr auto;gap:0;align-items:stretch;}
+@media(max-width:860px){.gh-import-grid{grid-template-columns:1fr;}}
+.gh-section{display:flex;flex-direction:column;gap:6px;padding:12px 16px 14px;
+  border-right:1px solid #f0f0f0;}
+.gh-section:last-of-type{border-right:none;}
+.gh-section-label{font-size:.67rem;font-weight:700;color:#555;text-transform:uppercase;
+  letter-spacing:.5px;display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+.gh-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.gh-dot-roster{background:#003087;}
+.gh-dot-flex{background:#e0301e;}
+.gh-dot-lta{background:#ff8f00;}
+/* File fetch row */
+.gh-file-row{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.gh-file-name{font-size:.75rem;font-weight:700;color:#333;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:260px;}
+.gh-status{font-size:.67rem;margin-top:3px;}
+.gh-status.ok{color:#2e7d32;font-weight:600;}
+.gh-status.err{color:#c62828;font-weight:600;}
+.gh-status.loading{color:#1565c0;font-style:italic;}
+.gh-status.pending{color:#888;font-style:italic;}
+/* Flex manifest list */
+.gh-flex-list{display:flex;flex-direction:column;gap:4px;margin-top:4px;max-height:160px;overflow-y:auto;}
+.gh-flex-item{display:flex;align-items:center;justify-content:space-between;
+  background:#f8f9fb;border:1px solid #e0e0e0;border-radius:6px;padding:5px 10px;gap:8px;}
+.gh-flex-item.loaded{background:#f1f8e9;border-color:#66bb6a;}
+.gh-flex-item.error{background:#ffebee;border-color:#e53935;}
+.gh-flex-item .gfi-name{font-size:.68rem;font-weight:700;color:#333;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;}
+.gh-flex-item .gfi-status{font-size:.62rem;font-weight:600;white-space:nowrap;}
+.gfi-status.ok{color:#2e7d32;}
+.gfi-status.err{color:#c62828;}
+.gfi-status.loading{color:#1565c0;}
+.gh-manifest-summary{font-size:.67rem;color:#888;font-style:italic;margin-top:2px;}
+.gh-manifest-summary.ok{color:#2e7d32;font-weight:600;font-style:normal;}
+.gh-manifest-summary.err{color:#c62828;font-weight:600;font-style:normal;}
+/* Refresh manifest button */
+.btn-gh-refresh{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
+  background:#e8f5e9;border:1.5px solid #66bb6a;color:#1b5e20;border-radius:7px;
+  font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;}
+.btn-gh-refresh:hover{background:#c8e6c9;border-color:#2e7d32;}
+.btn-gh-refresh:disabled{opacity:.5;cursor:not-allowed;}
+/* LTA in GH mode */
+.gh-lta-row{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;}
+/* GitHub bottom bar */
+.gh-import-bottom{display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+  padding:8px 16px;background:#f0faf0;border-top:1px solid #c8e6c9;}
+.gh-hint{font-size:.64rem;color:#2e7d32;flex:1;min-width:200px;line-height:1.5;}
+/* LTA GitHub auto-load toggle */
+.gh-lta-auto{display:flex;align-items:center;gap:6px;font-size:.68rem;color:#555;
+  background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:5px 10px;}
+.gh-lta-auto input[type=checkbox]{accent-color:#ff8f00;width:14px;height:14px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -434,7 +513,76 @@ table.lta-tbl tbody tr.lta-ca-local-sub td.lta-ca-local-cell{opacity:1;backgroun
   </div>
 </div>
 
-<!-- IMPORT BAR -->
+<!-- DATA SOURCE TOGGLE BAR -->
+<div class="ds-toggle-wrap">
+  <span class="ds-label">Data Source:</span>
+  <div class="ds-pill" id="dsPill" onclick="toggleDataSourceMode()">
+    <div class="ds-pill-opt local active" id="dsOptLocal">📁 Local Files</div>
+    <div class="ds-pill-opt github" id="dsOptGitHub">☁️ GitHub Live</div>
+  </div>
+  <span class="ds-mode-badge local" id="dsModeBadge">📁 Local File Import</span>
+  <span class="ds-gh-url" id="dsGhUrlHint" style="display:none">
+    Repo: <a href="https://kpwcite.github.io/pge-propel-scm-resources-dashboard/" target="_blank">kpwcite.github.io/pge-propel-scm-resources-dashboard</a>
+    &nbsp;·&nbsp; manifest: <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:.62rem">data/manifest.json</code>
+  </span>
+</div>
+
+<!-- GITHUB IMPORT PANEL (shown in GitHub mode) -->
+<div class="gh-import-panel" id="ghImportPanel">
+  <div class="gh-import-grid">
+
+    <!-- ROSTER -->
+    <div class="gh-section">
+      <div class="gh-section-label"><span class="gh-dot gh-dot-roster"></span>SCM Resource Source File</div>
+      <div class="gh-file-row" id="ghRosterRow">
+        <span class="gh-file-name" id="ghRosterName">—</span>
+      </div>
+      <div class="gh-status pending" id="ghRosterStatus">Waiting for manifest…</div>
+    </div>
+
+    <!-- FLEX ETC (manifest-driven multi-file) -->
+    <div class="gh-section">
+      <div class="gh-section-label"><span class="gh-dot gh-dot-flex"></span>Flex ETC — ForecastToActualByWeek
+        <span style="font-weight:400;color:#bbb;font-size:.62rem;text-transform:none;letter-spacing:0;margin-left:4px">(all WBS from manifest)</span>
+      </div>
+      <div class="gh-manifest-summary pending" id="ghFlexSummary">Waiting for manifest…</div>
+      <div class="gh-flex-list" id="ghFlexList"></div>
+      <button class="btn-gh-refresh" id="ghRefreshBtn" onclick="ghRefreshManifest()" disabled>
+        🔄 Refresh Manifest
+      </button>
+    </div>
+
+    <!-- GENERATE PANEL -->
+    <div class="generate-panel">
+      <button class="btn-generate" id="ghGenerateBtn" onclick="generateDashboard()" disabled>
+        ▶ Generate Dashboard
+      </button>
+      <div class="generate-status" id="ghGenerateStatus">Loading manifest…</div>
+    </div>
+
+  </div><!-- end gh-import-grid -->
+
+  <!-- GH BOTTOM BAR -->
+  <div class="gh-import-bottom">
+    <div class="gh-hint">
+      ☁️ <strong>GitHub Live mode</strong> — files are fetched directly from the repository.
+      Add new Flex WBS files to <code style="background:#d4edda;padding:1px 5px;border-radius:3px">data/</code> and update
+      <code style="background:#d4edda;padding:1px 5px;border-radius:3px">data/manifest.json</code>, then click <strong>Refresh Manifest</strong>.
+    </div>
+    <div class="import-counts" id="ghImportCounts" style="display:none">
+      <span>📋 <span class="cnt blue" id="ghCntRoster">—</span> resources, <span class="cnt blue" id="ghCntMonths">—</span> months</span>
+      <span>📊 <span class="cnt red" id="ghCntFlexFiles">—</span> file(s) · <span class="cnt red" id="ghCntFlex">—</span> resources · <span class="cnt red" id="ghCntWeeks">—</span> weeks</span>
+      <span>🔗 Merged: <span class="cnt" id="ghCntMerged">—</span></span>
+    </div>
+    <div class="action-btns">
+      <button class="btn refresh" id="ghDashRefreshBtn" onclick="refreshData()" disabled title="Re-merge and redraw">🔄 Refresh</button>
+      <button class="btn reset-data" onclick="confirmResetData()" title="Clear all data">🗑 Reset</button>
+      <button class="btn" onclick="resetFilters()" title="Reset filters">↺ Filters</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT BAR (Local mode) -->
 <div class="import-bar">
   <div class="import-grid">
 
@@ -760,6 +908,10 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
             </label>
           </div>
           <div class="lta-summary" id="ltaSummary" style="font-size:.67rem;margin-top:5px;color:#888;font-style:italic">No file loaded — showing demo data</div>
+          <!-- GitHub mode LTA hint -->
+          <div id="ltaGhHint" style="display:none;font-size:.67rem;margin-top:5px;color:#2e7d32;font-weight:600;">
+            ☁️ GitHub mode: LTA file will load from manifest if configured.
+          </div>
           <div style="font-size:.62rem;color:#aaa;margin-top:4px;line-height:1.5">
             Expected columns: <strong>EMPLOYEE_NAME</strong> + per-month pairs: <strong>[MON_YY]_CA_DAYS</strong> &amp; <strong>[MON_YY]_LOCAL_DAYS</strong>
           </div>
@@ -845,6 +997,15 @@ let rosterLoaded = false;
 let flexLoaded = false;
 let sortDir = 1, lastCol = -1;
 let charts = {};
+
+/* ── Data Source Mode ── */
+let _dsMode = 'local';   // 'local' | 'github'
+const GH_BASE = 'https://kpwcite.github.io/pge-propel-scm-resources-dashboard/';
+const GH_MANIFEST = GH_BASE + 'data/manifest.json';
+let _ghManifest = null;          // parsed manifest object
+let _ghFlexPending = 0;          // count of flex files still loading
+let _ghRosterLoaded = false;
+let _ghFlexStatuses = {};        // fname → 'loading'|'ok'|'error'
 
 /* ── Multi-file Flex state ── */
 /* Each entry: { fname, resourceCount, weekCount, flexMap, weekDates } */
@@ -1553,7 +1714,7 @@ function tryMerge(){
 }
 
 /* ── Generate Dashboard button logic ── */
-function _updateGenerateBtn(){
+function _updateLocalGenerateBtn(){
   const btn = document.getElementById('generateBtn');
   const st  = document.getElementById('generateStatus');
   if(!btn||!st) return;
@@ -2308,35 +2469,7 @@ function setStatus(id,msg,type){
   el.className='file-status'+(type?' '+type:'');
 }
 
-/* ── Import counts bar ── */
-function updateImportCounts(){
-  const rMap  = window._rosterMap || {};
-  const fMap  = window._flexMap   || {};
-  const rCnt  = Object.keys(rMap).length;
-  const fCnt  = Object.keys(fMap).length;
-  const fFiles= _flexFiles.length;
-  const mCnt  = MONTHS.length;
-  const wCnt  = WEEKS.length;
-  const mrgCnt= R.length;
-
-  const bar = document.getElementById('importCounts');
-  if(rCnt>0||fCnt>0) bar.style.display='flex'; else bar.style.display='none';
-
-  const s = id => document.getElementById(id);
-  s('cntRoster').textContent    = rCnt   || '—';
-  s('cntMonths').textContent    = mCnt   || '—';
-  s('cntFlexFiles').textContent = fFiles || '—';
-  s('cntFlex').textContent      = fCnt   || '—';
-  s('cntWeeks').textContent     = wCnt   || '—';
-  s('cntMerged').textContent    = mrgCnt || '—';
-
-  /* Enable Refresh only when dashboard has been generated */
-  const btn = document.getElementById('refreshBtn');
-  const dashVisible = document.getElementById('dashContent').style.display !== 'none';
-  btn.disabled = !dashVisible || !(rosterLoaded || flexLoaded);
-
-  _updateGenerateBtn();
-}
+/* ── Import counts bar — defined further below with GH sync ── */
 
 /* ── Refresh Data — re-merge loaded files and redraw ── */
 function refreshData(){
@@ -2369,9 +2502,364 @@ function confirmResetData(){
   if(confirm(msg)) resetAllData();
 }
 
-/* ── Reset All Data — wipe everything, return to empty state ── */
+/* ── Reset All Data — defined further below with GH state reset ── */
+
+/* ════════════════════════════════════════════════════
+   DATA SOURCE MODE — LOCAL vs GITHUB LIVE
+
+   MANIFEST FORMAT (data/manifest.json in your repo):
+   {
+     "roster": {
+       "file": "PROPEL_SCM_ROSTER_HOURS.xlsx",
+       "description": "SCM Workforce Roster with monthly planned hours"
+     },
+     "flex_files": [
+       { "file": "ForecastToActualByWeek Report_USC0171161.1.1.xlsx", "wbs": "USC0171161.1.1" },
+       { "file": "ForecastToActualByWeek Report_USC0195637.1.1.xlsx", "wbs": "USC0195637.1.1" }
+     ],
+     "lta": {
+       "file": "LTA_Tracking.xlsx",
+       "description": "Optional — Long-Term Assignment CA days tracker"
+     }
+   }
+
+   All files must be placed in the "data/" folder of your GitHub Pages repo.
+   flex_files entries can also be plain strings: "ForecastToActualByWeek Report_USC0171161.1.1.xlsx"
+   Add new WBS files to flex_files and click "Refresh Manifest" — no page reload needed.
+════════════════════════════════════════════════════ */
+
+function toggleDataSourceMode(){
+  const newMode = (_dsMode === 'local') ? 'github' : 'local';
+  setDataSourceMode(newMode);
+}
+
+function setDataSourceMode(mode){
+  _dsMode = mode;
+
+  const localOpt  = document.getElementById('dsOptLocal');
+  const githubOpt = document.getElementById('dsOptGitHub');
+  const badge     = document.getElementById('dsModeBadge');
+  const ghHint    = document.getElementById('dsGhUrlHint');
+  const localBar  = document.querySelector('.import-bar');
+  const ghPanel   = document.getElementById('ghImportPanel');
+  const ltaGhHint = document.getElementById('ltaGhHint');
+
+  if(mode === 'github'){
+    localOpt.classList.remove('active');
+    githubOpt.classList.add('active','github');
+    badge.textContent = '☁️ GitHub Live Mode';
+    badge.className   = 'ds-mode-badge github';
+    ghHint.style.display = 'inline';
+    localBar.style.display = 'none';
+    ghPanel.classList.add('active');
+    if(ltaGhHint) ltaGhHint.style.display = 'block';
+    /* Auto-fetch manifest on first switch to GitHub mode */
+    if(!_ghManifest){
+      ghFetchManifest();
+    } else {
+      _ghRenderManifestUI();
+    }
+  } else {
+    githubOpt.classList.remove('active','github');
+    localOpt.classList.add('active');
+    badge.textContent = '📁 Local File Import';
+    badge.className   = 'ds-mode-badge local';
+    ghHint.style.display = 'none';
+    localBar.style.display = '';
+    ghPanel.classList.remove('active');
+    if(ltaGhHint) ltaGhHint.style.display = 'none';
+  }
+}
+
+/* ── Fetch manifest.json from GitHub Pages repo ── */
+async function ghFetchManifest(){
+  const summaryEl = document.getElementById('ghFlexSummary');
+  const rosterSt  = document.getElementById('ghRosterStatus');
+  const genBtn    = document.getElementById('ghGenerateBtn');
+  const genSt     = document.getElementById('ghGenerateStatus');
+  const refBtn    = document.getElementById('ghRefreshBtn');
+
+  summaryEl.textContent = '⏳ Fetching manifest…';
+  summaryEl.className   = 'gh-manifest-summary loading';
+  rosterSt.textContent  = 'Waiting for manifest…';
+  rosterSt.className    = 'gh-status pending';
+  if(genBtn)  genBtn.disabled  = true;
+  if(refBtn)  refBtn.disabled  = true;
+  if(genSt)   genSt.innerHTML  = 'Loading manifest…';
+
+  try {
+    const url = GH_MANIFEST + '?cb=' + Date.now(); // cache-bust
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    _ghManifest = await res.json();
+    _ghRenderManifestUI();
+    ghLoadAllFiles();
+  } catch(err){
+    summaryEl.textContent = '❌ Could not load manifest: ' + err.message;
+    summaryEl.className   = 'gh-manifest-summary err';
+    rosterSt.textContent  = '❌ Manifest failed';
+    rosterSt.className    = 'gh-status err';
+    if(genSt) genSt.innerHTML = '❌ Manifest error';
+    console.error('GitHub manifest fetch error:', err);
+  } finally {
+    if(refBtn) refBtn.disabled = false;
+  }
+}
+
+/* Refresh — re-fetch manifest and reload all files */
+async function ghRefreshManifest(){
+  /* Reset state so files re-load cleanly */
+  _ghManifest = null;
+  _ghFlexStatuses = {};
+  _ghRosterLoaded = false;
+  /* Reset data */
+  R = []; FD = []; WEEKS = []; MONTHS = [];
+  rosterLoaded = false; flexLoaded = false;
+  _flexFiles = [];
+  _metaWBSCodes = []; _metaFlexIDs = [];
+  window._rosterMap = null; window._rosterKeys = null;
+  window._flexMap = null; window._weekDates = null;
+  /* Re-fetch */
+  await ghFetchManifest();
+}
+
+/* ── Render the manifest-driven UI without loading files ── */
+function _ghRenderManifestUI(){
+  const m = _ghManifest;
+  if(!m) return;
+
+  /* Roster */
+  const rosterNameEl = document.getElementById('ghRosterName');
+  const rosterStEl   = document.getElementById('ghRosterStatus');
+  if(m.roster && m.roster.file){
+    rosterNameEl.textContent = m.roster.file;
+    rosterStEl.textContent   = 'Ready to load…';
+    rosterStEl.className     = 'gh-status pending';
+  } else {
+    rosterNameEl.textContent = 'Not configured';
+    rosterStEl.textContent   = '⚠ No roster in manifest';
+    rosterStEl.className     = 'gh-status err';
+  }
+
+  /* Flex files */
+  const listEl    = document.getElementById('ghFlexList');
+  const summaryEl = document.getElementById('ghFlexSummary');
+  const flexFiles = (m.flex_files || []);
+
+  if(flexFiles.length === 0){
+    summaryEl.textContent = '⚠ No Flex ETC files in manifest';
+    summaryEl.className   = 'gh-manifest-summary err';
+    listEl.innerHTML = '';
+    return;
+  }
+
+  summaryEl.textContent = `📦 ${flexFiles.length} Flex file${flexFiles.length>1?'s':''} in manifest`;
+  summaryEl.className   = 'gh-manifest-summary';
+
+  listEl.innerHTML = flexFiles.map(f => {
+    const fname = typeof f === 'string' ? f : f.file;
+    const status = _ghFlexStatuses[fname] || 'pending';
+    const statusIcon = {pending:'⏳', loading:'⌛', ok:'✅', error:'❌'}[status] || '⏳';
+    const statusText = {pending:'Queued', loading:'Loading…', ok:'Loaded', error:'Error'}[status] || 'Queued';
+    const cls = {pending:'', loading:'', ok:'loaded', error:'error'}[status] || '';
+    return `<div class="gh-flex-item ${cls}" id="ghfi-${_ghSafeId(fname)}">
+      <span class="gfi-name" title="${fname}">📄 ${fname}</span>
+      <span class="gfi-status ${status}" id="ghfis-${_ghSafeId(fname)}">${statusIcon} ${statusText}</span>
+    </div>`;
+  }).join('');
+
+  /* GH Generate button — will be enabled once load completes */
+  _ghUpdateGenerateBtn();
+}
+
+function _ghSafeId(fname){
+  return fname.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
+/* ── Load all files listed in manifest ── */
+async function ghLoadAllFiles(){
+  const m = _ghManifest;
+  if(!m) return;
+
+  showLoading('Loading files from GitHub…');
+
+  const tasks = [];
+
+  /* Roster */
+  if(m.roster && m.roster.file){
+    tasks.push(ghFetchRoster(m.roster.file));
+  }
+
+  /* Flex files */
+  const flexFiles = (m.flex_files || []).map(f => typeof f === 'string' ? f : f.file);
+  /* Load each flex file sequentially to avoid hammering GitHub Pages */
+  tasks.push((async () => {
+    for(const fname of flexFiles){
+      await ghFetchFlexFile(fname);
+    }
+  })());
+
+  /* LTA (optional) */
+  if(m.lta && m.lta.file){
+    tasks.push(ghFetchLTA(m.lta.file));
+  }
+
+  await Promise.all(tasks);
+  hideLoading();
+
+  /* Merge and enable Generate */
+  if(rosterLoaded && flexLoaded){
+    tryMerge();
+    updateImportCounts();
+    _ghSyncImportCounts();
+    _ghUpdateGenerateBtn();
+  } else {
+    _ghUpdateGenerateBtn();
+  }
+}
+
+/* ── Fetch a single file from GitHub as ArrayBuffer → parse with XLSX ── */
+async function _ghFetchXLSX(path){
+  const url = GH_BASE + path + '?cb=' + Date.now();
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+  const buf = await res.arrayBuffer();
+  const wb  = XLSX.read(buf, {type:'array'});
+  const ws  = wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+}
+
+/* ── Fetch Roster from GitHub ── */
+async function ghFetchRoster(fname){
+  const stEl = document.getElementById('ghRosterStatus');
+  try {
+    stEl.textContent = '⌛ Loading…';
+    stEl.className   = 'gh-status loading';
+    const path = fname.includes('/') ? fname : 'data/' + fname;
+    const aoa = await _ghFetchXLSX(path);
+    parseRosterAoA(aoa, fname);
+    _ghRosterLoaded = true;
+    stEl.textContent = '✅ Loaded';
+    stEl.className   = 'gh-status ok';
+    document.getElementById('ghRosterName').textContent = fname;
+  } catch(err){
+    stEl.textContent = '❌ ' + err.message;
+    stEl.className   = 'gh-status err';
+    console.error('GH Roster fetch error:', err);
+  }
+}
+
+/* ── Fetch a single Flex ETC file from GitHub ── */
+async function ghFetchFlexFile(fname){
+  const safeId   = _ghSafeId(fname);
+  const itemEl   = document.getElementById('ghfi-'  + safeId);
+  const statusEl = document.getElementById('ghfis-' + safeId);
+  _ghFlexStatuses[fname] = 'loading';
+  if(statusEl){ statusEl.textContent = '⌛ Loading…'; statusEl.className = 'gfi-status loading'; }
+  if(itemEl)  { itemEl.className = 'gh-flex-item'; }
+  try {
+    const path = fname.includes('/') ? fname : 'data/' + fname;
+    const aoa  = await _ghFetchXLSX(path);
+    /* Skip duplicates already loaded */
+    if(!_flexFiles.some(f => f.fname === fname)){
+      const result = _parseSingleFlex(aoa, fname);
+      if(result){
+        _flexFiles.push(result);
+        flexLoaded = true;
+      }
+    }
+    _ghFlexStatuses[fname] = 'ok';
+    if(statusEl){ statusEl.textContent = '✅ Loaded'; statusEl.className = 'gfi-status ok'; }
+    if(itemEl)  { itemEl.className = 'gh-flex-item loaded'; }
+  } catch(err){
+    _ghFlexStatuses[fname] = 'error';
+    if(statusEl){ statusEl.textContent = '❌ ' + err.message; statusEl.className = 'gfi-status err'; }
+    if(itemEl)  { itemEl.className = 'gh-flex-item error'; }
+    console.error('GH Flex fetch error:', fname, err);
+  }
+}
+
+/* ── Fetch LTA file from GitHub ── */
+async function ghFetchLTA(fname){
+  try {
+    const path = fname.includes('/') ? fname : 'data/' + fname;
+    const aoa  = await _ghFetchXLSX(path);
+    _parseLTAFile(aoa, fname);
+    const ltaSum = document.getElementById('ltaSummary');
+    if(ltaSum){ ltaSum.textContent = `✅ Loaded from GitHub: ${fname}`; ltaSum.style.color='#2e7d32'; ltaSum.style.fontStyle='normal'; }
+    const ltaGhHint = document.getElementById('ltaGhHint');
+    if(ltaGhHint) ltaGhHint.textContent = `✅ LTA loaded from GitHub: ${fname}`;
+  } catch(err){
+    console.warn('GH LTA fetch error:', err.message);
+  }
+}
+
+/* ── Update GitHub mode Generate button ── */
+function _ghUpdateGenerateBtn(){
+  const btn = document.getElementById('ghGenerateBtn');
+  const st  = document.getElementById('ghGenerateStatus');
+  if(!btn||!st) return;
+  const ready = rosterLoaded && flexLoaded;
+  btn.disabled = !ready;
+  if(ready){
+    st.innerHTML = `✅ <strong>${R.length} resources</strong> ready — click to generate`;
+    st.className = 'generate-status ready';
+  } else if(rosterLoaded){
+    st.innerHTML = '⏳ Waiting for Flex files…';
+    st.className = 'generate-status partial';
+  } else if(flexLoaded){
+    st.innerHTML = '⏳ Waiting for Roster…';
+    st.className = 'generate-status partial';
+  } else {
+    st.innerHTML = 'Loading from GitHub…';
+    st.className = 'generate-status';
+  }
+  /* Also sync the GH dashboard refresh btn */
+  const ghDashBtn = document.getElementById('ghDashRefreshBtn');
+  if(ghDashBtn){
+    const dashVisible = document.getElementById('dashContent').style.display !== 'none';
+    ghDashBtn.disabled = !dashVisible || !ready;
+  }
+}
+
+/* ── Mirror import counts to the GitHub panel ── */
+function _ghSyncImportCounts(){
+  if(_dsMode !== 'github') return;
+  const rMap  = window._rosterMap || {};
+  const fMap  = window._flexMap   || {};
+  const rCnt  = Object.keys(rMap).length;
+  const fCnt  = Object.keys(fMap).length;
+  const fFiles= _flexFiles.length;
+  const mCnt  = MONTHS.length;
+  const wCnt  = WEEKS.length;
+  const mrgCnt= R.length;
+  const bar = document.getElementById('ghImportCounts');
+  if(bar) bar.style.display = (rCnt>0||fCnt>0) ? 'flex' : 'none';
+  const s = id => document.getElementById(id);
+  const _set = (id, v) => { const el=s(id); if(el) el.textContent = v||'—'; };
+  _set('ghCntRoster',    rCnt);
+  _set('ghCntMonths',    mCnt);
+  _set('ghCntFlexFiles', fFiles);
+  _set('ghCntFlex',      fCnt);
+  _set('ghCntWeeks',     wCnt);
+  _set('ghCntMerged',    mrgCnt);
+  /* Flex summary */
+  const sumEl = document.getElementById('ghFlexSummary');
+  if(sumEl && fFiles>0){
+    sumEl.textContent = `✅ ${fFiles} file${fFiles>1?'s':''} loaded — ${fCnt} resources, ${wCnt} weeks`;
+    sumEl.className   = 'gh-manifest-summary ok';
+  }
+}
+
+/* ── _updateGenerateBtn — updates both local panel + GH panel ── */
+function _updateGenerateBtn(){
+  _updateLocalGenerateBtn();
+  _ghUpdateGenerateBtn();
+}
+
+/* ── resetAllData — base reset + GH state reset ── */
 function resetAllData(){
-  /* Clear state */
+  /* ── Clear core state ── */
   R = []; FD = []; WEEKS = []; MONTHS = [];
   rosterLoaded = false; flexLoaded = false;
   sortDir = 1; lastCol = -1;
@@ -2386,63 +2874,103 @@ function resetAllData(){
   window._weekDates  = null;
   window._rosterFname= null;
 
-  /* Destroy all charts */
+  /* Destroy charts */
   Object.values(charts).forEach(c=>{ try{ c.destroy(); }catch(e){} });
   charts = {};
 
-  /* Reset file inputs */
+  /* Reset local file inputs */
   const ri = document.getElementById('rosterFile');
   const fi = document.getElementById('flexFileInput');
   if(ri) ri.value = '';
   if(fi) fi.value = '';
-
-  /* Reset roster button */
   document.getElementById('rosterBtn').classList.remove('loaded');
-
-  /* Reset flex chip UI */
   _renderFlexChips();
-
-  /* Reset status text */
   setStatus('rosterStatus','No file loaded','');
 
   /* Reset badges */
   document.getElementById('badgeRes').textContent       = '👥 — Resources';
   document.getElementById('badgeDateRange').textContent = '📅 —';
   document.getElementById('badgeShore').textContent     = '🌐 ON + OFF Shore';
-  updateHeaderMeta(); // resets WBS/FlexID to '—'
+  updateHeaderMeta();
 
-  /* Reset counts bar */
+  /* Reset local counts bar */
   document.getElementById('importCounts').style.display = 'none';
   ['cntRoster','cntMonths','cntFlexFiles','cntFlex','cntWeeks','cntMerged'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.textContent='—';
   });
-
-  /* Disable refresh button, reset generate button */
   document.getElementById('refreshBtn').disabled = true;
   _updateGenerateBtn();
 
-  /* Hide dashboard, show empty state */
+  /* Hide dashboard */
   document.getElementById('dashContent').style.display = 'none';
   document.getElementById('filterBar').style.display   = 'none';
   document.getElementById('footerBar').style.display   = 'none';
   document.getElementById('emptyState').style.display  = 'block';
 
-  /* Clear table bodies */
   ['detailBody','rosterBody','heatTable'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.innerHTML='';
   });
   const rh = document.getElementById('rosterHead'); if(rh) rh.innerHTML='';
 
-  /* Reset KPI values */
   ['kRoster','kForecast','kActual','kETC','kVar','kUtil','kRes','kOU'].forEach(id=>{
     const el=document.getElementById(id); if(el){ el.textContent='—'; el.style.color=''; }
   });
-
-  /* Reset filter dropdowns to base state */
   ['fShore','fScrum','fClass','fStatus','fMonth'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.innerHTML='<option value="all">—</option>';
   });
   const fa=document.getElementById('fActive'); if(fa){ fa.value='YES'; }
+
+  /* ── Reset GH state ── */
+  _ghManifest = null;
+  _ghFlexStatuses = {};
+  _ghRosterLoaded = false;
+  const ghFlexList = document.getElementById('ghFlexList');
+  if(ghFlexList) ghFlexList.innerHTML = '';
+  const ghFlexSummary = document.getElementById('ghFlexSummary');
+  if(ghFlexSummary){ ghFlexSummary.textContent='Waiting for manifest…'; ghFlexSummary.className='gh-manifest-summary pending'; }
+  const ghRosterStatus = document.getElementById('ghRosterStatus');
+  if(ghRosterStatus){ ghRosterStatus.textContent='Waiting for manifest…'; ghRosterStatus.className='gh-status pending'; }
+  const ghRosterName = document.getElementById('ghRosterName');
+  if(ghRosterName) ghRosterName.textContent='—';
+  const ghImportCounts = document.getElementById('ghImportCounts');
+  if(ghImportCounts) ghImportCounts.style.display='none';
+  _ghUpdateGenerateBtn();
+
+  /* If in GitHub mode, re-fetch manifest after reset */
+  if(_dsMode === 'github'){
+    setTimeout(ghFetchManifest, 200);
+  }
+}
+
+/* ── updateImportCounts — syncs both local + GH count bars ── */
+function updateImportCounts(){
+  const rMap  = window._rosterMap || {};
+  const fMap  = window._flexMap   || {};
+  const rCnt  = Object.keys(rMap).length;
+  const fCnt  = Object.keys(fMap).length;
+  const fFiles= _flexFiles.length;
+  const mCnt  = MONTHS.length;
+  const wCnt  = WEEKS.length;
+  const mrgCnt= R.length;
+
+  const bar = document.getElementById('importCounts');
+  if(rCnt>0||fCnt>0) bar.style.display='flex'; else bar.style.display='none';
+
+  const s = id => document.getElementById(id);
+  s('cntRoster').textContent    = rCnt   || '—';
+  s('cntMonths').textContent    = mCnt   || '—';
+  s('cntFlexFiles').textContent = fFiles || '—';
+  s('cntFlex').textContent      = fCnt   || '—';
+  s('cntWeeks').textContent     = wCnt   || '—';
+  s('cntMerged').textContent    = mrgCnt || '—';
+
+  /* Enable Refresh only when dashboard has been generated */
+  const btn = document.getElementById('refreshBtn');
+  const dashVisible = document.getElementById('dashContent').style.display !== 'none';
+  btn.disabled = !dashVisible || !(rosterLoaded || flexLoaded);
+
+  _updateGenerateBtn();
+  _ghSyncImportCounts();
 }
 
 /* ════════════════════════════════════════════════════
