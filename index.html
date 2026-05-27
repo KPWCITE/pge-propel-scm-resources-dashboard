@@ -1799,16 +1799,24 @@ function generateDashboard(){
     FD = [...R];
     initFilters();
     updateBadges();
-    renderAll();
+
+    /* Show dashboard containers BEFORE rendering charts so Chart.js
+       can measure canvas dimensions correctly (fails when display:none) */
     document.getElementById('emptyState').style.display  = 'none';
     document.getElementById('dashContent').style.display = 'block';
     document.getElementById('footerBar').style.display   = 'block';
     document.getElementById('filterBar').style.display   = 'flex';
+
     const now = new Date().toLocaleString('en-US',{month:'numeric',day:'numeric',year:'numeric',
       hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
     const ts=document.getElementById('ts'); if(ts) ts.textContent=now;
     const ts2=document.getElementById('ts2'); if(ts2) ts2.textContent=now;
-    hideLoading();
+
+    /* Render after a frame so the browser has painted the visible containers */
+    requestAnimationFrame(()=>{
+      renderAll();
+      hideLoading();
+    });
   }, 80);
 }
 
@@ -2614,12 +2622,14 @@ function refreshData(){
     FD = [...R];
     initFilters();
     updateBadges();
-    renderAll();
     const now = new Date().toLocaleString('en-US',{month:'numeric',day:'numeric',year:'numeric',
       hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
     const ts=document.getElementById('ts'); if(ts) ts.textContent=now;
     const ts2=document.getElementById('ts2'); if(ts2) ts2.textContent=now;
-    hideLoading();
+    requestAnimationFrame(()=>{
+      renderAll();
+      hideLoading();
+    });
   }, 80);
 }
 
@@ -2948,13 +2958,15 @@ async function ghFetchFlexFile(fname){
 /* ── Fetch LTA file from GitHub (CSV or XLSX, auto-detected) ── */
 async function ghFetchLTA(fname){
   const ltaGhStatus = document.getElementById('ltaGhStatus');
-  if(ltaGhStatus) ltaGhStatus.textContent = '⌛ Loading LTA from GitHub…';
+  if(ltaGhStatus){ ltaGhStatus.textContent = '⌛ Loading LTA from GitHub…'; ltaGhStatus.style.color='#1565c0'; }
   try {
     const aoa = await _ghFetchFile(fname);
     _parseLTAFile(aoa, fname);
+    /* Only update the GitHub-specific status line — ltaSummary is for local mode */
+    if(ltaGhStatus){ ltaGhStatus.textContent = `✅ LTA loaded: ${fname}`; ltaGhStatus.style.color='#2e7d32'; }
+    /* Suppress the ltaSummary update that _parseLTAFile triggers — override it */
     const ltaSum = document.getElementById('ltaSummary');
-    if(ltaSum){ ltaSum.textContent = `✅ Loaded from GitHub: ${fname}`; ltaSum.style.color='#2e7d32'; ltaSum.style.fontStyle='normal'; }
-    if(ltaGhStatus) ltaGhStatus.textContent = `✅ LTA loaded: ${fname}`;
+    if(ltaSum){ ltaSum.textContent = ''; ltaSum.style.display='none'; }
   } catch(err){
     console.warn('GH LTA fetch error:', err.message);
     if(ltaGhStatus){ ltaGhStatus.textContent = `⚠ LTA not loaded: ${err.message}`; ltaGhStatus.style.color='#e65100'; }
@@ -3510,10 +3522,16 @@ function _parseLTAFile(aoa, fname){
   _ltaMonths = _sortFiscal(months);
   _ltaIsDemo = false;
   hideLoading();
-  document.getElementById('ltaSummary').textContent =
-    `✅ ${fname} — ${parsed.length} resources, ${months.length} months`;
-  document.getElementById('ltaSummary').className='lta-summary ok';
-  document.getElementById('ltaFileBtn').classList.add('loaded');
+  /* Only update ltaSummary in local mode — GitHub mode manages its own status line */
+  if(_dsMode !== 'github'){
+    const ltaSum = document.getElementById('ltaSummary');
+    if(ltaSum){
+      ltaSum.textContent = `✅ ${fname} — ${parsed.length} resources, ${months.length} months`;
+      ltaSum.className   = 'lta-summary ok';
+      ltaSum.style.display = '';
+    }
+    document.getElementById('ltaFileBtn')?.classList.add('loaded');
+  }
   _initLTAFilters();
   renderLTATable();
 }
