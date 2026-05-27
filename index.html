@@ -386,7 +386,23 @@ table.dt tbody td{padding:7px 11px;border-bottom:1px solid #f0f0f0;white-space:n
 .lta-kpi.lk3{border-top-color:#ff8f00;} .lta-kpi.lk3 .val{color:#ff8f00;}
 .lta-kpi.lk4{border-top-color:#2e7d32;} .lta-kpi.lk4 .val{color:#2e7d32;}
 .lta-kpi.lk5{border-top-color:#6a1b9a;} .lta-kpi.lk5 .val{color:#6a1b9a;}
-.lta-filter-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;}
+/* ── LABEL TOOLTIP (for filter row labels, section headers) ── */
+.lbl-tip{position:relative;display:inline-flex;align-items:center;gap:4px;cursor:default;}
+.lbl-tip::after{content:'ℹ';font-size:.6rem;color:#90a4ae;font-style:normal;vertical-align:super;margin-left:2px;}
+.lbl-tip .ltip{
+  display:none;position:absolute;bottom:calc(100% + 8px);left:0;
+  background:#1b1b1b;color:#e0e0e0;font-size:.67rem;line-height:1.6;
+  padding:10px 13px;border-radius:8px;min-width:220px;max-width:300px;z-index:9999;
+  box-shadow:0 6px 20px rgba(0,0,0,.3);border-top:3px solid #1565c0;
+  font-weight:400;white-space:normal;pointer-events:none;animation:wtip-in .12s ease;}
+.lbl-tip .ltip::after{content:'';position:absolute;top:100%;left:14px;
+  border:6px solid transparent;border-top-color:#1565c0;}
+.lbl-tip:hover .ltip{display:block;}
+.lbl-tip strong{color:#ffd700;display:block;margin-bottom:4px;font-size:.69rem;}
+/* Section title with tooltip (for LTA Table title bar) */
+.lta-tbl-hdr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:#1b1b1b;border-radius:8px 8px 0 0;padding:8px 14px;margin-top:12px;}
+.lta-tbl-hdr-title{color:#ffd700;font-size:.78rem;font-weight:800;letter-spacing:.3px;}
 table.lta-tbl{width:100%;border-collapse:collapse;font-size:.71rem;}
 table.lta-tbl thead{position:sticky;top:0;z-index:2;}
 table.lta-tbl thead tr{background:#1b1b1b;color:#fff;}
@@ -420,20 +436,58 @@ table.lta-tbl tbody tr.lta-row-ca-local td{opacity:.55;background:#f9fdf5!import
 table.lta-tbl tbody tr.lta-row-ca-local td.lta-ca-local-cell{opacity:1;background:#e8f5e9!important;}
 table.lta-tbl tbody tr.lta-ca-local-sub td{opacity:.5;background:#f9fdf5!important;font-size:.68rem;}
 table.lta-tbl tbody tr.lta-ca-local-sub td.lta-ca-local-cell{opacity:1;background:#e8f5e9!important;}
+/* ── LTA Forecast — holiday tooltip REMOVED from CSS (now body-level floating) ── */
+.lta-fc-th{position:relative;cursor:default;}
+/* ── Apply forecast button — always fully opaque ── */
+#ltaApplyForecastBtn{opacity:1!important;pointer-events:auto!important;}
+/* ── Forecast clear cell button ── */
+.lta-fc-clr{width:16px;height:16px;border-radius:50%;border:none;background:#ffcdd2;
+  color:#c62828;font-size:.6rem;font-weight:900;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;transition:background .15s;padding:0;}
+.lta-fc-clr:hover{background:#ef9a9a;}
+.lta-fc-th-sub{background:#1976d2;color:#cfe8ff;font-size:.57rem;font-weight:600;
+  text-align:center;padding:3px 4px;white-space:nowrap;}
+.lta-fc-chk-th{background:#0d47a1;color:#fff;font-size:.59rem;text-align:center;
+  padding:4px 2px;vertical-align:middle;}
+/* ── Body-level floating holiday tooltip ── */
+#lta-float-tip{
+  display:none;position:fixed;z-index:99999;
+  background:#1b1b1b;color:#fff;font-size:.63rem;font-weight:400;
+  border-radius:8px;padding:9px 13px;white-space:nowrap;
+  box-shadow:0 6px 22px rgba(0,0,0,.45);min-width:190px;line-height:1.75;
+  border:1px solid #333;pointer-events:none;
+  animation:ftip-in .1s ease;}
+#lta-float-tip.blue-tip{background:#0a2a6e;border-color:#1565c0;}
+#lta-float-tip::before{
+  content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;}
+#lta-float-tip.blue-tip::before{border-bottom-color:#1565c0;}
+#lta-float-tip:not(.blue-tip)::before{border-bottom-color:#333;}
+@keyframes ftip-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.lta-fc-input{width:46px;text-align:center;border:1.5px solid #90caf9;border-radius:5px;
+  padding:3px 4px;font-size:.72rem;font-weight:700;background:#e3f2fd;color:#0d47a1;
+  transition:border-color .15s;}
+.lta-fc-input:focus{outline:none;border-color:#1565c0;background:#fff;}
+.lta-fc-input:disabled{background:#f5f5f5;color:#bbb;border-color:#ddd;cursor:not-allowed;}
+.lta-fc-local{font-size:.71rem;font-weight:700;color:#2e7d32;min-width:32px;display:inline-block;}
+.lta-fc-pct{font-size:.65rem;font-weight:800;}
+.lta-fc-pct.exceeded{color:#b71c1c;} .lta-fc-pct.warning{color:#e65100;} .lta-fc-pct.ok{color:#2e7d32;}
+.lta-fc-biz{font-size:.57rem;color:#90a4ae;display:block;margin-top:1px;}
+table.lta-fc-tbl{width:100%;border-collapse:collapse;font-size:.64rem;}
+table.lta-fc-tbl thead th{position:sticky;top:0;z-index:3;}
+table.lta-fc-tbl tbody td{padding:5px 6px;border-bottom:1px solid #e3f2fd;vertical-align:middle;}
+table.lta-fc-tbl tbody tr:nth-child(even){background:#f8fbff;}
+table.lta-fc-tbl tbody tr:hover{background:#e8f4ff;}
+/* ── lta-fc-th base style ── */
+.lta-fc-th{background:#1565c0;color:#fff;text-align:center;padding:5px 4px;white-space:nowrap;
+  border-left:2px solid #42a5f5;min-width:150px;font-size:.62rem;font-weight:700;}
+.lta-fc-colena-badge{display:inline-flex;align-items:center;gap:3px;font-size:.58rem;color:#1565c0;font-weight:600;}
 .lta-na-badge{background:#e8f5e9;color:#2e7d32;font-weight:700;border-radius:5px;
   padding:3px 9px;font-size:.66rem;display:inline-block;}
-/* Month holiday tooltip */
+/* Month holiday tooltip — now handled by floating #lta-float-tip via JS */
 .lta-month-th{position:relative;cursor:default;}
-.lta-month-th .lta-hol-tip{
-  display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);
-  background:#1b1b1b;color:#fff;font-size:.62rem;font-weight:400;
-  border-radius:7px;padding:8px 11px;white-space:nowrap;z-index:99;
-  box-shadow:0 4px 16px rgba(0,0,0,.35);min-width:180px;line-height:1.7;
-  border:1px solid #333;pointer-events:none;}
-.lta-month-th .lta-hol-tip::before{
-  content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
-  border:5px solid transparent;border-bottom-color:#333;}
-.lta-month-th:hover .lta-hol-tip{display:block;}
+/* Legacy .lta-hol-tip hidden — kept for fallback only */
+.lta-hol-tip{display:none!important;}
 
 /* ── DATA SOURCE TOGGLE ── */
 .ds-toggle-wrap{
@@ -978,17 +1032,18 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
 
       <!-- KPI strip -->
       <div class="lta-kpis">
-        <div class="lta-kpi lk1"><div class="lbl">👤 Onshore Tracked</div><div class="val" id="ltaKTotal">—</div><div class="sub">resources</div></div>
-        <div class="lta-kpi lk2"><div class="lbl">🚨 LTA Exceeded</div><div class="val" id="ltaKExceeded">—</div><div class="sub">≥ 50% CA days</div></div>
-        <div class="lta-kpi lk3"><div class="lbl">⚠ Approaching LTA</div><div class="val" id="ltaKWarning">—</div><div class="sub">40–49% CA days</div></div>
-        <div class="lta-kpi lk4"><div class="lbl">✓ Within Limit</div><div class="val" id="ltaKOK">—</div><div class="sub">&lt; 40% CA days</div></div>
-        <div class="lta-kpi" style="border-top-color:#2e7d32"><div class="lbl">🏠 CA Local</div><div class="val" id="ltaKCALocal" style="color:#2e7d32">—</div><div class="sub">LTA not applicable</div></div>
-        <div class="lta-kpi lk5"><div class="lbl">📅 Avg CA %</div><div class="val" id="ltaKAvg">—</div><div class="sub">excl. CA Local</div></div>
+        <div class="lta-kpi lk1"><div class="lbl">👤 Onshore Tracked</div><div class="val" id="ltaKTotal">—</div><div class="sub">resources</div><div class="kpi-tip"><strong>Onshore Resources Tracked</strong>Total number of ONSHORE resources included in LTA tracking for the current period.<span>Excludes OFFSHORE resources and CA Local (CA-based) resources from threshold counting.</span></div></div>
+        <div class="lta-kpi lk2"><div class="lbl">🚨 LTA Exceeded</div><div class="val" id="ltaKExceeded">—</div><div class="sub">≥ 50% CA days</div><div class="kpi-tip"><strong>LTA Exceeded</strong>Resources where CA Days ≥ 50% of total Business Days. These consultants have triggered the SF Bay Area tax nexus threshold.<span>Action required: coordinate with tax/HR team. Review travel schedules immediately.</span></div></div>
+        <div class="lta-kpi lk3"><div class="lbl">⚠ Approaching LTA</div><div class="val" id="ltaKWarning">—</div><div class="sub">40–49% CA days</div><div class="kpi-tip"><strong>Approaching LTA Limit</strong>Resources where CA Days are between 40–49% of Business Days. These are at risk and should reduce CA presence going forward.<span>Monitor closely. Consider scheduling more remote or local-office days.</span></div></div>
+        <div class="lta-kpi lk4"><div class="lbl">✓ Within Limit</div><div class="val" id="ltaKOK">—</div><div class="sub">&lt; 40% CA days</div><div class="kpi-tip"><strong>Within LTA Limit</strong>Resources with CA Days below 40% of Business Days. These are compliant and not at risk of triggering the SF tax nexus.<span>Continue monitoring monthly to ensure they stay below the 50% threshold.</span></div></div>
+        <div class="lta-kpi" style="border-top-color:#2e7d32"><div class="lbl">🏠 CA Local</div><div class="val" id="ltaKCALocal" style="color:#2e7d32">—</div><div class="sub">LTA not applicable</div><div class="kpi-tip"><strong>CA Local Resources</strong>Resources who are based in California (SF Bay Area) as their primary location. LTA tracking does not apply to them as they are already CA residents.<span>Toggle the 🏠 CA Local checkbox in the table to mark/unmark a resource.</span></div></div>
+        <div class="lta-kpi lk5"><div class="lbl">📅 Avg CA %</div><div class="val" id="ltaKAvg">—</div><div class="sub">excl. CA Local</div><div class="kpi-tip"><strong>Average CA Percentage</strong>Mean CA% across all tracked ONSHORE resources (excluding CA Local). Calculated as the average of each resource's CA Days ÷ Biz Days ratio.<span>A team-level indicator of overall California presence. Watch for creep toward 50%.</span></div></div>
       </div>
 
       <!-- Filters -->
-      <div class="lta-filter-row">
-        <div class="fg"><label>LTA Status</label>
+      <div class="lta-filter-row" style="align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <div class="fg">
+          <label><span class="lbl-tip">LTA Status<span class="ltip"><strong>Filter by LTA Status</strong>Filter the resource list to show only resources in a particular compliance state.<br><br>🚨 <b style="color:#ef9a9a">Exceeded</b> — CA days ≥ 50% of biz days<br>⚠ <b style="color:#ffcc80">Approaching</b> — CA days 40–49%<br>✓ <b style="color:#a5d6a7">OK</b> — CA days &lt; 40%<br>🏠 <b style="color:#a5d6a7">CA Local</b> — Based in CA, LTA N/A</span></span></label>
           <select id="ltaFStatus" onchange="renderLTATable()">
             <option value="all">All Statuses</option>
             <option value="exceeded">🚨 Exceeded</option>
@@ -997,17 +1052,45 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
             <option value="ca-local">🏠 CA Local (N/A)</option>
           </select>
         </div>
-        <div class="fg"><label>View Month</label>
-          <select id="ltaFMonth" onchange="renderLTATable()"><option value="all">YTD Cumulative</option></select>
+        <div class="fg">
+          <label><span class="lbl-tip">View Month<span class="ltip"><strong>View Month / Period</strong>Select a single month to see that month's individual CA Days, Local Days, Biz Days and CA% for each resource.<br><br>Defaults to <b style="color:#ffd700">Rolling 10-Month Cumulative</b> — sums the 10 most recent months to compute the LTA threshold.<br><br>Grouped into ✅ Completed, 📍 Current, and 🔭 Forecast months.</span></span></label>
+          <select id="ltaFMonth" onchange="ltaMonthFilterChange()"><option value="all">📊 Rolling 10-Month Cumulative</option></select>
         </div>
-        <div class="fg"><label>Search</label>
+        <!-- Date range -->
+        <div id="ltaDateRangeWrap" style="display:flex;align-items:flex-end;gap:8px;background:#f0f4ff;border:1px solid #c5cae9;border-radius:8px;padding:6px 10px">
+          <div class="fg">
+            <label><span class="lbl-tip" style="color:#3949ab">📅 Start Month<span class="ltip"><strong>Date Range — Start Month</strong>Filter to include months <b>on or after</b> this month. Combine with End Month to isolate a custom period. All metrics (CA Days, Local Days, Biz Days, CA%) recalculate for the selected range.</span></span></label>
+            <input type="month" id="ltaDateStart" onchange="renderLTATable()"
+              style="padding:4px 8px;border:1px solid #9fa8da;border-radius:6px;font-size:.75rem;background:#fff;color:#1a237e"/>
+          </div>
+          <div class="fg">
+            <label><span class="lbl-tip" style="color:#3949ab">📅 End Month<span class="ltip"><strong>Date Range — End Month</strong>Filter to include months <b>on or before</b> this month. Combine with Start Month to define a rolling window. Leave blank to include all months through the latest available.</span></span></label>
+            <input type="month" id="ltaDateEnd" onchange="renderLTATable()"
+              style="padding:4px 8px;border:1px solid #9fa8da;border-radius:6px;font-size:.75rem;background:#fff;color:#1a237e"/>
+          </div>
+          <button onclick="ltaClearDateRange()" title="Clear date range"
+            style="padding:5px 10px;background:#fff;color:#c62828;border:1px solid #e0301e;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;align-self:flex-end">✕ Clear</button>
+          <span id="ltaDateRangeLabel" style="font-size:.62rem;color:#3949ab;font-weight:600;align-self:flex-end;white-space:nowrap"></span>
+        </div>
+        <div class="fg">
+          <label><span class="lbl-tip">Search<span class="ltip"><strong>Search by Name</strong>Type any part of a resource's name to filter all three LTA sections simultaneously — the summary table, the monthly breakdown, and the forecast model.</span></span></label>
           <input type="text" id="ltaSearch" placeholder="🔍 Name…" oninput="renderLTATable()"
             style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;font-size:.75rem;min-width:150px"/>
         </div>
       </div>
 
+      <!-- LTA Table title bar -->
+      <div class="lta-tbl-hdr">
+        <span class="lta-tbl-hdr-title">📋 LTA Compliance Summary Table</span>
+        <span class="lbl-tip" style="color:#90a4ae;font-size:.65rem;cursor:default">
+          What does this table show?
+          <span class="ltip" style="border-top-color:#ffd700"><strong>LTA Compliance Summary</strong>Each row is an ONSHORE resource. Columns show their CA day count vs total business days and LTA compliance status for the selected period or month.<br><br><b style="color:#ef9a9a">Biz Days</b> — Mon–Fri working days (excl. US Federal holidays).<br><b style="color:#ef9a9a">CA Days</b> — Days spent in California (SF Bay Area).<br><b style="color:#ef9a9a">Local Days</b> — Days at home/local office.<br><b style="color:#ef9a9a">CA%</b> — CA Days ÷ Biz Days. ≥50% = LTA Exceeded.<br><br>Click any column header to sort. Check 🏠 CA Local to mark a resource as CA-based (exempt from LTA).</span>
+        </span>
+        <span style="font-size:.61rem;color:#9e9e9e;font-style:italic;margin-left:6px">Sortable · Click column headers · 🏠 CA Local toggle per row</span>
+      </div>
+
       <!-- Main summary table -->
-      <div class="tw" style="max-height:400px;margin-bottom:16px">
+      <div class="tw" style="max-height:400px;margin-bottom:16px;border-radius:0 0 8px 8px;overflow:hidden">
         <table class="lta-tbl">
           <thead><tr id="ltaHead"></tr></thead>
           <tbody id="ltaBody"></tbody>
@@ -1015,8 +1098,33 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
       </div>
 
       <!-- Monthly breakdown mini-cards -->
-      <div class="lta-section-hdr">📅 Monthly CA vs Local Days — Per Resource</div>
-      <div id="ltaMonthBreakdown" style="overflow-x:auto"></div>
+      <div class="lta-section-hdr" style="display:flex;align-items:center;gap:8px">
+        📅 Monthly CA vs Local Days — Per Resource
+        <span class="lbl-tip" style="font-size:.62rem;font-weight:400;color:#888;text-transform:none;letter-spacing:0;cursor:default">What is this?<span class="ltip"><strong>Monthly CA vs Local Days Breakdown</strong>A detailed per-resource, per-month grid showing:<br><br><b style="color:#ef9a9a">CA Days</b> — days in California that month<br><b style="color:#c5e1a5">Local Days</b> — days at local office<br><b style="color:#ffd700">CA% / Status</b> — monthly CA% with flag<br><br>Month headers show holiday tooltips on hover. Columns color-coded: dark = past, orange = current, blue = forecast. The fraction shown (e.g. 9/22) is CA Days ÷ Biz Days.</span></span>
+      </div>
+      <div id="ltaMonthBreakdown" style="overflow-x:auto;overflow-y:visible"></div>
+
+      <!-- ══ FORECAST LTA SECTION ══ -->
+      <div id="ltaForecastSection" style="display:none;margin-top:18px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:10px 14px;background:#e3f2fd;border-radius:10px;border:1.5px solid #90caf9">
+          <div class="lta-section-hdr" style="margin:0;color:#0d47a1;display:flex;align-items:center;gap:6px">🔭 LTA Forecast Model — Future Months
+            <span class="lbl-tip" style="font-size:.62rem;font-weight:400;color:#5c85c9;text-transform:none;letter-spacing:0;cursor:default">How does this work?<span class="ltip" style="border-top-color:#ffd700"><strong>LTA Forecast Model</strong>Projects future CA Days for each ONSHORE resource from the next calendar month through the end of the roster period.<br><br>1. <b style="color:#ffd700">Check ✅ Edit CA</b> in a column header to unlock that month for editing.<br>2. <b style="color:#ffd700">Enter CA Days</b> (positive integer ≤ biz days). Local days auto-calculate as Biz Days − CA Days.<br>3. Click <b style="color:#90caf9">× Clear</b> on any cell to reset that resource/month to 0.<br>4. Click <b style="color:#90caf9">📊 Apply Forecast to LTA Table</b> to merge forecast data into the main LTA table and recalculate all statuses.<br><br><b style="color:#ef9a9a">Note:</b> Forecast values are planning estimates only — they do not modify the source LTA file.</span>
+          </span></div>
+          <span id="ltaForecastRange" style="font-size:.67rem;color:#1565c0;font-weight:700;background:#fff;padding:3px 10px;border-radius:12px;border:1px solid #90caf9"></span>
+          <span style="font-size:.63rem;color:#1565c0;opacity:.8;font-style:italic;flex:1">Business days auto-calculated · Check column header to enable CA Days edit · Local = Biz Days − CA Days</span>
+          <button onclick="ltaResetForecast()"
+            style="padding:6px 14px;background:#fff;color:#c62828;border:1.5px solid #e0301e;border-radius:6px;font-size:.68rem;font-weight:700;cursor:pointer;flex-shrink:0"
+            title="Reset all forecast CA days to 0">
+            ↺ Reset Forecast
+          </button>
+          <button id="ltaApplyForecastBtn" onclick="ltaApplyForecast()"
+            style="padding:8px 20px;background:#1565c0;color:#fff;border:none;border-radius:7px;font-size:.74rem;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(21,101,192,.45);white-space:nowrap;flex-shrink:0;opacity:1"
+            title="Apply forecast values to the LTA summary table above">
+            📊 Apply Forecast to LTA Table
+          </button>
+        </div>
+        <div id="ltaForecastTable" style="overflow-x:auto"></div>
+      </div>
 
     </div><!-- end tLTA -->
 
@@ -1886,10 +1994,14 @@ function initFilters(){
     sel('fMonth').add(o);
   });
 
-  /* Monthly chart title */
+  /* Monthly chart title — preserve the wtip tooltip span */
   if(MONTHS.length>0){
-    document.getElementById('monthlyChartTitle').textContent =
-      `📆 Monthly Planned Hours by Resource (${MONTHS[0]} → ${MONTHS[MONTHS.length-1]})`;
+    const titleEl=document.getElementById('monthlyChartTitle');
+    const tipEl=document.getElementById('monthlyChartTip');
+    if(titleEl){
+      titleEl.childNodes[0].textContent=`📆 Monthly Planned Hours by Resource (${MONTHS[0]} → ${MONTHS[MONTHS.length-1]}) `;
+      if(tipEl) titleEl.appendChild(tipEl); // re-attach if detached
+    }
   }
 }
 
@@ -3279,25 +3391,37 @@ const _HOL_NAMES={
   '12-25':'Christmas Day',
 };
 
-/* Build holiday tooltip HTML for a given month label e.g. "Jul-25" */
-function _monthHolidayTip(monthLabel){
+/* Build holiday tooltip data — returns {html, hasHols} for a month label */
+function _monthHolData(monthLabel){
   const p=_parseML(monthLabel);
-  if(!p) return '';
+  if(!p) return {html:'',hasHols:false};
   const {mo,yr}=p;
   const hols=(_US_HOLIDAYS[yr]||[]).filter(d=>{
     const dm=String(d).match(/^(\d{4})-(\d{2})-(\d{2})$/);
     return dm && +dm[2]-1===mo;
   });
-  if(!hols.length) return `<span class="lta-hol-tip">🎉 No federal holidays this month</span>`;
+  if(!hols.length) return {html:'🎉 No federal holidays this month',hasHols:false};
   const lines=hols.map(d=>{
-    const md=d.slice(5); // MM-DD
+    const md=d.slice(5);
     const name=_HOL_NAMES[md]||'Federal Holiday';
     const dt=new Date(d+'T12:00:00Z');
     const dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getUTCDay()];
     return `📅 ${d.slice(5).replace('-','/')} ${dow} — ${name}`;
   }).join('<br>');
-  return `<span class="lta-hol-tip">🇺🇸 <strong>Federal Holidays</strong><br>${lines}</span>`;
+  return {html:`🇺🇸 <strong>Federal Holidays</strong><br>${lines}`,hasHols:true};
 }
+
+/* Returns data-hol-tip attribute string for embedding in a th/td element.
+   style: 'blue' for forecast columns, '' for standard dark theme. */
+function _holTipAttr(monthLabel, style){
+  const {html}=_monthHolData(monthLabel);
+  if(!html) return '';
+  const escaped=html.replace(/"/g,'&quot;');
+  return `data-hol-tip="${escaped}"${style==='blue'?' data-hol-style="blue"':''}`;
+}
+
+/* Legacy wrapper — kept for any remaining callers (returns empty string now) */
+function _monthHolidayTip(monthLabel){ return ''; }
 const _FISCAL_OFF={jul:0,aug:1,sep:2,oct:3,nov:4,dec:5,jan:6,feb:7,mar:8,apr:9,may:10,jun:11};
 function _fiscalOrder(ml){
   const p=_parseML(ml); if(!p) return 9999;
@@ -3309,24 +3433,45 @@ function _sortFiscal(months){return [...months].sort((a,b)=>_fiscalOrder(a)-_fis
 
 /* ── Rolling 10-month cumulative ──
    upToMonth: a month label or 'all'.
-   Sums the 10 most recent months up to and including upToMonth
-   (or all months if 'all'). Uses biz days as denominator. */
-function _ltaCompute(res, upToMonth){
+   dateRange: {start: 'YYYY-MM', end: 'YYYY-MM'} or null — overrides upToMonth if provided.
+   Sums months in the range. Uses biz days as denominator. */
+function _ltaCompute(res, upToMonth, dateRange){
   const allSorted=_sortFiscal(res.months.map(m=>m.label));
   let subset;
-  if(!upToMonth||upToMonth==='all'){
+
+  if(dateRange && (dateRange.start||dateRange.end)){
+    /* Date-range mode: filter months between start and end inclusive */
+    subset=allSorted.filter(ml=>{
+      const p=_parseML(ml); if(!p) return false;
+      const ym=p.yr*100+p.mo; // e.g. 202605
+      let ok=true;
+      if(dateRange.start){
+        const [sy,sm]=dateRange.start.split('-').map(Number);
+        if(ym<sy*100+(sm-1)) ok=false;
+      }
+      if(dateRange.end){
+        const [ey,em]=dateRange.end.split('-').map(Number);
+        if(ym>ey*100+(em-1)) ok=false;
+      }
+      return ok;
+    });
+  } else if(!upToMonth||upToMonth==='all'){
     subset=allSorted;
   } else {
     const idx=allSorted.indexOf(upToMonth);
-    const start=Math.max(0,idx-9); // up to 10 months back
-    subset=allSorted.slice(start,idx+1);
+    if(idx===-1){ subset=[upToMonth]; }
+    else {
+      const start=Math.max(0,idx-9); // up to 10 months back
+      subset=allSorted.slice(start,idx+1);
+    }
   }
+
   let totalCA=0,totalLocal=0,totalBiz=0;
   subset.forEach(ml=>{
     const md=res.months.find(m=>m.label===ml);
     if(!md) return;
-    totalCA   +=md.caDays;
-    totalLocal+=md.localDays;
+    totalCA   +=md.caDays||0;
+    totalLocal+=md.localDays||0;
     totalBiz  +=_bizDays(ml);
   });
   const totalDays=totalCA+totalLocal;
@@ -3539,13 +3684,70 @@ function _parseLTAFile(aoa, fname){
 /* ── Init filters ── */
 function _initLTAFilters(){
   const mon=document.getElementById('ltaFMonth');
-  if(mon){
-    mon.innerHTML='<option value="all">Rolling 10-Month Cumulative (All)</option>';
-    _ltaMonths.forEach(m=>{
-      const biz=_bizDays(m);
-      mon.add(new Option(`${m}  (${biz} biz days)`, m));
-    });
+  if(!mon) return;
+
+  const now=new Date();
+  const curYr=now.getFullYear();
+  const curMo=now.getMonth(); // 0-indexed
+
+  /* Determine which months are "past/completed" vs "future/forecast" */
+  function _isFuture(ml){
+    const p=_parseML(ml); if(!p) return false;
+    return p.yr>curYr||(p.yr===curYr&&p.mo>curMo);
   }
+  function _isCurrent(ml){
+    const p=_parseML(ml); if(!p) return false;
+    return p.yr===curYr&&p.mo===curMo;
+  }
+
+  const pastMonths    = _ltaMonths.filter(m=>!_isFuture(m)&&!_isCurrent(m));
+  const currentMonth  = _ltaMonths.filter(m=>_isCurrent(m));
+  const futureMonths  = _ltaMonths.filter(m=>_isFuture(m));
+
+  mon.innerHTML='';
+
+  /* Rolling cumulative option */
+  mon.add(new Option('📊 Rolling 10-Month Cumulative (All Data)','all'));
+
+  mon.add(new Option('─────────────────────────','__sep1',false,false));
+  mon.options[mon.options.length-1].disabled=true;
+  mon.options[mon.options.length-1].style.color='#aaa';
+
+  /* Past completed months */
+  if(pastMonths.length){
+    const grpPast=document.createElement('optgroup');
+    grpPast.label='✅ Completed Months (Actuals)';
+    pastMonths.forEach(m=>{
+      const biz=_bizDays(m);
+      grpPast.appendChild(new Option(`${m}  ·  ${biz} biz days`,m));
+    });
+    mon.appendChild(grpPast);
+  }
+
+  /* Current month */
+  if(currentMonth.length){
+    const grpCur=document.createElement('optgroup');
+    grpCur.label='📍 Current Month (In Progress)';
+    currentMonth.forEach(m=>{
+      const biz=_bizDays(m);
+      grpCur.appendChild(new Option(`${m}  ·  ${biz} biz days  ← current`,m));
+    });
+    mon.appendChild(grpCur);
+  }
+
+  /* Future forecast months */
+  if(futureMonths.length){
+    const grpFut=document.createElement('optgroup');
+    grpFut.label='🔭 Forecast Months (Planned)';
+    futureMonths.forEach(m=>{
+      const biz=_bizDays(m);
+      grpFut.appendChild(new Option(`${m}  ·  ${biz} biz days  (forecast)`,m));
+    });
+    mon.appendChild(grpFut);
+  }
+
+  /* Set date picker bounds based on available months */
+  _ltaSetDatePickerBounds();
 }
 
 /* ── Render LTA KPIs + main table + monthly breakdown ── */
@@ -3564,6 +3766,7 @@ function renderLTATable(){
           : '📂 Choose an LTA file above, then click <strong>▶ Generate LTA</strong> to view calculations.'}
       </span></td></tr>`;
     if(ltaMB) ltaMB.innerHTML='';
+    const fsec=document.getElementById('ltaForecastSection');if(fsec)fsec.style.display='none';
     /* Reset KPI strip */
     ['ltaKTotal','ltaKExceeded','ltaKWarning','ltaKOK','ltaKCALocal','ltaKAvg'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.textContent='—';
@@ -3575,14 +3778,33 @@ function renderLTATable(){
   const fMonth  = document.getElementById('ltaFMonth')?.value||'all';
   const fSearch = (document.getElementById('ltaSearch')?.value||'').toLowerCase();
 
-  /* Compute stats for every resource — CA Local resources get status overridden */
+  /* Read date range pickers */
+  const dateStart = document.getElementById('ltaDateStart')?.value||''; // 'YYYY-MM' or ''
+  const dateEnd   = document.getElementById('ltaDateEnd')?.value||'';
+  const hasDateRange = !!(dateStart||dateEnd);
+  const dateRange = hasDateRange ? {start:dateStart,end:dateEnd} : null;
+
+  /* Update range label */
+  const rangeLabel=document.getElementById('ltaDateRangeLabel');
+  if(rangeLabel){
+    if(hasDateRange){
+      const fmt=ym=>{ if(!ym) return '…'; const [y,m]=ym.split('-'); const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]; return `${mn}-${String(y).slice(2)}`; };
+      rangeLabel.textContent=`📊 Showing: ${fmt(dateStart)} → ${fmt(dateEnd)}`;
+      rangeLabel.style.display='inline';
+    } else {
+      rangeLabel.textContent='';
+    }
+  }
+
+  /* Compute stats for every resource — CA Local resources get status overridden.
+     FIX: destructure bizDays from _ltaCompute so it's available on the row object. */
   const computed = _ltaData.map(r=>{
     const isCALocal = _ltaCALocal.has(r.name);
-    const {caDays,localDays,totalDays,caPct} = isCALocal
-      ? {caDays:0,localDays:0,totalDays:0,caPct:null}
-      : _ltaCompute(r, fMonth);
+    const {caDays,localDays,totalDays,bizDays,caPct} = isCALocal
+      ? {caDays:0,localDays:0,totalDays:0,bizDays:0,caPct:null}
+      : _ltaCompute(r, fMonth, dateRange);
     const status = ltaStatus(caPct, isCALocal);
-    return {...r, caDays, localDays, totalDays, caPct, status, isCALocal};
+    return {...r, caDays, localDays, totalDays, bizDays, caPct, status, isCALocal};
   });
 
   /* KPIs — exclude CA Local from LTA counts */
@@ -3637,15 +3859,53 @@ function renderLTATable(){
   const showMonthCols = fMonth==='all';
   const totalCols = 7 + (showMonthCols ? _ltaMonths.length : 0);
 
+  /* Determine context label for single-month view */
+  let monthCtxLabel='', monthCtxColor='#555', monthCtxBadge='';
+  if(fMonth&&fMonth!=='all'){
+    const now2=new Date();
+    const p2=_parseML(fMonth);
+    if(p2){
+      const isCur=p2.yr===now2.getFullYear()&&p2.mo===now2.getMonth();
+      const isFut=p2.yr>now2.getFullYear()||(p2.yr===now2.getFullYear()&&p2.mo>now2.getMonth());
+      if(isCur){ monthCtxLabel='📍 Current Month'; monthCtxColor='#e65100'; monthCtxBadge='<span style="font-size:.6rem;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px">IN PROGRESS</span>'; }
+      else if(isFut){ monthCtxLabel='🔭 Forecast'; monthCtxColor='#1565c0'; monthCtxBadge='<span style="font-size:.6rem;background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px">FORECAST</span>'; }
+      else { monthCtxLabel='✅ Completed'; monthCtxColor='#2e7d32'; monthCtxBadge='<span style="font-size:.6rem;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px">ACTUAL</span>'; }
+    }
+    const biz2=fMonth?_bizDays(fMonth):0;
+    monthCtxLabel+=` — ${fMonth}  ·  ${biz2} biz days`;
+  }
+
+  /* Column header label — reflects active filter mode */
+  let modeLabel='10M Rolling';
+  if(hasDateRange){
+    const fmt=ym=>{ if(!ym) return '…'; const [y,m]=ym.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+'-'+String(y).slice(2); };
+    modeLabel=`${fmt(dateStart)||'Start'} → ${fmt(dateEnd)||'End'}`;
+  } else if(fMonth&&fMonth!=='all'){
+    modeLabel=fMonth;
+  }
+  const caLabel  = `CA Days<br><span style="font-size:.56rem;font-weight:400;color:#aaa">${modeLabel}</span>`;
+  const locLabel = `Local Days<br><span style="font-size:.56rem;font-weight:400;color:#aaa">${modeLabel}</span>`;
+  const bizLabel = `Biz Days<br><span style="font-size:.56rem;font-weight:400;color:#aaa">${modeLabel}</span>`;
+  const pctLabel = `CA %<br><span style="font-size:.56rem;font-weight:400;color:#aaa">CA÷Biz</span>`;
+
   document.getElementById('ltaHead').innerHTML = `
     <th onclick="ltaSort(0)" style="padding:8px 10px;min-width:160px">Name${demoBadge}${sa(0)}</th>
     <th onclick="ltaSort(1)" style="padding:8px 10px;text-align:center;min-width:90px">🏠 CA Local${sa(1)}<br><span style="font-size:.58rem;font-weight:400;color:#aaa">click to toggle</span></th>
-    <th onclick="ltaSort(2)" style="padding:8px 10px;text-align:center">CA Days${sa(2)}</th>
-    <th onclick="ltaSort(3)" style="padding:8px 10px;text-align:center">Local Days${sa(3)}</th>
-    <th onclick="ltaSort(4)" style="padding:8px 10px;text-align:center">Biz Days${sa(4)}</th>
-    <th onclick="ltaSort(5)" style="padding:8px 10px;text-align:center">CA %<br><span style="font-size:.56rem;font-weight:400;color:#aaa">vs Biz Days</span>${sa(5)}</th>
+    <th onclick="ltaSort(2)" style="padding:8px 10px;text-align:center">${caLabel}${sa(2)}</th>
+    <th onclick="ltaSort(3)" style="padding:8px 10px;text-align:center">${locLabel}${sa(3)}</th>
+    <th onclick="ltaSort(4)" style="padding:8px 10px;text-align:center">${bizLabel}${sa(4)}</th>
+    <th onclick="ltaSort(5)" style="padding:8px 10px;text-align:center">${pctLabel}${sa(5)}</th>
     <th onclick="ltaSort(6)" style="padding:8px 10px">LTA Status${sa(6)}</th>
-    ${showMonthCols ? _ltaMonths.map(m=>{const biz=_bizDays(m);return `<th class="lta-month-th" style="padding:6px 4px;text-align:center;font-size:.6rem;cursor:default;background:#2d2d2d;color:#ffd700;min-width:80px;white-space:nowrap">${m}<br><span style="color:#90a4ae;font-size:.55rem;font-weight:400">${biz} biz days</span>${_monthHolidayTip(m)}</th>`;}).join('') : ''}`;
+    ${showMonthCols ? _ltaMonths.map(m=>{
+        const now3=new Date();const p3=_parseML(m);
+        const isFut3=p3&&(p3.yr>now3.getFullYear()||(p3.yr===now3.getFullYear()&&p3.mo>now3.getMonth()));
+        const isCur3=p3&&p3.yr===now3.getFullYear()&&p3.mo===now3.getMonth();
+        const thBg=isFut3?'background:#1565c0':isCur3?'background:#e65100':'background:#2d2d2d';
+        const biz=_bizDays(m);
+        const fcTag=isFut3?`<span style="font-size:.5rem;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:4px;display:block;margin-top:2px">FORECAST</span>`
+                   :isCur3?`<span style="font-size:.5rem;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:4px;display:block;margin-top:2px">CURRENT</span>`:'';
+        return `<th class="lta-month-th" ${_holTipAttr(m,isFut3?'blue':'')} style="padding:6px 4px;text-align:center;font-size:.6rem;cursor:default;${thBg};color:#ffd700;min-width:80px;white-space:nowrap">${m}${fcTag}<span style="color:#90a4ae;font-size:.55rem;font-weight:400;display:block">${biz} biz days</span></th>`;
+      }).join('') : ''}`;
 
   /* Build body */
   const tbody = document.getElementById('ltaBody');
@@ -3677,8 +3937,12 @@ function renderLTATable(){
       </td>
       <td style="font-weight:700;color:${r.isCALocal?'#bbb':'#e53935'};text-align:center">${r.isCALocal?'—':r.caDays}</td>
       <td style="font-weight:700;color:${r.isCALocal?'#bbb':'#1565c0'};text-align:center">${r.isCALocal?'—':r.localDays}</td>
-      <td style="text-align:center;color:#555">${r.isCALocal?'—':(r.bizDays||'—')}</td>
-      <td style="text-align:center">${bar}<strong style="color:${pctCol}">${pctStr}</strong></td>
+      <td style="text-align:center;color:#555;font-weight:600">${r.isCALocal?'—':(r.bizDays>0?r.bizDays:'—')}</td>
+      <td style="text-align:center">
+        ${bar}
+        <strong style="color:${pctCol};font-size:.8rem">${pctStr}</strong>
+        ${!r.isCALocal&&r.bizDays>0?`<div style="font-size:.58rem;color:#aaa;margin-top:1px">${r.caDays}÷${r.bizDays}</div>`:''}
+      </td>
       <td>${ltaStatusBadge(r.status)}</td>`;
 
     if(showMonthCols){
@@ -3720,6 +3984,7 @@ function renderLTATable(){
 
   tbody.innerHTML = html;
   _renderLTAMonthBreakdown(computed);
+  _renderLTAForecast();
 }
 
 /* Toggle CA Local flag — fires on checkbox change, re-renders immediately */
@@ -3759,7 +4024,7 @@ function _renderLTAMonthBreakdown(computed){
     📌 Rolling 10-month window — CA% calculated as <strong>CA Days ÷ Business Days</strong>
     (excludes weekends &amp; US Federal holidays). Months sorted by fiscal year (Jul = FY start).
   </div>
-  <div style="overflow-x:auto"><table class="lta-tbl" style="font-size:.64rem;border-collapse:separate;border-spacing:0">
+  <div style="overflow-x:auto;overflow-y:visible"><table class="lta-tbl" style="font-size:.64rem;border-collapse:separate;border-spacing:0">
     <thead>
       <tr>
         <th rowspan="3" style="min-width:160px;position:sticky;left:0;background:#1b1b1b;z-index:3;vertical-align:middle">Resource</th>
@@ -3768,10 +4033,12 @@ function _renderLTAMonthBreakdown(computed){
         </th>
         <th rowspan="3" style="position:sticky;left:256px;background:#1b1b1b;z-index:3;min-width:110px;text-align:center;vertical-align:middle">Status</th>`;
 
-  /* Month group headers — with holiday tooltip on hover */
+  /* Month group headers — floating holiday tooltip via data-hol-tip */
   _ltaMonths.forEach(ml=>{
-    html+=`<th colspan="3" class="lta-month-th" style="background:#2d2d2d;color:#ffd700;border-left:2px solid #e0301e;text-align:center;min-width:132px;padding:5px 4px">
-      ${ml}${_monthHolidayTip(ml)}
+    const now4=new Date();const p4=_parseML(ml);
+    const isFut4=p4&&(p4.yr>now4.getFullYear()||(p4.yr===now4.getFullYear()&&p4.mo>now4.getMonth()));
+    html+=`<th colspan="3" class="lta-month-th" ${_holTipAttr(ml,isFut4?'blue':'')} style="background:#2d2d2d;color:#ffd700;border-left:2px solid #e0301e;text-align:center;min-width:132px;padding:5px 4px">
+      ${ml}
     </th>`;
   });
   html+=`</tr>
@@ -3825,16 +4092,308 @@ function _renderLTAMonthBreakdown(computed){
   container.innerHTML=html;
 }
 
+/* ════════════════════════════════════════════════════
+   LTA FORECAST MODEL
+   Forecast months = current month+1 through last month in MONTHS (roster).
+   CA Days editable per column (enabled by column-level checkbox).
+   Local = Biz Days − CA Days (auto).
+   "Apply Forecast" merges forecast data into _ltaData and re-renders top table.
+════════════════════════════════════════════════════ */
+
+/* Storage: _ltaForecastCA[resourceName][monthLabel] = caDays (number) */
+let _ltaForecastCA = {};
+/* Which columns have editing enabled: Set of monthLabels */
+let _ltaForecastEditable = new Set();
+
+/* ── Derive forecast months from current date + MONTHS array ── */
+function _ltaForecastMonths(){
+  const now=new Date();
+  // Start: next month after current month
+  const startMo=now.getMonth()+1; // 0-indexed next month
+  const startYr=startMo>11?now.getFullYear()+1:now.getFullYear();
+  const startMoAdj=startMo>11?0:startMo;
+
+  if(!MONTHS||!MONTHS.length) return [];
+
+  // Get end from last roster month
+  const lastML=MONTHS[MONTHS.length-1];
+  const lastP=_parseML(lastML);
+  if(!lastP) return [];
+
+  const result=[];
+  let yr=startYr, mo=startMoAdj;
+  const MON3_INV=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Generate months from startMo/yr up to and including lastP
+  for(let i=0;i<36;i++){ // safety cap
+    if(yr>lastP.yr||(yr===lastP.yr&&mo>lastP.mo)) break;
+    result.push(`${MON3_INV[mo]}-${String(yr).slice(2)}`);
+    mo++;
+    if(mo>11){mo=0;yr++;}
+  }
+  return result;
+}
+
+/* ── Render the forecast table ── */
+function _renderLTAForecast(){
+  const sec=document.getElementById('ltaForecastSection');
+  const tbl=document.getElementById('ltaForecastTable');
+  const rangeEl=document.getElementById('ltaForecastRange');
+  if(!sec||!tbl) return;
+
+  const fMonths=_ltaForecastMonths();
+
+  // Only show forecast section if LTA data is loaded AND roster has future months
+  if(!_ltaData.length||!fMonths.length){
+    sec.style.display='none';
+    return;
+  }
+  sec.style.display='block';
+  if(rangeEl) rangeEl.textContent=`${fMonths[0]} → ${fMonths[fMonths.length-1]}  (${fMonths.length} months)`;
+
+  const fSearch=(document.getElementById('ltaSearch')?.value||'').toLowerCase();
+  // Only onshore, non-CA-local resources
+  const resources=_ltaData.filter(r=>
+    !_ltaCALocal.has(r.name) &&
+    (!fSearch||r.name.toLowerCase().includes(fSearch))
+  );
+
+  /* Init storage for new resources/months */
+  resources.forEach(r=>{
+    if(!_ltaForecastCA[r.name]) _ltaForecastCA[r.name]={};
+    fMonths.forEach(ml=>{
+      if(_ltaForecastCA[r.name][ml]===undefined) _ltaForecastCA[r.name][ml]=0;
+    });
+  });
+
+  let html=`
+  <div style="font-size:.63rem;color:#1565c0;margin-bottom:7px;font-style:italic;line-height:1.6">
+    📌 Forecast uses <strong>current month+1</strong> through roster end date as future months.
+    Check ✅ a month column header to enable CA Days editing. Local days = Biz Days − CA Days (auto-calculated).
+    Click <strong>📊 Apply Forecast to LTA Table</strong> to push values into the LTA summary above.
+  </div>
+  <table class="lta-fc-tbl">
+    <thead>
+      <tr>
+        <th rowspan="3" style="min-width:160px;position:sticky;left:0;background:#0d47a1;color:#fff;z-index:5;vertical-align:middle;padding:6px 10px">Resource</th>`;
+
+  fMonths.forEach(ml=>{
+    const biz=_bizDays(ml);
+    const ena=_ltaForecastEditable.has(ml);
+    html+=`<th class="lta-fc-th" ${_holTipAttr(ml,'blue')} style="${ena?'background:#0d47a1;':''}">
+      ${ml}
+      <span class="lta-fc-biz">${biz} biz days</span>
+    </th>`;
+  });
+  html+=`</tr><tr>`;
+
+  // Row 2: enable checkbox per column
+  fMonths.forEach(ml=>{
+    const ena=_ltaForecastEditable.has(ml);
+    html+=`<th class="lta-fc-chk-th" title="Enable CA Days editing for ${ml}">
+      <label style="display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:.59rem;color:#fff;white-space:nowrap">
+        <input type="checkbox" ${ena?'checked':''} onchange="ltaForecastToggleCol('${ml}',this.checked)"
+          style="accent-color:#ffd700;width:13px;height:13px;cursor:pointer">
+        Edit CA
+      </label>
+    </th>`;
+  });
+  html+=`</tr><tr>`;
+
+  // Row 3: sub-column labels
+  fMonths.forEach(()=>{
+    html+=`<th class="lta-fc-th-sub" style="border-left:1px solid rgba(255,255,255,.15)">CA Days</th>`;
+  });
+  html+=`</tr></thead><tbody>`;
+
+  resources.forEach(r=>{
+    html+=`<tr>
+      <td style="font-weight:600;position:sticky;left:0;background:#fff;z-index:1;white-space:nowrap;padding:5px 10px">${r.name}</td>`;
+
+    fMonths.forEach(ml=>{
+      const biz=_bizDays(ml);
+      const ena=_ltaForecastEditable.has(ml);
+      const ca=(_ltaForecastCA[r.name]||{})[ml]||0;
+      const local=Math.max(0,biz-ca);
+      const pct=biz>0?Math.round(ca/biz*100):0;
+      const pctCls=pct>=50?'exceeded':pct>=40?'warning':'ok';
+      const inputBg=ena?'#e3f2fd':'#f5f5f5';
+      html+=`<td style="text-align:center;border-left:1px solid #e3f2fd;padding:4px 6px;min-width:90px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="display:flex;align-items:center;gap:3px">
+            <input type="number" min="0" max="${biz}" value="${ca||''}" placeholder="0" step="1"
+              class="lta-fc-input" id="fcin_${r.name.replace(/[\s']/g,'_')}_${ml.replace(/[^a-zA-Z0-9]/g,'_')}"
+              style="background:${inputBg}"
+              ${ena?'':'disabled'}
+              onchange="ltaForecastUpdateCell('${r.name.replace(/'/g,"\\'")}','${ml}',this.value,${biz})"
+              oninput="ltaForecastUpdateCell('${r.name.replace(/'/g,"\\'")}','${ml}',this.value,${biz})">
+            <button class="lta-fc-clr"
+              title="Clear ${ml} for ${r.name}"
+              onclick="ltaForecastClearCell('${r.name.replace(/'/g,"\\'")}','${ml}',${biz})"
+              ${ena?'':'disabled'}
+              style="${ena?'':'opacity:.25;cursor:not-allowed;'}">×</button>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center">
+            <span title="Local days" style="font-size:.67rem;color:#2e7d32;font-weight:700" id="fcloc_${r.name.replace(/[\s']/g,'_')}_${ml.replace(/[^a-zA-Z0-9]/g,'_')}">🏠 ${local}</span>
+            <span class="lta-fc-pct ${pctCls}" id="fcpct_${r.name.replace(/[\s']/g,'_')}_${ml.replace(/[^a-zA-Z0-9]/g,'_')}">${ca>0?pct+'%':''}</span>
+          </div>
+          <div style="font-size:.55rem;color:#b0bec5">${biz} biz days</div>
+        </div>
+      </td>`;
+    });
+    html+=`</tr>`;
+  });
+
+  html+=`</tbody></table>`;
+  tbl.innerHTML=html;
+}
+
+/* ── Clear a single forecast cell ── */
+function ltaForecastClearCell(name, ml, biz){
+  if(!_ltaForecastCA[name]) _ltaForecastCA[name]={};
+  _ltaForecastCA[name][ml]=0;
+  const key=name.replace(/[\s']/g,'_');
+  const mlKey=ml.replace(/[^a-zA-Z0-9]/g,'_');
+  const inp=document.getElementById('fcin_'+key+'_'+mlKey);
+  if(inp) inp.value='';
+  const locEl=document.getElementById('fcloc_'+key+'_'+mlKey);
+  const pctEl=document.getElementById('fcpct_'+key+'_'+mlKey);
+  if(locEl) locEl.textContent='🏠 '+biz;
+  if(pctEl){ pctEl.textContent=''; pctEl.className='lta-fc-pct ok'; }
+}
+
+/* ── Toggle column edit mode ── */
+function ltaForecastToggleCol(ml, enabled){
+  if(enabled) _ltaForecastEditable.add(ml);
+  else        _ltaForecastEditable.delete(ml);
+  _renderLTAForecast();
+}
+
+/* ── Live update a single cell ── */
+function ltaForecastUpdateCell(name, ml, val, biz){
+  if(!_ltaForecastCA[name]) _ltaForecastCA[name]={};
+  let ca=Math.max(0,Math.min(Math.floor(+val||0),biz));
+  const key=name.replace(/[\s']/g,'_');
+  const mlKey=ml.replace(/[^a-zA-Z0-9]/g,'_');
+  const inp=document.getElementById('fcin_'+key+'_'+mlKey);
+  if(inp&&inp.value!==''&&inp.value!=String(ca)) inp.value=ca||'';
+  _ltaForecastCA[name][ml]=ca;
+  const local=Math.max(0,biz-ca);
+  const pct=biz>0?Math.round(ca/biz*100):0;
+  const pctCls=pct>=50?'exceeded':pct>=40?'warning':'ok';
+  const locEl=document.getElementById('fcloc_'+key+'_'+mlKey);
+  const pctEl=document.getElementById('fcpct_'+key+'_'+mlKey);
+  if(locEl) locEl.textContent='🏠 '+local;
+  if(pctEl){
+    pctEl.textContent=ca>0?pct+'%':'';
+    pctEl.className='lta-fc-pct '+pctCls;
+  }
+}
+
+/* ── Reset all forecast CA values to 0 ── */
+function ltaResetForecast(){
+  _ltaForecastCA={};
+  _ltaForecastEditable.clear();
+  _renderLTAForecast();
+}
+
+/* ── Apply forecast data into _ltaData then re-render top table ── */
+function ltaApplyForecast(){
+  const fMonths=_ltaForecastMonths();
+  if(!fMonths.length){alert('No forecast months available. Load the Roster file first.');return;}
+
+  let applied=0;
+  _ltaData.forEach(r=>{
+    if(_ltaCALocal.has(r.name)) return;
+    const fc=_ltaForecastCA[r.name]||{};
+    fMonths.forEach(ml=>{
+      const biz=_bizDays(ml);
+      const ca=fc[ml]||0;
+      const local=Math.max(0,biz-ca);
+      // Check if month already exists in r.months
+      const existing=r.months.find(m=>m.label===ml);
+      if(existing){
+        existing.caDays=ca;
+        existing.localDays=local;
+      } else {
+        r.months.push({label:ml,caDays:ca,localDays:local});
+      }
+      applied++;
+    });
+  });
+
+  // Merge forecast months into _ltaMonths
+  fMonths.forEach(ml=>{
+    if(!_ltaMonths.includes(ml)) _ltaMonths.push(ml);
+  });
+  _ltaMonths=_sortFiscal(_ltaMonths);
+  _initLTAFilters();
+
+  renderLTATable();
+
+  // Flash confirmation — restore explicit background color (not '' which goes grey)
+  const btn=document.getElementById('ltaApplyForecastBtn');
+  if(btn){
+    const orig=btn.innerHTML;
+    btn.innerHTML='✅ Applied!';
+    btn.style.background='linear-gradient(135deg,#1b5e20,#2e7d32)';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.background='#1565c0';},2000);
+  }
+}
+
+
 function ltaSort(col){
   if(_ltaSortCol===col) _ltaSortDir*=-1;
   else{ _ltaSortCol=col; _ltaSortDir=-1; }
   renderLTATable();
 }
 
+/* ── View Month filter change — clear date range when a specific month is picked ── */
+function ltaMonthFilterChange(){
+  const sel=document.getElementById('ltaFMonth')?.value||'all';
+  if(sel&&sel!=='all'){
+    // Clear date range when a specific month is selected
+    const ds=document.getElementById('ltaDateStart');
+    const de=document.getElementById('ltaDateEnd');
+    if(ds) ds.value='';
+    if(de) de.value='';
+  }
+  renderLTATable();
+}
+
+/* ── Clear date range pickers and re-render ── */
+function ltaClearDateRange(){
+  const ds=document.getElementById('ltaDateStart');
+  const de=document.getElementById('ltaDateEnd');
+  if(ds) ds.value='';
+  if(de) de.value='';
+  const lbl=document.getElementById('ltaDateRangeLabel');
+  if(lbl) lbl.textContent='';
+  renderLTATable();
+}
+
+/* ── Auto-populate date pickers min/max from loaded months ── */
+function _ltaSetDatePickerBounds(){
+  if(!_ltaMonths.length) return;
+  const sorted=_sortFiscal(_ltaMonths);
+  function mlToYYYYMM(ml){
+    const p=_parseML(ml); if(!p) return '';
+    return `${p.yr}-${String(p.mo+1).padStart(2,'0')}`;
+  }
+  const minVal=mlToYYYYMM(sorted[0]);
+  const maxVal=mlToYYYYMM(sorted[sorted.length-1]);
+  const ds=document.getElementById('ltaDateStart');
+  const de=document.getElementById('ltaDateEnd');
+  if(ds){ ds.min=minVal; ds.max=maxVal; }
+  if(de){ de.min=minVal; de.max=maxVal; }
+}
+
 function resetLTA(){
   _ltaData=[]; _ltaMonths=[]; _ltaIsDemo=false; _ltaSortCol=-1; _ltaSortDir=1;
   _ltaFileAoA=null; _ltaFileName=null;
   _ltaCALocal.clear();
+  /* Reset forecast state */
+  _ltaForecastCA={}; _ltaForecastEditable.clear();
+  const fsec=document.getElementById('ltaForecastSection'); if(fsec) fsec.style.display='none';
   ['ltaKTotal','ltaKExceeded','ltaKWarning','ltaKOK','ltaKCALocal','ltaKAvg'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.textContent='—';
   });
@@ -4601,6 +5160,73 @@ function _userBuildSelect(selectId,placeholder){
 
 /* Kick off on page load */
 _userLoadRoster();
+</script>
+
+<!-- ── Floating holiday tooltip — renders above ALL overflow containers ── -->
+<div id="lta-float-tip"></div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   FLOATING HOLIDAY TOOLTIP
+   Attached to document — works across all overflow containers.
+   Any element with data-hol-tip="<html>" will show the floating tooltip on hover.
+   data-hol-style="blue" → uses blue theme (forecast columns).
+════════════════════════════════════════════════════ */
+(function(){
+  const tip=document.getElementById('lta-float-tip');
+  if(!tip) return;
+
+  let currentTarget=null;
+
+  function showTip(el, x, y){
+    const html=el.getAttribute('data-hol-tip');
+    if(!html) return;
+    tip.innerHTML=html;
+    tip.className=el.getAttribute('data-hol-style')==='blue'?'blue-tip':'';
+    tip.style.display='block';
+    positionTip(x, y);
+  }
+
+  function positionTip(x, y){
+    const W=window.innerWidth, H=window.innerHeight;
+    const tw=tip.offsetWidth||200, th=tip.offsetHeight||60;
+    /* Default: below cursor */
+    let left=x-tw/2;
+    let top=y+18;
+    /* Clamp horizontally */
+    left=Math.max(8,Math.min(W-tw-8,left));
+    /* If below would clip bottom, flip above */
+    if(top+th>H-8) top=y-th-12;
+    tip.style.left=left+'px';
+    tip.style.top=top+'px';
+  }
+
+  document.addEventListener('mouseover',function(e){
+    const el=e.target.closest('[data-hol-tip]');
+    if(el){
+      currentTarget=el;
+      showTip(el, e.clientX, e.clientY);
+    }
+  });
+
+  document.addEventListener('mousemove',function(e){
+    if(currentTarget&&tip.style.display==='block'){
+      positionTip(e.clientX, e.clientY);
+    }
+  });
+
+  document.addEventListener('mouseout',function(e){
+    const el=e.target.closest('[data-hol-tip]');
+    if(el){
+      /* Only hide if leaving the element itself (not entering a child) */
+      const related=e.relatedTarget;
+      if(!el.contains(related)){
+        tip.style.display='none';
+        currentTarget=null;
+      }
+    }
+  });
+})();
 </script>
 </body>
 </html>
