@@ -132,13 +132,37 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1b1b1b;fo
 .tab-panel.active{display:block;}
 
 /* ── HEATMAP ── */
-.heat-wrap{overflow:auto;max-height:520px;}
+/* The scroll container — overflow here is the sticky anchor */
+.heat-wrap{
+  display:block;
+  overflow:auto;
+  max-height:560px;
+  position:relative;
+  -webkit-overflow-scrolling:touch;
+}
+/* Row 1 of thead (month group headers) */
+.heat-wrap .heat-table thead tr:first-child th{
+  position:sticky;top:0;z-index:4;
+}
+/* Row 2 of thead (week sub-cols) — sits directly below row 1 (~28px) */
+.heat-wrap .heat-table thead tr:nth-child(2) th{
+  position:sticky;top:28px;z-index:4;
+}
+/* Frozen left-column TH — rowspan="2" spans both rows, so just top:0 */
+.heat-wrap .heat-table thead th.fc-expand{position:sticky!important;left:0;  top:0;z-index:8;}
+.heat-wrap .heat-table thead th.fc-name  {position:sticky!important;left:22px;top:0;z-index:8;}
+.heat-wrap .heat-table thead th.fc-shore {position:sticky!important;left:182px;top:0;z-index:8;}
+.heat-wrap .heat-table thead th.fc-active{position:sticky!important;left:232px;top:0;z-index:8;}
+/* Grand total TH (rowspan=2) */
+.heat-wrap .heat-table thead th.total-hdr{position:sticky!important;top:0;z-index:4;}
+
 .heat-table{border-collapse:separate;border-spacing:0;font-size:.66rem;min-width:100%;}
 
-/* All th sticky to top */
+/* All th — background set here; sticky handled by .heat-wrap scope above */
 .heat-table th{
   background:#1b1b1b;color:#fff;padding:7px 8px;
-  white-space:nowrap;position:sticky;top:0;z-index:2;text-align:center;}
+  white-space:nowrap;text-align:center;}
+
 
 /* ── Frozen columns — th ── */
 /* Col 0: expand toggle */
@@ -851,6 +875,22 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
     </div>
 
     <div class="tab-panel" id="tRoster">
+      <div class="srow" style="margin-bottom:8px;gap:10px;flex-wrap:wrap;">
+        <input id="rosterSrch" type="text" placeholder="🔍 Filter by name…" oninput="filterRosterTable()"
+          style="padding:6px 12px;border:1px solid #ccc;border-radius:6px;font-size:.75rem;min-width:180px;flex:1;max-width:280px;"/>
+        <select id="rosterFShore" onchange="filterRosterTable()"
+          style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;font-size:.75rem;background:#fff;">
+          <option value="all">All Shore</option>
+          <option value="ONSHORE">Onshore</option>
+          <option value="OFFSHORE">Offshore</option>
+        </select>
+        <select id="rosterFScrum" onchange="filterRosterTable()"
+          style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;font-size:.75rem;background:#fff;min-width:140px;">
+          <option value="all">All Scrums</option>
+        </select>
+        <button onclick="clearRosterFilters()" style="padding:5px 12px;background:#e0301e;color:#fff;border:none;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;">✕ Clear</button>
+        <span id="rosterRowCount" style="font-size:.7rem;color:#888;white-space:nowrap;align-self:center;"></span>
+      </div>
       <div class="tw">
         <table class="dt" id="rosterTable">
           <thead><tr id="rosterHead"></tr></thead>
@@ -862,6 +902,7 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
     <div class="tab-panel" id="tDetail">
       <div class="srow">
         <input id="srch" type="text" placeholder="🔍 Search name, role, scrum, email…" oninput="searchTable()"/>
+        <button onclick="clearDetailSearch()" style="padding:5px 12px;background:#e0301e;color:#fff;border:none;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap;">✕ Clear</button>
         <span id="rowCount" style="font-size:.7rem;color:#888;white-space:nowrap;"></span>
       </div>
       <div class="tw">
@@ -899,19 +940,25 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
         <div style="flex:1;min-width:220px;">
           <div class="import-label" style="color:#5d4037;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
             <span style="background:#ff8f00;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0"></span>
-            LTA Tracking File &nbsp;<span style="font-weight:400;color:#aaa;font-size:.62rem;text-transform:none">(optional — demo data pre-loaded)</span>
+            LTA Tracking File &nbsp;<span style="font-weight:400;color:#aaa;font-size:.62rem;text-transform:none">(optional — load file to view LTA calculations)</span>
           </div>
-          <div class="import-row">
+          <!-- Manual file upload (hidden in GitHub mode) -->
+          <div id="ltaLocalUploadRow" class="import-row">
             <label class="file-btn" id="ltaFileBtn">
               <input type="file" id="ltaFileInput" accept=".xlsx,.xls,.csv" onchange="handleLTAFile(this)"/>
               📂 Choose LTA File (.xlsx / .csv)
             </label>
+            <button id="ltaManualGenBtn" onclick="ltaManualGenerate()"
+              style="padding:5px 14px;background:#ff8f00;color:#fff;border:none;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;display:none;" title="Generate LTA calculation from uploaded file">
+              ▶ Generate LTA
+            </button>
+          </div>
+          <!-- GitHub mode row (hidden in local mode) -->
+          <div id="ltaGhRow" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span id="ltaGhStatus" style="font-size:.67rem;color:#2e7d32;font-weight:600;">☁️ LTA loads automatically from GitHub manifest</span>
+            <button onclick="ghReloadLTA()" style="padding:4px 12px;background:#2e7d32;color:#fff;border:none;border-radius:6px;font-size:.68rem;font-weight:700;cursor:pointer;">🔄 Reload from GitHub</button>
           </div>
           <div class="lta-summary" id="ltaSummary" style="font-size:.67rem;margin-top:5px;color:#888;font-style:italic">No file loaded — showing demo data</div>
-          <!-- GitHub mode LTA hint -->
-          <div id="ltaGhHint" style="display:none;font-size:.67rem;margin-top:5px;color:#2e7d32;font-weight:600;">
-            ☁️ GitHub mode: LTA file will load from manifest if configured.
-          </div>
           <div style="font-size:.62rem;color:#aaa;margin-top:4px;line-height:1.5">
             Expected columns: <strong>EMPLOYEE_NAME</strong> + per-month pairs: <strong>[MON_YY]_CA_DAYS</strong> &amp; <strong>[MON_YY]_LOCAL_DAYS</strong>
           </div>
@@ -1883,6 +1930,18 @@ function renderAll(){
   drawResVar();
   drawMonthly();
   buildHeatmap();
+  /* Fix two-row sticky header: measure row-1 height, apply as top for row-2 */
+  requestAnimationFrame(()=>{
+    const wrap=document.querySelector('.heat-wrap');
+    const tbl =document.getElementById('heatTable');
+    if(!wrap||!tbl) return;
+    const row1=tbl.querySelector('thead tr:first-child');
+    if(!row1) return;
+    const row1H=row1.getBoundingClientRect().height||28;
+    tbl.querySelectorAll('thead tr:nth-child(2) th').forEach(th=>{
+      th.style.top=row1H+'px';
+    });
+  });
   buildRosterTable();
   buildDetailTable();
 }
@@ -2369,7 +2428,8 @@ function buildRosterTable(){
   FD.forEach((r,i)=>{
     const tot=sm(r.rosterHrs);
     const isActiveR=(r.active||'YES')==='YES';
-    bh+=`<tr style="${isActiveR?'':'opacity:.6;'}"><td>${i+1}</td><td><strong>${r.name}</strong></td>
+    bh+=`<tr data-shore="${(r.shore||'').toUpperCase()}" data-scrum="${(r.scrum||'')}" style="${isActiveR?'':'opacity:.6;'}">
+      <td>${i+1}</td><td><strong>${r.name}</strong></td>
       <td style="font-size:.68rem;color:#888">${r.pge}</td>
       <td><span class="tag ${r.shore==='ONSHORE'?'ton':'toff'}">${r.shore}</span></td>
       <td style="text-align:center"><span class="tag ${isActiveR?'tok':'tover'}">${isActiveR?'YES':'NO'}</span></td>
@@ -2382,6 +2442,9 @@ function buildRosterTable(){
     bh+=`<td style="font-weight:800;color:#003087;text-align:center">${f1(tot)}</td></tr>`;
   });
   bd.innerHTML=bh;
+  _populateRosterScrumFilter();
+  const rc=document.getElementById('rosterRowCount');
+  if(rc) rc.textContent=FD.length+' resources shown';
 }
 
 /* ── Detail Table ── */
@@ -2425,6 +2488,75 @@ function searchTable(){
   });
 }
 
+function clearDetailSearch(){
+  const inp=document.getElementById('srch');
+  if(inp){ inp.value=''; searchTable(); }
+}
+
+/* ── Roster Monthly Hours — filter + clear ── */
+function filterRosterTable(){
+  const q      = (document.getElementById('rosterSrch')?.value||'').toLowerCase();
+  const shore  = document.getElementById('rosterFShore')?.value||'all';
+  const scrum  = document.getElementById('rosterFScrum')?.value||'all';
+  let count=0;
+  document.querySelectorAll('#rosterBody tr').forEach(row=>{
+    const text=row.textContent.toLowerCase();
+    const rowShore=(row.dataset.shore||'').toUpperCase();
+    const rowScrum=(row.dataset.scrum||'').toLowerCase();
+    const nameMatch = !q || text.includes(q);
+    const shoreMatch= shore==='all' || rowShore===shore;
+    const scrumMatch= scrum==='all' || rowScrum===scrum.toLowerCase();
+    const show=nameMatch&&shoreMatch&&scrumMatch;
+    row.style.display=show?'':'none';
+    if(show) count++;
+  });
+  const rc=document.getElementById('rosterRowCount');
+  if(rc) rc.textContent=count+' resources shown';
+}
+
+function clearRosterFilters(){
+  const s=document.getElementById('rosterSrch');
+  const sh=document.getElementById('rosterFShore');
+  const sc=document.getElementById('rosterFScrum');
+  if(s) s.value='';
+  if(sh) sh.value='all';
+  if(sc) sc.value='all';
+  filterRosterTable();
+}
+
+/* Populate scrum dropdown in roster filter from FD data */
+function _populateRosterScrumFilter(){
+  const sel=document.getElementById('rosterFScrum');
+  if(!sel) return;
+  const scrums=[...new Set(FD.map(r=>r.scrum).filter(Boolean))].sort();
+  sel.innerHTML='<option value="all">All Scrums</option>'+
+    scrums.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+
+/* ── LTA — GitHub reload ── */
+async function ghReloadLTA(){
+  if(!_ghManifest){ alert('Manifest not loaded yet. Switch to GitHub mode first.'); return; }
+  const ltaConf=_ghManifest.lta;
+  if(!ltaConf||!ltaConf.file){ alert('No LTA file configured in manifest.json'); return; }
+  const ltaSum=document.getElementById('ltaSummary');
+  if(ltaSum){ ltaSum.textContent='⌛ Reloading…'; ltaSum.style.color='#1565c0'; }
+  await ghFetchLTA(ltaConf.file);
+}
+
+/* ── LTA — Manual generate (local mode, after file chosen) ── */
+function ltaManualGenerate(){
+  if(!_ltaFileAoA||!_ltaFileName){ alert('No LTA file loaded yet. Please choose a file first.'); return; }
+  showLoading('Generating LTA…');
+  try{
+    _parseLTAFile(_ltaFileAoA, _ltaFileName);
+  } catch(err){
+    hideLoading(); alert('Error: '+err.message);
+  }
+}
+
+/* Store raw AoA from file pick so manual generate can replay it */
+let _ltaFileAoA=null, _ltaFileName=null;
+
 /* ── Sort ── */
 function srt(col){
   if(lastCol===col) sortDir*=-1; else sortDir=1;
@@ -2455,9 +2587,9 @@ function switchTab(panelId,el){
   document.getElementById(panelId).classList.add('active');
   el.classList.add('active');
   /* Auto-load LTA demo on first open if no data yet */
-  if(panelId==='tLTA' && !_ltaTabOpened && !_ltaData.length && R.length){
+  if(panelId==='tLTA' && !_ltaTabOpened){
     _ltaTabOpened=true;
-    loadLTADemo();
+    /* No demo data — just show empty state */
   }
 }
 
@@ -2540,7 +2672,6 @@ function setDataSourceMode(mode){
   const ghHint    = document.getElementById('dsGhUrlHint');
   const localBar  = document.querySelector('.import-bar');
   const ghPanel   = document.getElementById('ghImportPanel');
-  const ltaGhHint = document.getElementById('ltaGhHint');
 
   if(mode === 'github'){
     localOpt.classList.remove('active');
@@ -2550,7 +2681,16 @@ function setDataSourceMode(mode){
     ghHint.style.display = 'inline';
     localBar.style.display = 'none';
     ghPanel.classList.add('active');
-    if(ltaGhHint) ltaGhHint.style.display = 'block';
+    /* LTA: show GitHub row, hide local upload, disable file input */
+    const ltaLocalRow = document.getElementById('ltaLocalUploadRow');
+    const ltaGhRow    = document.getElementById('ltaGhRow');
+    const ltaFileBtn  = document.getElementById('ltaFileBtn');
+    const ltaFileInp  = document.getElementById('ltaFileInput');
+    const ltaManualBtn= document.getElementById('ltaManualGenBtn');
+    if(ltaLocalRow){ ltaLocalRow.style.opacity='0.4'; ltaLocalRow.style.pointerEvents='none'; }
+    if(ltaGhRow)   { ltaGhRow.style.display='flex'; }
+    if(ltaFileInp) { ltaFileInp.disabled=true; }
+    if(ltaManualBtn){ ltaManualBtn.style.display='none'; }
     /* Auto-fetch manifest on first switch to GitHub mode */
     if(!_ghManifest){
       ghFetchManifest();
@@ -2565,7 +2705,13 @@ function setDataSourceMode(mode){
     ghHint.style.display = 'none';
     localBar.style.display = '';
     ghPanel.classList.remove('active');
-    if(ltaGhHint) ltaGhHint.style.display = 'none';
+    /* LTA: restore local upload, hide GitHub row */
+    const ltaLocalRow = document.getElementById('ltaLocalUploadRow');
+    const ltaGhRow    = document.getElementById('ltaGhRow');
+    const ltaFileInp  = document.getElementById('ltaFileInput');
+    if(ltaLocalRow){ ltaLocalRow.style.opacity=''; ltaLocalRow.style.pointerEvents=''; }
+    if(ltaGhRow)   { ltaGhRow.style.display='none'; }
+    if(ltaFileInp) { ltaFileInp.disabled=false; }
   }
 }
 
@@ -2801,17 +2947,17 @@ async function ghFetchFlexFile(fname){
 
 /* ── Fetch LTA file from GitHub (CSV or XLSX, auto-detected) ── */
 async function ghFetchLTA(fname){
+  const ltaGhStatus = document.getElementById('ltaGhStatus');
+  if(ltaGhStatus) ltaGhStatus.textContent = '⌛ Loading LTA from GitHub…';
   try {
     const aoa = await _ghFetchFile(fname);
     _parseLTAFile(aoa, fname);
     const ltaSum = document.getElementById('ltaSummary');
     if(ltaSum){ ltaSum.textContent = `✅ Loaded from GitHub: ${fname}`; ltaSum.style.color='#2e7d32'; ltaSum.style.fontStyle='normal'; }
-    const ltaGhHint = document.getElementById('ltaGhHint');
-    if(ltaGhHint) ltaGhHint.textContent = `✅ LTA loaded from GitHub: ${fname}`;
+    if(ltaGhStatus) ltaGhStatus.textContent = `✅ LTA loaded: ${fname}`;
   } catch(err){
     console.warn('GH LTA fetch error:', err.message);
-    const ltaGhHint = document.getElementById('ltaGhHint');
-    if(ltaGhHint){ ltaGhHint.textContent = `⚠ LTA not loaded: ${err.message}`; ltaGhHint.style.color='#e65100'; }
+    if(ltaGhStatus){ ltaGhStatus.textContent = `⚠ LTA not loaded: ${err.message}`; ltaGhStatus.style.color='#e65100'; }
   }
 }
 
@@ -3263,6 +3409,10 @@ function handleLTAFile(input){
       const wb=XLSX.read(e.target.result,{type:'array'});
       const ws=wb.Sheets[wb.SheetNames[0]];
       const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+      _ltaFileAoA=aoa; _ltaFileName=file.name;
+      /* Show manual generate button in local mode */
+      const genBtn=document.getElementById('ltaManualGenBtn');
+      if(genBtn&&_dsMode==='local') genBtn.style.display='inline-block';
       _parseLTAFile(aoa, file.name);
     }catch(err){
       hideLoading();
@@ -3382,7 +3532,26 @@ function _initLTAFilters(){
 
 /* ── Render LTA KPIs + main table + monthly breakdown ── */
 function renderLTATable(){
-  if(!_ltaData.length) return;
+  if(!_ltaData.length){
+    /* Show empty state — no data loaded yet */
+    const ltaHead=document.getElementById('ltaHead');
+    const ltaBody=document.getElementById('ltaBody');
+    const ltaMB  =document.getElementById('ltaMonthBreakdown');
+    if(ltaHead) ltaHead.innerHTML='';
+    if(ltaBody) ltaBody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px 20px;color:#aaa;font-style:italic;font-size:.8rem;">
+      No LTA data loaded.<br><br>
+      <span style="font-size:.72rem;color:#bbb">
+        ${_dsMode==='github'
+          ? '☁️ GitHub mode — LTA will auto-load from manifest, or click <strong>Reload from GitHub</strong> above.'
+          : '📂 Choose an LTA file above, then click <strong>▶ Generate LTA</strong> to view calculations.'}
+      </span></td></tr>`;
+    if(ltaMB) ltaMB.innerHTML='';
+    /* Reset KPI strip */
+    ['ltaKTotal','ltaKExceeded','ltaKWarning','ltaKOK','ltaKCALocal','ltaKAvg'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.textContent='—';
+    });
+    return;
+  }
 
   const fStatus = document.getElementById('ltaFStatus')?.value||'all';
   const fMonth  = document.getElementById('ltaFMonth')?.value||'all';
@@ -3646,20 +3815,27 @@ function ltaSort(col){
 
 function resetLTA(){
   _ltaData=[]; _ltaMonths=[]; _ltaIsDemo=false; _ltaSortCol=-1; _ltaSortDir=1;
+  _ltaFileAoA=null; _ltaFileName=null;
   _ltaCALocal.clear();
   ['ltaKTotal','ltaKExceeded','ltaKWarning','ltaKOK','ltaKCALocal','ltaKAvg'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.textContent='—';
   });
   const s=document.getElementById('ltaSummary');
-  if(s){ s.textContent='No file loaded'; s.className='lta-summary'; }
+  if(s){ s.textContent='No file loaded'; s.style.color='#888'; s.style.fontStyle='italic'; }
   const hd=document.getElementById('ltaHead'); if(hd) hd.innerHTML='';
   const bd=document.getElementById('ltaBody'); if(bd) bd.innerHTML='';
   const mb=document.getElementById('ltaMonthBreakdown'); if(mb) mb.innerHTML='';
   document.getElementById('ltaFileBtn')?.classList.remove('loaded');
-  /* Reset file input value — critical: allows same file to be re-selected
-     after clearing, as onchange only fires when the value changes */
-  const fi=document.getElementById('ltaFileInput');
-  if(fi) fi.value='';
+  const fi=document.getElementById('ltaFileInput'); if(fi) fi.value='';
+  /* Hide manual generate button until a new file is chosen */
+  const genBtn=document.getElementById('ltaManualGenBtn');
+  if(genBtn) genBtn.style.display='none';
+  /* In GitHub mode, update status to prompt reload */
+  if(_dsMode==='github'){
+    const ghSt=document.getElementById('ltaGhStatus');
+    if(ghSt){ ghSt.textContent='⚠ LTA cleared — click "Reload from GitHub" to restore'; ghSt.style.color='#e65100'; }
+  }
+  renderLTATable();
 }
 
 /* ── Download LTA sample file ── */
