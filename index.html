@@ -2373,17 +2373,24 @@ function drawShore(){
 /* ── Scrum ── */
 function drawScrum(){
   const map={};
-  FD.forEach(r=>{ if(r.scrum) map[r.scrum]=(map[r.scrum]||0)+r.flex.forecast; });
-  const total=Object.values(map).reduce((s,v)=>s+v,0);
+  FD.forEach(r=>{ if(r.scrum) map[r.scrum]=(map[r.scrum]||0)+(+r.flex.forecast||0); });
   const labs=Object.keys(map).sort((a,b)=>map[b]-map[a]);
+  const vals=labs.map(k=>+(map[k]||0));
+  const grandTotal=vals.reduce((s,v)=>s+v,0)||1;
   mkChart('cScrum',{
     type:'bar',
-    data:{labels:labs,datasets:[{label:'Forecast Hrs',data:labs.map(k=>map[k]),
+    data:{labels:labs,datasets:[{label:'Forecast Hrs',data:vals,
       backgroundColor:PALETTE.slice(0,labs.length),borderRadius:4}]},
     options:{...BASE,indexAxis:'y',
       plugins:{
         legend:{display:false},
-        tooltip:{callbacks:{label:c=>`Forecast: ${f1(c.raw)} hrs${total>0?' ('+((c.raw/total)*100).toFixed(1)+'%)':''}`}}
+        tooltip:{callbacks:{
+          label:function(c){
+            const v=typeof c.raw==='number'?c.raw:(c.parsed&&c.parsed.x)||0;
+            const pct=(v/grandTotal*100).toFixed(1);
+            return `Forecast: ${f1(v)} hrs (${pct}%)`;
+          }
+        }}
       },
       scales:{x:{beginAtZero:true,grid:{color:'#f0f0f0'}}}
     }
@@ -2393,16 +2400,23 @@ function drawScrum(){
 /* ── Staff Class ── */
 function drawClass(){
   const map={};
-  FD.forEach(r=>{ if(r.sclass) map[r.sclass]=(map[r.sclass]||0)+r.flex.forecast; });
-  const total=Object.values(map).reduce((s,v)=>s+v,0);
+  FD.forEach(r=>{ if(r.sclass) map[r.sclass]=(map[r.sclass]||0)+(+r.flex.forecast||0); });
   const labs=Object.keys(map);
+  const vals=labs.map(k=>+(map[k]||0));
+  const grandTotal=vals.reduce((s,v)=>s+v,0)||1;
   mkChart('cClass',{
     type:'pie',
-    data:{labels:labs,datasets:[{data:labs.map(k=>map[k]),
-      backgroundColor:PALETTE.slice(0,labs.length)}]},
+    data:{labels:labs,datasets:[{data:vals,backgroundColor:PALETTE.slice(0,labs.length)}]},
     options:{...BASE,plugins:{
       legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}},
-      tooltip:{callbacks:{label:c=>`${c.label}: ${f1(c.raw)} hrs${total>0?' ('+((c.raw/total)*100).toFixed(1)+'%)':''}`}}
+      tooltip:{callbacks:{
+        label:function(c){
+          const v=typeof c.raw==='number'?c.raw:0;
+          const lbl=c.chart.data.labels[c.dataIndex]||c.label||'';
+          const pct=(v/grandTotal*100).toFixed(1);
+          return `${lbl}: ${f1(v)} hrs (${pct}%)`;
+        }
+      }}
     }}
   });
 }
