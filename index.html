@@ -403,12 +403,14 @@ table.dt tbody td{padding:7px 11px;border-bottom:1px solid #f0f0f0;white-space:n
 .lta-tbl-hdr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   background:#1b1b1b;border-radius:8px 8px 0 0;padding:8px 14px;margin-top:12px;}
 .lta-tbl-hdr-title{color:#ffd700;font-size:.78rem;font-weight:800;letter-spacing:.3px;}
-table.lta-tbl{width:100%;border-collapse:collapse;font-size:.71rem;}
-table.lta-tbl thead{position:sticky;top:0;z-index:2;}
+table.lta-tbl{width:max-content;min-width:100%;border-collapse:collapse;font-size:.71rem;}
 table.lta-tbl thead tr{background:#1b1b1b;color:#fff;}
-table.lta-tbl thead th{padding:8px 10px;text-align:left;white-space:nowrap;
-  cursor:pointer;user-select:none;font-weight:600;}
-table.lta-tbl thead th:hover{background:#333;}
+table.lta-tbl thead th{
+  padding:8px 10px;text-align:left;white-space:nowrap;
+  cursor:pointer;user-select:none;font-weight:600;
+  /* Sticky header row */
+  position:sticky;top:0;z-index:3;background:#1b1b1b;color:#fff;}
+table.lta-tbl thead th:hover{background:#2a2a2a;}
 table.lta-tbl tbody tr:nth-child(even){background:#f8f9fb;}
 table.lta-tbl tbody tr:hover{background:#fffde7;}
 table.lta-tbl tbody td{padding:6px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
@@ -431,11 +433,100 @@ table.lta-tbl tbody tr.lta-row-warning{background:#fffbf0!important;}
   letter-spacing:.4px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #eee;}
 /* CA Local checkbox */
 .lta-ca-local-chk{width:16px;height:16px;cursor:pointer;accent-color:#2e7d32;vertical-align:middle;}
-.lta-ca-local-cell{text-align:center;background:#f1f8e9;}
+.lta-ca-local-cell{text-align:center;}
 table.lta-tbl tbody tr.lta-row-ca-local td{opacity:.55;background:#f9fdf5!important;}
 table.lta-tbl tbody tr.lta-row-ca-local td.lta-ca-local-cell{opacity:1;background:#e8f5e9!important;}
 table.lta-tbl tbody tr.lta-ca-local-sub td{opacity:.5;background:#f9fdf5!important;font-size:.68rem;}
 table.lta-tbl tbody tr.lta-ca-local-sub td.lta-ca-local-cell{opacity:1;background:#e8f5e9!important;}
+/* ── LTA Table wrapper — both scroll axes, fixed height for 5 rows ── */
+.lta-tbl-wrap{
+  overflow:auto;
+  border-radius:0 0 8px 8px;
+  border:1px solid #e0e0e0;}
+/* ── Frozen columns: lta-fc class applied to th/td 1-7.
+   left: offset set by JS (_ltaApplyStickyOffsets) after render.
+   Solid background explicitly set per context — never inherit (inherit=transparent). ── */
+table.lta-tbl th.lta-fc{
+  position:sticky;z-index:4;background:#1b1b1b;color:#fff;}
+table.lta-tbl td.lta-fc{
+  position:sticky;z-index:2;background:#fff;}
+/* Last frozen column gets right shadow divider */
+table.lta-tbl th.lta-fc-last{
+  position:sticky;z-index:4;background:#1b1b1b;color:#fff;
+  box-shadow:3px 0 6px -2px rgba(0,0,0,.35);}
+table.lta-tbl td.lta-fc-last{
+  position:sticky;z-index:2;background:#fff;
+  box-shadow:3px 0 6px -2px rgba(0,0,0,.2);}
+/* Row state backgrounds — must override the base #fff on frozen cells */
+table.lta-tbl tbody tr:nth-child(even) td.lta-fc,
+table.lta-tbl tbody tr:nth-child(even) td.lta-fc-last{background:#f8f9fb;}
+table.lta-tbl tbody tr:hover td.lta-fc,
+table.lta-tbl tbody tr:hover td.lta-fc-last{background:#fffde7;}
+table.lta-tbl tbody tr.lta-row-exceeded td.lta-fc,
+table.lta-tbl tbody tr.lta-row-exceeded td.lta-fc-last{background:#fff5f5;}
+table.lta-tbl tbody tr.lta-row-warning td.lta-fc,
+table.lta-tbl tbody tr.lta-row-warning td.lta-fc-last{background:#fffbf0;}
+table.lta-tbl tbody tr.lta-row-ca-local td.lta-fc,
+table.lta-tbl tbody tr.lta-row-ca-local td.lta-fc-last{background:#f9fdf5!important;opacity:.55;}
+table.lta-tbl tbody tr.lta-row-ca-local td.lta-ca-local-cell.lta-fc{background:#e8f5e9!important;opacity:1;}
+/* Monthly breakdown — scroll container */
+.lta-mb-scroll{
+  overflow:auto;
+  border:1px solid #e0e0e0;
+  border-radius:6px;}
+/* Forecast table — scroll container */
+.lta-fc-scroll{
+  overflow:auto;
+  border:1px solid #d0e4ff;
+  border-radius:6px;}
+
+/* ── Monthly breakdown table ── */
+/* Fixed widths for frozen cols: Resource=160px, Rolling=100px, Status=120px */
+/* ── Monthly breakdown table — same sticky pattern as lta-tbl ── */
+table.lta-mb-tbl{border-collapse:collapse;font-size:.64rem;width:max-content;min-width:100%;}
+table.lta-mb-tbl thead th{position:sticky;top:0;z-index:3;background:#1b1b1b;color:#fff;padding:8px 4px;white-space:nowrap;font-weight:600;}
+table.lta-mb-tbl th.lta-mb-fc{position:sticky;top:0;z-index:4;background:#1b1b1b;color:#fff;}
+table.lta-mb-tbl td.lta-mb-fc{position:sticky;z-index:2;background:#fff;}
+table.lta-mb-tbl th.lta-mb-fc-last{position:sticky;top:0;z-index:4;background:#1b1b1b;color:#fff;box-shadow:3px 0 6px -2px rgba(0,0,0,.35);}
+table.lta-mb-tbl td.lta-mb-fc-last{position:sticky;z-index:2;background:#fff;box-shadow:3px 0 6px -2px rgba(0,0,0,.2);}
+table.lta-mb-tbl tbody tr:nth-child(even) td.lta-mb-fc,
+table.lta-mb-tbl tbody tr:nth-child(even) td.lta-mb-fc-last{background:#f8f9fb;}
+table.lta-mb-tbl tbody tr:hover td.lta-mb-fc,
+table.lta-mb-tbl tbody tr:hover td.lta-mb-fc-last{background:#fffde7;}
+table.lta-mb-tbl tbody td{padding:5px 6px;border-bottom:1px solid #f0f0f0;white-space:nowrap;vertical-align:middle;}
+
+/* ── Forecast table — same sticky pattern as lta-tbl ── */
+table.lta-fc-tbl{border-collapse:collapse;font-size:.64rem;width:max-content;min-width:100%;}
+table.lta-fc-tbl thead th{position:sticky;top:0;z-index:3;background:#1565c0;color:#fff;white-space:nowrap;font-weight:600;}
+table.lta-fc-tbl th.lta-fc-frozen{position:sticky;top:0;z-index:4;background:#0d47a1;color:#fff;min-width:160px;padding:6px 10px;vertical-align:middle;white-space:nowrap;box-shadow:3px 0 6px -2px rgba(0,0,0,.35);}
+table.lta-fc-tbl td.lta-fc-frozen{position:sticky;z-index:2;background:#fff;color:#1a237e;font-weight:600;white-space:nowrap;padding:5px 10px;box-shadow:3px 0 5px -2px rgba(0,0,0,.2);}
+table.lta-fc-tbl tbody tr:nth-child(even) td.lta-fc-frozen{background:#f8fbff;}
+table.lta-fc-tbl tbody tr:hover td.lta-fc-frozen{background:#e8f4ff;}
+table.lta-fc-tbl tbody td{padding:5px 6px;border-bottom:1px solid #e3f2fd;vertical-align:middle;white-space:nowrap;}
+/* Resource multi-select filter */
+.lta-res-filter{position:relative;display:inline-block;min-width:200px;}
+.lta-res-btn{display:flex;align-items:center;justify-content:space-between;gap:6px;
+  padding:5px 10px;border:1px solid #ccc;border-radius:6px;font-size:.75rem;
+  background:#fff;cursor:pointer;min-width:200px;white-space:nowrap;user-select:none;}
+.lta-res-btn:hover{border-color:#1565c0;background:#f8f9ff;}
+.lta-res-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;
+  background:#fff;border:1px solid #c5cae9;border-radius:8px;
+  box-shadow:0 6px 20px rgba(0,0,0,.15);min-width:240px;max-height:260px;overflow-y:auto;padding:6px 0;}
+.lta-res-dropdown.open{display:block;}
+.lta-res-item{display:flex;align-items:center;gap:8px;padding:5px 12px;font-size:.73rem;cursor:pointer;}
+.lta-res-item:hover{background:#f0f4ff;}
+.lta-res-item input[type=checkbox]{accent-color:#1565c0;cursor:pointer;width:14px;height:14px;}
+.lta-res-sep{border:none;border-top:1px solid #eee;margin:4px 0;}
+.lta-res-actions{display:flex;gap:6px;padding:5px 10px;border-top:1px solid #eee;}
+.lta-res-act-btn{flex:1;padding:4px 8px;font-size:.68rem;font-weight:700;border-radius:5px;
+  cursor:pointer;border:1px solid #ccc;background:#fff;}
+.lta-res-act-btn.primary{background:#1565c0;color:#fff;border-color:#1565c0;}
+.lta-res-act-btn:hover{background:#e8eaf6;}
+.lta-res-act-btn.primary:hover{background:#1976d2;}
+/* >10 month warning */
+#ltaRangeWarn{display:none;background:#fff3cd;border:1.5px solid #ffc107;border-radius:7px;
+  padding:8px 14px;font-size:.72rem;color:#856404;font-weight:600;margin-bottom:8px;
+  align-items:center;gap:8px;}
 /* ── LTA Forecast — holiday tooltip REMOVED from CSS (now body-level floating) ── */
 .lta-fc-th{position:relative;cursor:default;}
 /* ── Apply forecast button — always fully opaque ── */
@@ -473,8 +564,7 @@ table.lta-tbl tbody tr.lta-ca-local-sub td.lta-ca-local-cell{opacity:1;backgroun
 .lta-fc-pct{font-size:.65rem;font-weight:800;}
 .lta-fc-pct.exceeded{color:#b71c1c;} .lta-fc-pct.warning{color:#e65100;} .lta-fc-pct.ok{color:#2e7d32;}
 .lta-fc-biz{font-size:.57rem;color:#90a4ae;display:block;margin-top:1px;}
-table.lta-fc-tbl{width:100%;border-collapse:collapse;font-size:.64rem;}
-table.lta-fc-tbl thead th{position:sticky;top:0;z-index:3;}
+/* lta-fc-tbl CSS is now in the table block above — these are kept for body/td only */
 table.lta-fc-tbl tbody td{padding:5px 6px;border-bottom:1px solid #e3f2fd;vertical-align:middle;}
 table.lta-fc-tbl tbody tr:nth-child(even){background:#f8fbff;}
 table.lta-fc-tbl tbody tr:hover{background:#e8f4ff;}
@@ -484,8 +574,8 @@ table.lta-fc-tbl tbody tr:hover{background:#e8f4ff;}
 .lta-fc-colena-badge{display:inline-flex;align-items:center;gap:3px;font-size:.58rem;color:#1565c0;font-weight:600;}
 .lta-na-badge{background:#e8f5e9;color:#2e7d32;font-weight:700;border-radius:5px;
   padding:3px 9px;font-size:.66rem;display:inline-block;}
-/* Month holiday tooltip — now handled by floating #lta-float-tip via JS */
-.lta-month-th{position:relative;cursor:default;}
+/* Month holiday tooltip — handled by floating div */
+.lta-month-th{cursor:default;}
 /* Legacy .lta-hol-tip hidden — kept for fallback only */
 .lta-hol-tip{display:none!important;}
 
@@ -853,6 +943,31 @@ Doughnut chart comparing total planned hours between ONSHORE and OFFSHORE resour
   </div>
 </div>
 
+<!-- ROW 2b : Flex Actual widgets -->
+<div class="g3">
+  <div class="card">
+    <h3>🧩 Flex Hours by Scrum Team
+  <span class="wtip"><strong>Flex Hours by Scrum Team — Actuals</strong>
+Horizontal bar chart showing total <strong>actual</strong> hours charged (from Flex ETC) aggregated by each Scrum workstream. Each bar also shows the actual % of total actual hours for that workstream.
+<span class="wsrc">Source: ForecastToActualByWeek — "Actual Hours to Date" summed by SCRUM column</span></span></h3>
+    <canvas id="cScrumFlex"></canvas>
+  </div>
+  <div class="card">
+    <h3>🎓 Actual Hours by Staff Class
+  <span class="wtip"><strong>Actual Hours by Staff Class</strong>
+Pie chart breaking down total <strong>actual</strong> hours charged by staff grade/band. Shows which seniority levels are actively burning hours vs plan.
+<span class="wsrc">Source: ForecastToActualByWeek — "Actual Hours to Date" grouped by Staff Class column</span></span></h3>
+    <canvas id="cClassActual"></canvas>
+  </div>
+  <div class="card">
+    <h3>🌐 Flex Hours by Shore Type - Actual
+  <span class="wtip"><strong>Flex Hours by Shore Type — Actual</strong>
+Doughnut chart comparing total <strong>actual</strong> hours charged between ONSHORE and OFFSHORE resources from the Flex ETC file. Reflects real burn split vs the planned Roster split above.
+<span class="wsrc">Source: ForecastToActualByWeek — "Actual Hours to Date" grouped by SHORE_TYPE</span></span></h3>
+    <canvas id="cShoreFlex"></canvas>
+  </div>
+</div>
+
 <!-- ROW 3 -->
 <div class="g1">
   <div class="card">
@@ -1073,10 +1188,33 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
           <span id="ltaDateRangeLabel" style="font-size:.62rem;color:#3949ab;font-weight:600;align-self:flex-end;white-space:nowrap"></span>
         </div>
         <div class="fg">
-          <label><span class="lbl-tip">Search<span class="ltip"><strong>Search by Name</strong>Type any part of a resource's name to filter all three LTA sections simultaneously — the summary table, the monthly breakdown, and the forecast model.</span></span></label>
-          <input type="text" id="ltaSearch" placeholder="🔍 Name…" oninput="renderLTATable()"
-            style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;font-size:.75rem;min-width:150px"/>
+          <label><span class="lbl-tip">Resource Name<span class="ltip"><strong>Filter by Resource Name</strong>Select one or more specific resources. Tick/untick names in the dropdown, then click <strong>✔ Apply Filter</strong> to update all three LTA tables. Use <strong>All</strong> to reset to all resources, or <strong>None</strong> to deselect all.</span></span></label>
+          <div class="lta-res-filter" id="ltaResFilterWrap">
+            <div class="lta-res-btn" id="ltaResBtnLabel" onclick="ltaResToggleDropdown(event)">
+              <span id="ltaResBtnText">👤 All Resources</span>
+              <span style="font-size:.6rem;color:#999">▾</span>
+            </div>
+            <div class="lta-res-dropdown" id="ltaResDropdown">
+              <div class="lta-res-actions">
+                <button class="lta-res-act-btn primary" onclick="ltaResPendingAll(event)">All</button>
+                <button class="lta-res-act-btn" onclick="ltaResPendingNone(event)" style="color:#c62828;border-color:#e0301e">None</button>
+              </div>
+              <hr class="lta-res-sep">
+              <div id="ltaResItems"></div>
+              <div style="padding:6px 10px;border-top:1px solid #e8eaf6;display:flex;gap:6px;">
+                <button class="lta-res-act-btn primary" style="font-size:.72rem;padding:6px 0"
+                  onclick="ltaResApply(event)">✔ Apply Filter</button>
+                <button class="lta-res-act-btn" style="font-size:.72rem;padding:6px 0"
+                  onclick="ltaResCancel(event)">✕ Cancel</button>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- >10 month warning -->
+      <div id="ltaRangeWarn" style="display:none">
+        ⚠️ <strong>More than 10 months selected.</strong> Please narrow your date range — the table shows a maximum of 10 month columns. Currently showing the first 10 months of your range.
       </div>
 
       <!-- LTA Table title bar -->
@@ -1086,11 +1224,11 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
           What does this table show?
           <span class="ltip" style="border-top-color:#ffd700"><strong>LTA Compliance Summary</strong>Each row is an ONSHORE resource. Columns show their CA day count vs total business days and LTA compliance status for the selected period or month.<br><br><b style="color:#ef9a9a">Biz Days</b> — Mon–Fri working days (excl. US Federal holidays).<br><b style="color:#ef9a9a">CA Days</b> — Days spent in California (SF Bay Area).<br><b style="color:#ef9a9a">Local Days</b> — Days at home/local office.<br><b style="color:#ef9a9a">CA%</b> — CA Days ÷ Biz Days. ≥50% = LTA Exceeded.<br><br>Click any column header to sort. Check 🏠 CA Local to mark a resource as CA-based (exempt from LTA).</span>
         </span>
-        <span style="font-size:.61rem;color:#9e9e9e;font-style:italic;margin-left:6px">Sortable · Click column headers · 🏠 CA Local toggle per row</span>
+        <span style="font-size:.61rem;color:#9e9e9e;font-style:italic;margin-left:6px">Sortable · Click column headers · 🏠 CA Local toggle per row · Scroll right for months →</span>
       </div>
 
-      <!-- Main summary table -->
-      <div class="tw" style="max-height:400px;margin-bottom:16px;border-radius:0 0 8px 8px;overflow:hidden">
+      <!-- Main summary table — 5 rows visible, sticky frozen cols 1-7, horizontal scroll -->
+      <div class="lta-tbl-wrap">
         <table class="lta-tbl">
           <thead><tr id="ltaHead"></tr></thead>
           <tbody id="ltaBody"></tbody>
@@ -1102,7 +1240,7 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
         📅 Monthly CA vs Local Days — Per Resource
         <span class="lbl-tip" style="font-size:.62rem;font-weight:400;color:#888;text-transform:none;letter-spacing:0;cursor:default">What is this?<span class="ltip"><strong>Monthly CA vs Local Days Breakdown</strong>A detailed per-resource, per-month grid showing:<br><br><b style="color:#ef9a9a">CA Days</b> — days in California that month<br><b style="color:#c5e1a5">Local Days</b> — days at local office<br><b style="color:#ffd700">CA% / Status</b> — monthly CA% with flag<br><br>Month headers show holiday tooltips on hover. Columns color-coded: dark = past, orange = current, blue = forecast. The fraction shown (e.g. 9/22) is CA Days ÷ Biz Days.</span></span>
       </div>
-      <div id="ltaMonthBreakdown" style="overflow-x:auto;overflow-y:visible"></div>
+      <div id="ltaMonthBreakdown" class="lta-mb-scroll"></div>
 
       <!-- ══ FORECAST LTA SECTION ══ -->
       <div id="ltaForecastSection" style="display:none;margin-top:18px">
@@ -1123,7 +1261,7 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
             📊 Apply Forecast to LTA Table
           </button>
         </div>
-        <div id="ltaForecastTable" style="overflow-x:auto"></div>
+        <div id="ltaForecastTable" class="lta-fc-scroll"></div>
       </div>
 
     </div><!-- end tLTA -->
@@ -2046,6 +2184,9 @@ function renderAll(){
   drawShore();
   drawScrum();
   drawClass();
+  drawScrumFlex();
+  drawClassActual();
+  drawShoreFlex();
   drawVarTrend();
   drawResVar();
   drawMonthly();
@@ -2215,6 +2356,7 @@ function drawWeekly(){
 function drawShore(){
   const on  = FD.filter(r=>r.shore==='ONSHORE').reduce((s,r)=>s+sm(r.rosterHrs),0);
   const off = FD.filter(r=>r.shore==='OFFSHORE').reduce((s,r)=>s+sm(r.rosterHrs),0);
+  const total=on+off;
   mkChart('cShore',{
     type:'doughnut',
     data:{labels:['ONSHORE','OFFSHORE'],datasets:[{data:[on,off],
@@ -2222,7 +2364,7 @@ function drawShore(){
     options:{...BASE,
       plugins:{
         legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}},
-        tooltip:{callbacks:{label:c=>`${c.label}: ${f1(c.raw)} hrs`}}
+        tooltip:{callbacks:{label:c=>`${c.label}: ${f1(c.raw)} hrs${total>0?' ('+((c.raw/total)*100).toFixed(1)+'%)':''}`}}
       }
     }
   });
@@ -2232,13 +2374,17 @@ function drawShore(){
 function drawScrum(){
   const map={};
   FD.forEach(r=>{ if(r.scrum) map[r.scrum]=(map[r.scrum]||0)+r.flex.forecast; });
+  const total=Object.values(map).reduce((s,v)=>s+v,0);
   const labs=Object.keys(map).sort((a,b)=>map[b]-map[a]);
   mkChart('cScrum',{
     type:'bar',
     data:{labels:labs,datasets:[{label:'Forecast Hrs',data:labs.map(k=>map[k]),
       backgroundColor:PALETTE.slice(0,labs.length),borderRadius:4}]},
     options:{...BASE,indexAxis:'y',
-      plugins:{legend:{display:false}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`Forecast: ${f1(c.raw)} hrs${total>0?' ('+((c.raw/total)*100).toFixed(1)+'%)':''}`}}
+      },
       scales:{x:{beginAtZero:true,grid:{color:'#f0f0f0'}}}
     }
   });
@@ -2248,15 +2394,78 @@ function drawScrum(){
 function drawClass(){
   const map={};
   FD.forEach(r=>{ if(r.sclass) map[r.sclass]=(map[r.sclass]||0)+r.flex.forecast; });
+  const total=Object.values(map).reduce((s,v)=>s+v,0);
+  const labs=Object.keys(map);
   mkChart('cClass',{
     type:'pie',
-    data:{labels:Object.keys(map),datasets:[{data:Object.values(map),
-      backgroundColor:PALETTE.slice(0,Object.keys(map).length)}]},
-    options:{...BASE,plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}}}
+    data:{labels:labs,datasets:[{data:labs.map(k=>map[k]),
+      backgroundColor:PALETTE.slice(0,labs.length)}]},
+    options:{...BASE,plugins:{
+      legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${f1(c.raw)} hrs${total>0?' ('+((c.raw/total)*100).toFixed(1)+'%)':''}`}}
+    }}
   });
 }
 
-/* ── Weekly Variance Trend — current month + prior month only ── */
+/* ── Flex Hours by Scrum Team (Actuals) ── */
+function drawScrumFlex(){
+  const map={};
+  FD.forEach(r=>{ if(r.scrum) map[r.scrum]=(map[r.scrum]||0)+r.flex.actual; });
+  const total=Object.values(map).reduce((s,v)=>s+v,0);
+  if(!total){ mkChart('cScrumFlex',{type:'bar',data:{labels:['No data'],datasets:[{data:[0]}]},options:{...BASE}}); return; }
+  const labs=Object.keys(map).sort((a,b)=>map[b]-map[a]);
+  mkChart('cScrumFlex',{
+    type:'bar',
+    data:{labels:labs,datasets:[{label:'Actual Hrs',data:labs.map(k=>map[k]),
+      backgroundColor:PALETTE.slice(0,labs.length),borderRadius:4}]},
+    options:{...BASE,indexAxis:'y',
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`Actual: ${f1(c.raw)} hrs (${(c.raw/total*100).toFixed(1)}%)`}}
+      },
+      scales:{x:{beginAtZero:true,grid:{color:'#f0f0f0'},
+        ticks:{callback:v=>f1(v)}}}
+    }
+  });
+}
+
+/* ── Actual Hours by Staff Class ── */
+function drawClassActual(){
+  const map={};
+  FD.forEach(r=>{ if(r.sclass) map[r.sclass]=(map[r.sclass]||0)+r.flex.actual; });
+  const total=Object.values(map).reduce((s,v)=>s+v,0);
+  if(!total){ mkChart('cClassActual',{type:'pie',data:{labels:['No data'],datasets:[{data:[0]}]},options:{...BASE}}); return; }
+  const labs=Object.keys(map);
+  const vals=labs.map(k=>map[k]);
+  mkChart('cClassActual',{
+    type:'pie',
+    data:{labels:labs,datasets:[{data:vals,backgroundColor:PALETTE.slice(0,labs.length)}]},
+    options:{...BASE,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}},
+        tooltip:{callbacks:{label:c=>`${c.label}: ${f1(c.raw)} hrs (${(c.raw/total*100).toFixed(1)}%)`}}
+      }
+    }
+  });
+}
+
+/* ── Flex Hours by Shore Type (Actuals) ── */
+function drawShoreFlex(){
+  const on  = FD.filter(r=>r.shore==='ONSHORE').reduce((s,r)=>s+r.flex.actual,0);
+  const off = FD.filter(r=>r.shore==='OFFSHORE').reduce((s,r)=>s+r.flex.actual,0);
+  const total=on+off;
+  mkChart('cShoreFlex',{
+    type:'doughnut',
+    data:{labels:['ONSHORE','OFFSHORE'],datasets:[{data:[on,off],
+      backgroundColor:[C.blue,C.red],borderWidth:3,hoverOffset:10}]},
+    options:{...BASE,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:c=>`${c.label}: ${f1(c.raw)} hrs${total>0?' ('+((c.raw/total)*100).toFixed(1)+'%)':''}`}}
+      }
+    }
+  });
+}
 function drawVarTrend(){
   if(!WEEKS.length) return;
   const allowed = getWeekMonthFilter(1); // current month + 1 prior month
@@ -2311,11 +2520,12 @@ function drawResVar(){
   });
 }
 
-/* ── Monthly Stacked ── */
+/* ── Monthly Stacked with % labels ── */
 function drawMonthly(){
   if(!MONTHS.length) return;
   const onData  = MONTHS.map((_,mi)=>FD.filter(r=>r.shore==='ONSHORE').reduce((s,r)=>s+(r.rosterHrs[mi]||0),0));
   const offData = MONTHS.map((_,mi)=>FD.filter(r=>r.shore==='OFFSHORE').reduce((s,r)=>s+(r.rosterHrs[mi]||0),0));
+  const totals  = MONTHS.map((_,mi)=>(onData[mi]||0)+(offData[mi]||0));
   mkChart('cMonthly',{
     type:'bar',
     data:{labels:MONTHS,datasets:[
@@ -2326,6 +2536,20 @@ function drawMonthly(){
       scales:{
         x:{stacked:true},
         y:{stacked:true,beginAtZero:true,title:{display:true,text:'Planned Hours'},grid:{color:'#f0f0f0'}}
+      },
+      plugins:{
+        ...BASE.plugins,
+        tooltip:{callbacks:{
+          label:ctx=>{
+            const v=ctx.raw||0;
+            const tot=totals[ctx.dataIndex]||1;
+            return `${ctx.dataset.label}: ${f1(v)} hrs (${(v/tot*100).toFixed(1)}%)`;
+          },
+          footer:items=>{
+            const tot=totals[items[0].dataIndex]||0;
+            return `Total: ${f1(tot)} hrs`;
+          }
+        }}
       }
     }
   });
@@ -3359,6 +3583,12 @@ function _parseML(monthLabel){
   return {mo,yr};
 }
 
+/* Convert month label (e.g. "Jun-26") to "YYYY-MM" for date pickers */
+function _mlToYYYYMM(ml){
+  const p=_parseML(ml); if(!p) return '';
+  return `${p.yr}-${String(p.mo+1).padStart(2,'0')}`;
+}
+
 function _bizDays(monthLabel){
   const p=_parseML(monthLabel);
   if(!p) return 20;
@@ -3748,6 +3978,8 @@ function _initLTAFilters(){
 
   /* Set date picker bounds based on available months */
   _ltaSetDatePickerBounds();
+  /* Populate resource name filter dropdown */
+  _ltaPopulateResFilter();
 }
 
 /* ── Render LTA KPIs + main table + monthly breakdown ── */
@@ -3776,7 +4008,6 @@ function renderLTATable(){
 
   const fStatus = document.getElementById('ltaFStatus')?.value||'all';
   const fMonth  = document.getElementById('ltaFMonth')?.value||'all';
-  const fSearch = (document.getElementById('ltaSearch')?.value||'').toLowerCase();
 
   /* Read date range pickers */
   const dateStart = document.getElementById('ltaDateStart')?.value||''; // 'YYYY-MM' or ''
@@ -3796,18 +4027,77 @@ function renderLTATable(){
     }
   }
 
-  /* Compute stats for every resource — CA Local resources get status overridden.
-     FIX: destructure bizDays from _ltaCompute so it's available on the row object. */
+  /* Compute stats — see _periodForResource defined below after visibleMonthCols */
+
+  /* ══════════════════════════════════════════════════════════
+     COLUMN DISPLAY LOGIC
+     ─────────────────────────────────────────────────────────
+     'all' + date range set   → show columns for months in range (max 10)
+     'all' + no date range    → prompt user to set Start/End Month, show no columns
+     Completed or Current     → no month columns; single-month summary only
+     Forecast month           → show up to 10 columns: selected month + 9 prior months
+  ══════════════════════════════════════════════════════════ */
+  const now=new Date();
+  function _isFutureMl(ml){ const p=_parseML(ml); return p&&(p.yr>now.getFullYear()||(p.yr===now.getFullYear()&&p.mo>now.getMonth())); }
+  function _isCurrentMl(ml){ const p=_parseML(ml); return p&&p.yr===now.getFullYear()&&p.mo===now.getMonth(); }
+
+  const isForecastMonth  = fMonth!=='all' && _isFutureMl(fMonth);
+  const isCompletedOrCur = fMonth!=='all' && !_isFutureMl(fMonth);
+  const isAllMode        = fMonth==='all';
+  const needsDatePrompt  = isAllMode && !hasDateRange;
+
+  /* Derive which month columns to show */
+  let visibleMonthCols = [];
+
+  if(isAllMode && hasDateRange){
+    visibleMonthCols = _ltaMonths.filter(ml=>{
+      const p=_parseML(ml); if(!p) return false;
+      const ym=p.yr*100+p.mo;
+      let ok=true;
+      if(dateStart){ const [sy,sm]=dateStart.split('-').map(Number); if(ym<sy*100+(sm-1)) ok=false; }
+      if(dateEnd){   const [ey,em]=dateEnd.split('-').map(Number);   if(ym>ey*100+(em-1)) ok=false; }
+      return ok;
+    }).slice(0,10);
+  } else if(isForecastMonth){
+    const allSorted=_sortFiscal(_ltaMonths);
+    const idx=allSorted.indexOf(fMonth);
+    if(idx===-1){ visibleMonthCols=[fMonth]; }
+    else { const start=Math.max(0,idx-9); visibleMonthCols=allSorted.slice(start,idx+1); }
+  }
+
+  /* ── Show/hide >10 month warning ── */
+  const warnEl=document.getElementById('ltaRangeWarn');
+  if(warnEl){
+    const rawCount=isAllMode&&hasDateRange?_ltaMonths.filter(ml=>{
+      const p=_parseML(ml); if(!p) return false;
+      const ym=p.yr*100+p.mo; let ok=true;
+      if(dateStart){const [sy,sm]=dateStart.split('-').map(Number);if(ym<sy*100+(sm-1))ok=false;}
+      if(dateEnd){const [ey,em]=dateEnd.split('-').map(Number);if(ym>ey*100+(em-1))ok=false;}
+      return ok;
+    }).length:0;
+    warnEl.style.display=(rawCount>10)?'flex':'none';
+  }
+  function _periodForResource(r){
+    if(isAllMode && hasDateRange)  return _ltaCompute(r,'all',dateRange);
+    if(isCompletedOrCur)           return _ltaCompute(r,'all',{start:_mlToYYYYMM(fMonth),end:_mlToYYYYMM(fMonth)});
+    if(isForecastMonth && visibleMonthCols.length){
+      const fc0=visibleMonthCols[0], fcN=visibleMonthCols[visibleMonthCols.length-1];
+      return _ltaCompute(r,'all',{start:_mlToYYYYMM(fc0),end:_mlToYYYYMM(fcN)});
+    }
+    return {caDays:0,localDays:0,totalDays:0,bizDays:0,caPct:null,months:[]};
+  }
+
+  /* ── computed: declared here — all dependencies are ready ── */
   const computed = _ltaData.map(r=>{
     const isCALocal = _ltaCALocal.has(r.name);
     const {caDays,localDays,totalDays,bizDays,caPct} = isCALocal
       ? {caDays:0,localDays:0,totalDays:0,bizDays:0,caPct:null}
-      : _ltaCompute(r, fMonth, dateRange);
+      : _periodForResource(r);
     const status = ltaStatus(caPct, isCALocal);
     return {...r, caDays, localDays, totalDays, bizDays, caPct, status, isCALocal};
   });
 
-  /* KPIs — exclude CA Local from LTA counts */
+  /* ── KPIs — now safe, computed is initialised ── */
   const nonLocal  = computed.filter(r=>!r.isCALocal);
   const exceeded  = nonLocal.filter(r=>r.status==='exceeded').length;
   const warning   = nonLocal.filter(r=>r.status==='warning').length;
@@ -3823,15 +4113,16 @@ function renderLTATable(){
   document.getElementById('ltaKCALocal').textContent  = caLocal;
   document.getElementById('ltaKAvg').textContent      = avgPct;
 
-  /* Filter rows */
+  /* ── Filter rows ── */
+  const selRes=_ltaGetSelectedResources();
   let rows = computed.filter(r=>{
     if(fStatus==='ca-local' && !r.isCALocal) return false;
     if(fStatus!=='all' && fStatus!=='ca-local' && r.status!==fStatus) return false;
-    if(fSearch && !r.name.toLowerCase().includes(fSearch)) return false;
+    if(selRes.size>0 && !selRes.has(r.name)) return false;
     return true;
   });
 
-  /* Sort */
+  /* ── Sort ── */
   if(_ltaSortCol>=0){
     rows.sort((a,b)=>{
       const vals=[
@@ -3848,38 +4139,25 @@ function renderLTATable(){
     });
   }
 
-  /* Always push CA Local rows to the bottom — they are exempt from LTA
-     and should not compete visually with resources that need monitoring */
   const activeRows  = rows.filter(r=>!r.isCALocal);
   const caLocalRows = rows.filter(r=> r.isCALocal);
 
-  /* Build header */
+  const showMonthCols = visibleMonthCols.length>0;
+  const totalCols = 7 + visibleMonthCols.length;
+
+  /* ── Build header ── */
   const demoBadge = _ltaIsDemo ? `<span class="lta-demo-badge">DEMO</span>` : '';
   const sa = ci => _ltaSortCol===ci?(_ltaSortDir===1?' ▲':' ▼'):'';
-  const showMonthCols = fMonth==='all';
-  const totalCols = 7 + (showMonthCols ? _ltaMonths.length : 0);
 
-  /* Determine context label for single-month view */
-  let monthCtxLabel='', monthCtxColor='#555', monthCtxBadge='';
-  if(fMonth&&fMonth!=='all'){
-    const now2=new Date();
-    const p2=_parseML(fMonth);
-    if(p2){
-      const isCur=p2.yr===now2.getFullYear()&&p2.mo===now2.getMonth();
-      const isFut=p2.yr>now2.getFullYear()||(p2.yr===now2.getFullYear()&&p2.mo>now2.getMonth());
-      if(isCur){ monthCtxLabel='📍 Current Month'; monthCtxColor='#e65100'; monthCtxBadge='<span style="font-size:.6rem;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px">IN PROGRESS</span>'; }
-      else if(isFut){ monthCtxLabel='🔭 Forecast'; monthCtxColor='#1565c0'; monthCtxBadge='<span style="font-size:.6rem;background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px">FORECAST</span>'; }
-      else { monthCtxLabel='✅ Completed'; monthCtxColor='#2e7d32'; monthCtxBadge='<span style="font-size:.6rem;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px">ACTUAL</span>'; }
-    }
-    const biz2=fMonth?_bizDays(fMonth):0;
-    monthCtxLabel+=` — ${fMonth}  ·  ${biz2} biz days`;
-  }
-
-  /* Column header label — reflects active filter mode */
-  let modeLabel='10M Rolling';
-  if(hasDateRange){
+  /* Mode label for summary columns */
+  let modeLabel='';
+  if(needsDatePrompt){
+    modeLabel='select range';
+  } else if(hasDateRange){
     const fmt=ym=>{ if(!ym) return '…'; const [y,m]=ym.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+'-'+String(y).slice(2); };
     modeLabel=`${fmt(dateStart)||'Start'} → ${fmt(dateEnd)||'End'}`;
+  } else if(isForecastMonth){
+    modeLabel=`${visibleMonthCols[0]||''}→${fMonth} (${visibleMonthCols.length}M)`;
   } else if(fMonth&&fMonth!=='all'){
     modeLabel=fMonth;
   }
@@ -3888,29 +4166,48 @@ function renderLTATable(){
   const bizLabel = `Biz Days<br><span style="font-size:.56rem;font-weight:400;color:#aaa">${modeLabel}</span>`;
   const pctLabel = `CA %<br><span style="font-size:.56rem;font-weight:400;color:#aaa">CA÷Biz</span>`;
 
+  /* Month column th builder */
+  function _monthTh(m){
+    const p3=_parseML(m);
+    const isFut3=p3&&(p3.yr>now.getFullYear()||(p3.yr===now.getFullYear()&&p3.mo>now.getMonth()));
+    const isCur3=p3&&p3.yr===now.getFullYear()&&p3.mo===now.getMonth();
+    const thBg=isFut3?'background:#1565c0':isCur3?'background:#e65100':'background:#2d2d2d';
+    const biz=_bizDays(m);
+    const tag=isFut3?`<span style="font-size:.5rem;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:4px;display:block;margin-top:2px">FORECAST</span>`
+              :isCur3?`<span style="font-size:.5rem;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:4px;display:block;margin-top:2px">CURRENT</span>`:'';
+    return `<th class="lta-month-th" ${_holTipAttr(m,isFut3?'blue':'')} style="padding:6px 4px;text-align:center;font-size:.6rem;cursor:default;${thBg};color:#ffd700;min-width:80px;white-space:nowrap">${m}${tag}<span style="color:#90a4ae;font-size:.55rem;font-weight:400;display:block">${biz} biz days</span></th>`;
+  }
+
   document.getElementById('ltaHead').innerHTML = `
-    <th onclick="ltaSort(0)" style="padding:8px 10px;min-width:160px">Name${demoBadge}${sa(0)}</th>
-    <th onclick="ltaSort(1)" style="padding:8px 10px;text-align:center;min-width:90px">🏠 CA Local${sa(1)}<br><span style="font-size:.58rem;font-weight:400;color:#aaa">click to toggle</span></th>
-    <th onclick="ltaSort(2)" style="padding:8px 10px;text-align:center">${caLabel}${sa(2)}</th>
-    <th onclick="ltaSort(3)" style="padding:8px 10px;text-align:center">${locLabel}${sa(3)}</th>
-    <th onclick="ltaSort(4)" style="padding:8px 10px;text-align:center">${bizLabel}${sa(4)}</th>
-    <th onclick="ltaSort(5)" style="padding:8px 10px;text-align:center">${pctLabel}${sa(5)}</th>
-    <th onclick="ltaSort(6)" style="padding:8px 10px">LTA Status${sa(6)}</th>
-    ${showMonthCols ? _ltaMonths.map(m=>{
-        const now3=new Date();const p3=_parseML(m);
-        const isFut3=p3&&(p3.yr>now3.getFullYear()||(p3.yr===now3.getFullYear()&&p3.mo>now3.getMonth()));
-        const isCur3=p3&&p3.yr===now3.getFullYear()&&p3.mo===now3.getMonth();
-        const thBg=isFut3?'background:#1565c0':isCur3?'background:#e65100':'background:#2d2d2d';
-        const biz=_bizDays(m);
-        const fcTag=isFut3?`<span style="font-size:.5rem;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:4px;display:block;margin-top:2px">FORECAST</span>`
-                   :isCur3?`<span style="font-size:.5rem;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:4px;display:block;margin-top:2px">CURRENT</span>`:'';
-        return `<th class="lta-month-th" ${_holTipAttr(m,isFut3?'blue':'')} style="padding:6px 4px;text-align:center;font-size:.6rem;cursor:default;${thBg};color:#ffd700;min-width:80px;white-space:nowrap">${m}${fcTag}<span style="color:#90a4ae;font-size:.55rem;font-weight:400;display:block">${biz} biz days</span></th>`;
-      }).join('') : ''}`;
+    <th class="lta-fc" onclick="ltaSort(0)" style="padding:8px 10px;min-width:160px">Name${demoBadge}${sa(0)}</th>
+    <th class="lta-fc" onclick="ltaSort(1)" style="padding:8px 10px;text-align:center;min-width:90px">🏠 CA Local${sa(1)}<br><span style="font-size:.58rem;font-weight:400;color:#aaa">click to toggle</span></th>
+    <th class="lta-fc" onclick="ltaSort(2)" style="padding:8px 10px;text-align:center;min-width:90px">${caLabel}${sa(2)}</th>
+    <th class="lta-fc" onclick="ltaSort(3)" style="padding:8px 10px;text-align:center;min-width:90px">${locLabel}${sa(3)}</th>
+    <th class="lta-fc" onclick="ltaSort(4)" style="padding:8px 10px;text-align:center;min-width:80px">${bizLabel}${sa(4)}</th>
+    <th class="lta-fc" onclick="ltaSort(5)" style="padding:8px 10px;text-align:center;min-width:120px">${pctLabel}${sa(5)}</th>
+    <th class="lta-fc lta-fc-last" onclick="ltaSort(6)" style="padding:8px 10px;min-width:130px">LTA Status${sa(6)}</th>
+    ${showMonthCols ? visibleMonthCols.map(_monthTh).join('') : ''}`;
+
+  /* ── Date prompt banner when 'all' but no range set ── */
+  const tbody = document.getElementById('ltaBody');
+  if(needsDatePrompt){
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:28px 20px;background:#fff8e1;border:1.5px dashed #ffc107;border-radius:8px">
+      <div style="font-size:.85rem;font-weight:700;color:#e65100;margin-bottom:8px">📅 Select a Date Range to view Rolling Cumulative data</div>
+      <div style="font-size:.72rem;color:#795548;line-height:1.7">
+        Use the <strong>📅 Start Month</strong> and <strong>📅 End Month</strong> pickers above to define the period.<br>
+        Up to <strong>10 month columns</strong> will be shown with per-month breakdown.<br>
+        Or select a specific month from the <strong>View Month</strong> dropdown instead.
+      </div>
+    </td></tr>`;
+    _renderLTAMonthBreakdown(computed);
+    _renderLTAForecast();
+    return;
+  }
 
   /* Build body */
-  const tbody = document.getElementById('ltaBody');
   if(!rows.length){
     tbody.innerHTML=`<tr><td colspan="${totalCols}" style="text-align:center;padding:24px;color:#aaa">No resources match the current filters.</td></tr>`;
+    _ltaApplyStickyOffsets();
     _renderLTAMonthBreakdown(computed);
     return;
   }
@@ -3928,25 +4225,25 @@ function renderLTATable(){
                   : r.caPct>=40 ? '#e65100' : '#2e7d32';
 
     let cells = `
-      <td><strong>${r.name}</strong></td>
-      <td class="lta-ca-local-cell">
+      <td class="lta-fc"><strong>${r.name}</strong></td>
+      <td class="lta-fc lta-ca-local-cell">
         <input type="checkbox" class="lta-ca-local-chk" ${chkd}
           title="${r.isCALocal ? 'CA Local — LTA not applicable. Uncheck to track.' : 'Check if this resource is based in California — LTA will not apply'}"
           onchange="ltaToggleCALocal('${r.name.replace(/'/g,"\\'")}', this.checked)"/>
         ${r.isCALocal ? '<span style="font-size:.62rem;color:#2e7d32;font-weight:700;display:block;margin-top:2px">CA Based</span>' : ''}
       </td>
-      <td style="font-weight:700;color:${r.isCALocal?'#bbb':'#e53935'};text-align:center">${r.isCALocal?'—':r.caDays}</td>
-      <td style="font-weight:700;color:${r.isCALocal?'#bbb':'#1565c0'};text-align:center">${r.isCALocal?'—':r.localDays}</td>
-      <td style="text-align:center;color:#555;font-weight:600">${r.isCALocal?'—':(r.bizDays>0?r.bizDays:'—')}</td>
-      <td style="text-align:center">
+      <td class="lta-fc" style="font-weight:700;color:${r.isCALocal?'#bbb':'#e53935'};text-align:center">${r.isCALocal?'—':r.caDays}</td>
+      <td class="lta-fc" style="font-weight:700;color:${r.isCALocal?'#bbb':'#1565c0'};text-align:center">${r.isCALocal?'—':r.localDays}</td>
+      <td class="lta-fc" style="text-align:center;color:#555;font-weight:600">${r.isCALocal?'—':(r.bizDays>0?r.bizDays:'—')}</td>
+      <td class="lta-fc" style="text-align:center">
         ${bar}
         <strong style="color:${pctCol};font-size:.8rem">${pctStr}</strong>
         ${!r.isCALocal&&r.bizDays>0?`<div style="font-size:.58rem;color:#aaa;margin-top:1px">${r.caDays}÷${r.bizDays}</div>`:''}
       </td>
-      <td>${ltaStatusBadge(r.status)}</td>`;
+      <td class="lta-fc lta-fc-last">${ltaStatusBadge(r.status)}</td>`;
 
     if(showMonthCols){
-      _ltaMonths.forEach(ml=>{
+      visibleMonthCols.forEach(ml=>{
         if(r.isCALocal){
           cells+=`<td style="text-align:center;font-size:.66rem;color:#bbb">—</td>`;
         } else {
@@ -3966,11 +4263,10 @@ function renderLTATable(){
 
   let html = activeRows.map(buildRow).join('');
 
-  /* Divider + collapsed CA Local section — only shown when at least one CA Local exists */
+  /* Divider + collapsed CA Local section */
   if(caLocalRows.length){
-    const colSpan = totalCols;
     html += `<tr>
-      <td colspan="${colSpan}" style="
+      <td colspan="${totalCols}" style="
         background:#e8f5e9;border-top:2px solid #2e7d32;border-bottom:1px solid #c8e6c9;
         padding:5px 12px;font-size:.67rem;font-weight:700;color:#2e7d32;
         cursor:pointer;user-select:none;" onclick="ltaToggleCALocalSection(this)">
@@ -3983,6 +4279,12 @@ function renderLTATable(){
   }
 
   tbody.innerHTML = html;
+  _ltaApplyStickyOffsets();
+  /* Set container height to show exactly 5 body rows */
+  _ltaFix5Rows(
+    document.querySelector('.lta-tbl-wrap'),
+    document.querySelector('.lta-tbl-wrap table.lta-tbl')
+  );
   _renderLTAMonthBreakdown(computed);
   _renderLTAForecast();
 }
@@ -4013,44 +4315,36 @@ function _renderLTAMonthBreakdown(computed){
   const container=document.getElementById('ltaMonthBreakdown');
   if(!container||!_ltaMonths.length) return;
 
-  const fSearch=(document.getElementById('ltaSearch')?.value||'').toLowerCase();
-  const rows=computed.filter(r=>!fSearch||r.name.toLowerCase().includes(fSearch));
+  const selRes=_ltaGetSelectedResources();
+  const rows=computed.filter(r=>{
+    if(selRes.size>0&&!selRes.has(r.name)) return false;
+    return true;
+  });
 
   /* Biz days per month (shared across all resources) */
   const bizPerMonth=_ltaMonths.map(ml=>({ml,biz:_bizDays(ml)}));
 
-  let html=`
-  <div style="font-size:.63rem;color:#888;margin-bottom:6px;font-style:italic">
-    📌 Rolling 10-month window — CA% calculated as <strong>CA Days ÷ Business Days</strong>
-    (excludes weekends &amp; US Federal holidays). Months sorted by fiscal year (Jul = FY start).
-  </div>
-  <div style="overflow-x:auto;overflow-y:visible"><table class="lta-tbl" style="font-size:.64rem;border-collapse:separate;border-spacing:0">
-    <thead>
-      <tr>
-        <th rowspan="3" style="min-width:160px;position:sticky;left:0;background:#1b1b1b;z-index:3;vertical-align:middle">Resource</th>
-        <th rowspan="3" style="position:sticky;left:160px;background:#1b1b1b;z-index:3;min-width:96px;text-align:center;vertical-align:middle">
-          Rolling<br>10M CA%<br><span style="font-size:.58rem;font-weight:400;color:#aaa">vs Biz Days</span>
-        </th>
-        <th rowspan="3" style="position:sticky;left:256px;background:#1b1b1b;z-index:3;min-width:110px;text-align:center;vertical-align:middle">Status</th>`;
+  /* SINGLE-ROW header — same pattern as working lta-tbl.
+     Frozen cols use lta-fc / lta-fc-last; left: offset set by _ltaApplyStickyOffsetsTo */
+  let html=`<table id="ltaMBTable" class="lta-mb-tbl">
+    <thead><tr>
+      <th class="lta-mb-fc" style="min-width:160px;padding:8px 10px;white-space:nowrap;text-align:left">Resource</th>
+      <th class="lta-mb-fc" style="min-width:96px;text-align:center;padding:8px 4px">Rolling<br>10M CA%<br><span style="font-size:.55rem;font-weight:400;color:#aaa">vs Biz Days</span></th>
+      <th class="lta-mb-fc lta-mb-fc-last" style="min-width:110px;text-align:center;padding:8px 4px">Status</th>`;
 
-  /* Month group headers — floating holiday tooltip via data-hol-tip */
+  const now4=new Date();
   _ltaMonths.forEach(ml=>{
-    const now4=new Date();const p4=_parseML(ml);
+    const p4=_parseML(ml);
     const isFut4=p4&&(p4.yr>now4.getFullYear()||(p4.yr===now4.getFullYear()&&p4.mo>now4.getMonth()));
-    html+=`<th colspan="3" class="lta-month-th" ${_holTipAttr(ml,isFut4?'blue':'')} style="background:#2d2d2d;color:#ffd700;border-left:2px solid #e0301e;text-align:center;min-width:132px;padding:5px 4px">
-      ${ml}
+    const isCur4=p4&&p4.yr===now4.getFullYear()&&p4.mo===now4.getMonth();
+    const bg=isFut4?'background:#1565c0':isCur4?'background:#e65100':'background:#2d2d2d';
+    const biz=_bizDays(ml);
+    html+=`<th colspan="3" class="lta-month-th" ${_holTipAttr(ml,isFut4?'blue':'')}
+      style="${bg};color:#ffd700;border-left:2px solid #e0301e;text-align:center;min-width:132px;padding:5px 4px;white-space:nowrap">
+      ${ml}<span style="display:block;font-size:.55rem;color:#90a4ae;font-weight:400">${biz} biz · CA | Local | CA%</span>
     </th>`;
   });
-  html+=`</tr>
-      <tr>`;
-  /* Column sub-headers: CA Days | Local | CA% / Flag */
-  _ltaMonths.forEach(()=>{
-    html+=`<th style="background:#37474f;color:#ccc;font-size:.58rem;font-weight:600;border-left:2px solid #e0301e;text-align:center;padding:3px 4px;white-space:nowrap">CA Days</th>
-           <th style="background:#37474f;color:#ccc;font-size:.58rem;font-weight:600;text-align:center;padding:3px 4px">Local</th>
-           <th style="background:#37474f;color:#ccc;font-size:.58rem;font-weight:600;text-align:center;padding:3px 4px;white-space:nowrap">CA% / Status</th>`;
-  });
-  html+=`</tr>
-    </thead><tbody>`;
+  html+=`</tr></thead><tbody>`;
 
   rows.forEach(r=>{
     const rowBg=r.isCALocal?'#f9fdf5':r.status==='exceeded'?'#fff5f5':r.status==='warning'?'#fffbf0':'#fff';
@@ -4060,9 +4354,9 @@ function _renderLTAMonthBreakdown(computed){
     const rTxt=r.isCALocal?'N/A':rolling.caPct!==null?rolling.caPct+'%<br><span style="font-size:.58rem;color:#aaa">'+rolling.bizDays+' biz</span>':'—';
 
     html+=`<tr>
-      <td style="font-weight:600;position:sticky;left:0;background:${rowBg};z-index:1;white-space:nowrap">${r.name}</td>
-      <td style="text-align:center;font-weight:800;color:${rCol};position:sticky;left:160px;background:${rowBg};z-index:1">${rTxt}</td>
-      <td style="text-align:center;position:sticky;left:256px;background:${rowBg};z-index:1">${ltaStatusBadge(r.status)}</td>`;
+      <td class="lta-mb-fc" style="background:${rowBg};padding:6px 10px;font-weight:600">${r.name}</td>
+      <td class="lta-mb-fc" style="text-align:center;font-weight:800;color:${rCol};background:${rowBg};padding:6px 4px">${rTxt}</td>
+      <td class="lta-mb-fc lta-mb-fc-last" style="text-align:center;background:${rowBg};padding:6px 4px">${ltaStatusBadge(r.status)}</td>`;
 
     _ltaMonths.forEach(ml=>{
       if(r.isCALocal){
@@ -4088,9 +4382,14 @@ function _renderLTAMonthBreakdown(computed){
     html+=`</tr>`;
   });
 
-  html+=`</tbody></table></div>`;
+  html+=`</tbody></table>`;
   container.innerHTML=html;
-}
+  _ltaApplyStickyOffsetsTo(document.getElementById('ltaMBTable'),'td.lta-mb-fc,th.lta-mb-fc','td.lta-mb-fc-last,th.lta-mb-fc-last');
+  _ltaFix5Rows(
+    document.getElementById('ltaMonthBreakdown'),
+    document.getElementById('ltaMBTable')
+  );
+  }
 
 /* ════════════════════════════════════════════════════
    LTA FORECAST MODEL
@@ -4150,11 +4449,11 @@ function _renderLTAForecast(){
   sec.style.display='block';
   if(rangeEl) rangeEl.textContent=`${fMonths[0]} → ${fMonths[fMonths.length-1]}  (${fMonths.length} months)`;
 
-  const fSearch=(document.getElementById('ltaSearch')?.value||'').toLowerCase();
-  // Only onshore, non-CA-local resources
+  const selRes=_ltaGetSelectedResources();
+  // Only onshore, non-CA-local resources matching resource filter
   const resources=_ltaData.filter(r=>
     !_ltaCALocal.has(r.name) &&
-    (!fSearch||r.name.toLowerCase().includes(fSearch))
+    (selRes.size===0||selRes.has(r.name))
   );
 
   /* Init storage for new resources/months */
@@ -4165,49 +4464,42 @@ function _renderLTAForecast(){
     });
   });
 
-  let html=`
-  <div style="font-size:.63rem;color:#1565c0;margin-bottom:7px;font-style:italic;line-height:1.6">
-    📌 Forecast uses <strong>current month+1</strong> through roster end date as future months.
-    Check ✅ a month column header to enable CA Days editing. Local days = Biz Days − CA Days (auto-calculated).
-    Click <strong>📊 Apply Forecast to LTA Table</strong> to push values into the LTA summary above.
-  </div>
-  <table class="lta-fc-tbl">
-    <thead>
-      <tr>
-        <th rowspan="3" style="min-width:160px;position:sticky;left:0;background:#0d47a1;color:#fff;z-index:5;vertical-align:middle;padding:6px 10px">Resource</th>`;
+  /* SINGLE-ROW header — same pattern as working lta-tbl */
+  let html=`<table class="lta-fc-tbl" id="ltaFCTable">
+    <thead><tr>
+      <th class="lta-fc-frozen">Resource</th>`;
 
   fMonths.forEach(ml=>{
     const biz=_bizDays(ml);
     const ena=_ltaForecastEditable.has(ml);
-    html+=`<th class="lta-fc-th" ${_holTipAttr(ml,'blue')} style="${ena?'background:#0d47a1;':''}">
-      ${ml}
-      <span class="lta-fc-biz">${biz} biz days</span>
+    const mlKey=ml.replace(/[^a-zA-Z0-9]/g,'_');
+    html+=`<th class="lta-fc-th" ${_holTipAttr(ml,'blue')} style="min-width:160px;text-align:center;padding:4px 6px;${ena?'background:#0d47a1;':''}">
+      <div style="font-weight:700;font-size:.63rem">${ml}</div>
+      <div style="font-size:.55rem;color:#90caf9">${biz} biz days</div>
+      <div style="margin-top:3px">
+        <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;font-size:.58rem;color:#fff">
+          <input type="checkbox" ${ena?'checked':''} onchange="ltaForecastToggleCol('${ml}',this.checked)"
+            style="accent-color:#ffd700;width:12px;height:12px;cursor:pointer"> Edit CA
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;gap:3px;justify-content:center;margin-top:2px;opacity:${ena?'1':'.35'}">
+        <span style="font-size:.55rem;color:#ffd700;font-weight:700">All:</span>
+        <input type="number" min="0" max="${biz}" step="1" placeholder="—"
+          id="fcbulk_${mlKey}" ${ena?'':'disabled'}
+          style="width:38px;text-align:center;border:1.5px solid ${ena?'#ffd700':'#555'};border-radius:4px;
+            padding:2px 3px;font-size:.64rem;font-weight:700;background:${ena?'#1a3a6e':'#1b2a40'};
+            color:${ena?'#ffd700':'#888'};cursor:${ena?'text':'not-allowed'}"
+          onkeydown="if(event.key==='Enter')ltaForecastFillCol('${ml}',this.value,${biz})"
+          onblur="ltaForecastFillCol('${ml}',this.value,${biz})"
+          title="Fill all resources for ${ml}">
+      </div>
     </th>`;
-  });
-  html+=`</tr><tr>`;
-
-  // Row 2: enable checkbox per column
-  fMonths.forEach(ml=>{
-    const ena=_ltaForecastEditable.has(ml);
-    html+=`<th class="lta-fc-chk-th" title="Enable CA Days editing for ${ml}">
-      <label style="display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:.59rem;color:#fff;white-space:nowrap">
-        <input type="checkbox" ${ena?'checked':''} onchange="ltaForecastToggleCol('${ml}',this.checked)"
-          style="accent-color:#ffd700;width:13px;height:13px;cursor:pointer">
-        Edit CA
-      </label>
-    </th>`;
-  });
-  html+=`</tr><tr>`;
-
-  // Row 3: sub-column labels
-  fMonths.forEach(()=>{
-    html+=`<th class="lta-fc-th-sub" style="border-left:1px solid rgba(255,255,255,.15)">CA Days</th>`;
   });
   html+=`</tr></thead><tbody>`;
 
   resources.forEach(r=>{
     html+=`<tr>
-      <td style="font-weight:600;position:sticky;left:0;background:#fff;z-index:1;white-space:nowrap;padding:5px 10px">${r.name}</td>`;
+      <td class="lta-fc-frozen">${r.name}</td>`;
 
     fMonths.forEach(ml=>{
       const biz=_bizDays(ml);
@@ -4245,6 +4537,11 @@ function _renderLTAForecast(){
 
   html+=`</tbody></table>`;
   tbl.innerHTML=html;
+  _ltaApplyStickyOffsetsTo(tbl.querySelector('table.lta-fc-tbl'),'td.lta-fc-frozen,th.lta-fc-frozen','td.lta-fc-frozen,th.lta-fc-frozen');
+  _ltaFix5Rows(
+    document.getElementById('ltaForecastTable'),
+    tbl.querySelector('table.lta-fc-tbl')
+  );
 }
 
 /* ── Clear a single forecast cell ── */
@@ -4266,6 +4563,44 @@ function ltaForecastToggleCol(ml, enabled){
   if(enabled) _ltaForecastEditable.add(ml);
   else        _ltaForecastEditable.delete(ml);
   _renderLTAForecast();
+}
+
+/* ── Bulk-fill all resources for a month with one CA Days value ──
+   Called on Enter or blur of the "All:" input in the column header.
+   Updates every resource's stored value and live-refreshes each cell without full re-render. */
+function ltaForecastFillCol(ml, val, biz){
+  if(!_ltaForecastEditable.has(ml)) return; // safety — col must be enabled
+  const raw=val===''||val===undefined?null:val;
+  if(raw===null) return; // blank — don't overwrite existing values
+  const ca=Math.max(0,Math.min(Math.floor(+raw||0),biz));
+  const local=Math.max(0,biz-ca);
+  const pct=biz>0?Math.round(ca/biz*100):0;
+  const pctCls=pct>=50?'exceeded':pct>=40?'warning':'ok';
+  const mlKey=ml.replace(/[^a-zA-Z0-9]/g,'_');
+
+  // Update every resource that's currently rendered
+  _ltaData.forEach(r=>{
+    if(_ltaCALocal.has(r.name)) return;
+    if(!_ltaForecastCA[r.name]) _ltaForecastCA[r.name]={};
+    _ltaForecastCA[r.name][ml]=ca;
+    const rKey=r.name.replace(/[\s']/g,'_');
+    const inp =document.getElementById('fcin_' +rKey+'_'+mlKey);
+    const locEl=document.getElementById('fcloc_'+rKey+'_'+mlKey);
+    const pctEl=document.getElementById('fcpct_'+rKey+'_'+mlKey);
+    if(inp)   inp.value  = ca||'';
+    if(locEl) locEl.textContent='🏠 '+local;
+    if(pctEl){ pctEl.textContent=ca>0?pct+'%':''; pctEl.className='lta-fc-pct '+pctCls; }
+  });
+
+  // Visual feedback on the bulk input itself
+  const bulkInp=document.getElementById('fcbulk_'+mlKey);
+  if(bulkInp){
+    bulkInp.style.borderColor='#69f0ae';
+    bulkInp.style.color='#69f0ae';
+    setTimeout(()=>{
+      if(bulkInp){bulkInp.style.borderColor='#ffd700';bulkInp.style.color='#ffd700';}
+    },800);
+  }
 }
 
 /* ── Live update a single cell ── */
@@ -4347,6 +4682,83 @@ function ltaSort(col){
   renderLTATable();
 }
 
+/* ── Set scroll container max-height to show exactly 5 body rows ──────────────
+   Measures the real rendered height of the thead + first 5 tbody rows,
+   then sets max-height on the container. Works for any row height.
+   wrapper  — the overflow:auto container element
+   tableEl  — the <table> inside it
+   maxRows  — number of body rows to show (default 5)
+   ─────────────────────────────────────────────────────────────────────────── */
+function _ltaFix5Rows(wrapper, tableEl, maxRows){
+  if(!wrapper||!tableEl) return;
+  maxRows=maxRows||5;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const thead=tableEl.querySelector('thead');
+    const rows=[...tableEl.querySelectorAll('tbody tr')];
+    if(!thead||!rows.length) return;
+    const theadH=thead.getBoundingClientRect().height;
+    let bodyH=0;
+    rows.slice(0,maxRows).forEach(r=>{ bodyH+=r.getBoundingClientRect().height; });
+    const total=Math.ceil(theadH+bodyH)+2; /* +2px for border */
+    wrapper.style.maxHeight=total+'px';
+  }));
+}
+
+/* ── Generic sticky column offset applicator ─────────────────────────────────
+   Measures actual rendered column widths from the first matching header cells,
+   then writes the correct `left:` value to every frozen cell in the table.
+   fcSel  = CSS selector for all frozen cells (e.g. '.lta-fc')
+   lastSel = CSS selector for the last frozen cell in a row (e.g. '.lta-fc-last')
+   ─────────────────────────────────────────────────────────────────────────── */
+function _ltaApplyStickyOffsetsTo(tbl, fcSel, lastSel){
+  if(!tbl) return;
+  /* Double rAF: first frame for layout, second for measurement after paint */
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    /* Find all unique frozen cells in the first header row */
+    const thead=tbl.querySelector('thead');
+    if(!thead) return;
+    /* Use the first tr for measurement — cells with rowspan are here */
+    const firstRow=thead.querySelector('tr');
+    if(!firstRow) return;
+    const frozenCells=[...firstRow.querySelectorAll(
+      fcSel.split(',').concat(lastSel.split(',')).join(',')
+    )];
+    /* Deduplicate by DOM identity */
+    const seen=new Set();
+    const uniqueFrozen=frozenCells.filter(c=>{ if(seen.has(c)) return false; seen.add(c); return true; });
+    if(!uniqueFrozen.length) return;
+
+    /* Measure actual rendered widths */
+    let offset=0;
+    const offsets=uniqueFrozen.map(cell=>{
+      const left=offset;
+      offset+=Math.round(cell.getBoundingClientRect().width);
+      return left;
+    });
+
+    /* Apply to every cell in thead and tbody */
+    [...tbl.querySelectorAll('tr')].forEach(row=>{
+      const allFrozen=[...row.querySelectorAll(
+        fcSel.split(',').concat(lastSel.split(',')).join(',')
+      )];
+      const seenR=new Set();
+      const uniqueR=allFrozen.filter(c=>{ if(seenR.has(c)) return false; seenR.add(c); return true; });
+      uniqueR.forEach((cell,i)=>{
+        if(offsets[i]!==undefined) cell.style.left=offsets[i]+'px';
+      });
+    });
+  }));
+}
+
+/* Convenience wrapper for the main LTA summary table */
+function _ltaApplyStickyOffsets(){
+  _ltaApplyStickyOffsetsTo(
+    document.querySelector('.lta-tbl-wrap table.lta-tbl'),
+    'td.lta-fc,th.lta-fc',
+    'td.lta-fc-last,th.lta-fc-last'
+  );
+}
+
 /* ── View Month filter change — clear date range when a specific month is picked ── */
 function ltaMonthFilterChange(){
   const sel=document.getElementById('ltaFMonth')?.value||'all';
@@ -4371,6 +4783,144 @@ function ltaClearDateRange(){
   renderLTATable();
 }
 
+/* ════════════════════════════════════════════════════
+   RESOURCE NAME MULTI-SELECT FILTER
+   Two-state model:
+     _ltaAppliedResources  — the APPLIED set that drives table rendering (empty = all)
+     _ltaPendingResources  — the IN-PROGRESS set while dropdown is open
+     null in pending means "all selected" (no explicit set needed)
+════════════════════════════════════════════════════ */
+let _ltaAppliedResources = new Set(); // empty = show all
+let _ltaPendingResources = null;      // null = mirrors applied; Set = pending edits
+let _ltaPendingNone = false;          // true = "None" was clicked; all boxes unchecked
+let _ltaAppliedNone = false;          // true = applied state is "show nothing"
+
+function _ltaGetSelectedResources(){
+  /* Returns a Set of names to SHOW. Empty set = show all. 
+     If applied state is "none", return a Set with impossible value so nothing matches. */
+  if(_ltaAppliedNone) return new Set(['__NONE_SELECTED__']);
+  return _ltaAppliedResources;
+}
+
+/* Open the dropdown: clone applied → pending so we can cancel */
+function ltaResToggleDropdown(e){
+  e.stopPropagation();
+  const dd=document.getElementById('ltaResDropdown');
+  if(!dd) return;
+  const wasOpen=dd.classList.contains('open');
+  if(wasOpen){
+    _ltaPendingResources=null; _ltaPendingNone=false;
+    dd.classList.remove('open');
+  } else {
+    _ltaPendingResources=new Set(_ltaAppliedResources);
+    _ltaPendingNone=_ltaAppliedNone;
+    dd.classList.add('open');
+    _ltaPopulateResFilter();
+  }
+}
+
+/* Populate checkboxes reflecting pending state */
+function _ltaPopulateResFilter(){
+  const items=document.getElementById('ltaResItems');
+  if(!items) return;
+  const names=_ltaData.map(r=>r.name).sort();
+  const isNone=_ltaPendingNone;
+  const pending=_ltaPendingResources||new Set();
+  items.innerHTML=names.map(n=>{
+    const checked=!isNone&&(pending.size===0||pending.has(n));
+    const esc=n.replace(/"/g,'&quot;').replace(/'/g,"\'");
+    return `<label class="lta-res-item">
+      <input type="checkbox" value="${n.replace(/"/g,'&quot;')}"
+        ${checked?'checked':''}
+        onchange="ltaResPendingToggle('${esc}',this.checked)">
+      <span>${n}</span>
+    </label>`;
+  }).join('');
+  _ltaResUpdatePendingBadge();
+}
+
+/* Toggle a single resource in pending */
+function ltaResPendingToggle(name, checked){
+  if(!_ltaPendingResources) _ltaPendingResources=new Set(_ltaAppliedNone?new Set():_ltaAppliedResources);
+  if(_ltaPendingNone && checked){
+    /* Coming from None — start fresh with just this name */
+    _ltaPendingNone=false;
+    _ltaPendingResources=new Set([name]);
+    _ltaResUpdatePendingBadge();
+    return;
+  }
+  if(_ltaPendingResources.size===0 && !checked){
+    _ltaData.map(r=>r.name).forEach(n=>_ltaPendingResources.add(n));
+  }
+  if(checked) _ltaPendingResources.add(name);
+  else        _ltaPendingResources.delete(name);
+  if(_ltaData.every(r=>_ltaPendingResources.has(r.name))){ _ltaPendingResources=new Set(); }
+  _ltaResUpdatePendingBadge();
+}
+
+/* All — check every resource */
+function ltaResPendingAll(e){
+  e.stopPropagation();
+  _ltaPendingNone=false;
+  _ltaPendingResources=new Set(); // empty = all
+  _ltaPopulateResFilter();
+}
+
+/* None — uncheck every resource */
+function ltaResPendingNone(e){
+  e.stopPropagation();
+  _ltaPendingNone=true;
+  _ltaPendingResources=new Set();
+  _ltaPopulateResFilter();
+}
+
+/* Apply pending → applied */
+function ltaResApply(e){
+  e.stopPropagation();
+  _ltaAppliedNone=_ltaPendingNone;
+  _ltaAppliedResources=_ltaPendingNone?new Set():new Set(_ltaPendingResources||new Set());
+  _ltaPendingResources=null; _ltaPendingNone=false;
+  document.getElementById('ltaResDropdown')?.classList.remove('open');
+  _ltaResUpdateBtnLabel();
+  renderLTATable();
+}
+
+/* Cancel */
+function ltaResCancel(e){
+  e.stopPropagation();
+  _ltaPendingResources=null; _ltaPendingNone=false;
+  document.getElementById('ltaResDropdown')?.classList.remove('open');
+}
+
+/* Pending badge — shows count in Apply button */
+function _ltaResUpdatePendingBadge(){
+  const allCount=_ltaData.length;
+  const selCount=_ltaPendingNone?0:(_ltaPendingResources&&_ltaPendingResources.size>0?_ltaPendingResources.size:allCount);
+  const applyBtn=document.querySelector('#ltaResDropdown .lta-res-act-btn.primary');
+  if(applyBtn) applyBtn.textContent=`✔ Apply (${selCount} of ${allCount})`;
+}
+
+/* Button label */
+function _ltaResUpdateBtnLabel(){
+  const lbl=document.getElementById('ltaResBtnText');
+  if(!lbl) return;
+  if(_ltaAppliedNone){ lbl.textContent='👤 0 Resources (None)'; return; }
+  const count=_ltaAppliedResources.size;
+  const total=_ltaData.length;
+  if(count===0||count===total) lbl.textContent='👤 All Resources';
+  else if(count===1) lbl.textContent=`👤 ${[..._ltaAppliedResources][0]}`;
+  else lbl.textContent=`👤 ${count} / ${total} resources`;
+}
+
+/* Close dropdown when clicking outside */
+document.addEventListener('click',function(e){
+  const wrap=document.getElementById('ltaResFilterWrap');
+  if(wrap&&!wrap.contains(e.target)){
+    _ltaPendingResources=null; _ltaPendingNone=false;
+    document.getElementById('ltaResDropdown')?.classList.remove('open');
+  }
+});
+
 /* ── Auto-populate date pickers min/max from loaded months ── */
 function _ltaSetDatePickerBounds(){
   if(!_ltaMonths.length) return;
@@ -4393,6 +4943,11 @@ function resetLTA(){
   _ltaCALocal.clear();
   /* Reset forecast state */
   _ltaForecastCA={}; _ltaForecastEditable.clear();
+  /* Reset resource filter */
+  _ltaAppliedResources.clear();
+  _ltaPendingResources=null;
+  const resItems=document.getElementById('ltaResItems'); if(resItems) resItems.innerHTML='';
+  _ltaResUpdateBtnLabel();
   const fsec=document.getElementById('ltaForecastSection'); if(fsec) fsec.style.display='none';
   ['ltaKTotal','ltaKExceeded','ltaKWarning','ltaKOK','ltaKCALocal','ltaKAvg'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.textContent='—';
