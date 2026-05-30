@@ -141,20 +141,17 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1b1b1b;fo
   -webkit-overflow-scrolling:touch;
 }
 /* Row 1 of thead (month group headers) */
-.heat-wrap .heat-table thead tr:first-child th{
-  position:sticky;top:0;z-index:4;
+/* Single-row thead — all cells stick at top:0, no two-row overlap problem */
+.heat-wrap .heat-table thead tr th{
+  position:sticky;top:0;z-index:5;
 }
-/* Row 2 of thead (week sub-cols) — sits directly below row 1 (~28px) */
-.heat-wrap .heat-table thead tr:nth-child(2) th{
-  position:sticky;top:28px;z-index:4;
-}
-/* Frozen left-column TH — rowspan="2" spans both rows, so just top:0 */
-.heat-wrap .heat-table thead th.fc-expand{position:sticky!important;left:0;  top:0;z-index:8;}
-.heat-wrap .heat-table thead th.fc-name  {position:sticky!important;left:22px;top:0;z-index:8;}
-.heat-wrap .heat-table thead th.fc-shore {position:sticky!important;left:182px;top:0;z-index:8;}
-.heat-wrap .heat-table thead th.fc-active{position:sticky!important;left:232px;top:0;z-index:8;}
-/* Grand total TH (rowspan=2) */
-.heat-wrap .heat-table thead th.total-hdr{position:sticky!important;top:0;z-index:4;}
+/* Frozen left-column TH — stick both horizontally and vertically */
+.heat-wrap .heat-table thead th.fc-expand{position:sticky!important;left:0;  top:0;z-index:10;}
+.heat-wrap .heat-table thead th.fc-name  {position:sticky!important;left:22px;top:0;z-index:10;}
+.heat-wrap .heat-table thead th.fc-shore {position:sticky!important;left:182px;top:0;z-index:10;}
+.heat-wrap .heat-table thead th.fc-active{position:sticky!important;left:232px;top:0;z-index:10;}
+/* Grand total TH */
+.heat-wrap .heat-table thead th.total-hdr{position:sticky!important;top:0;z-index:5;}
 
 .heat-table{border-collapse:separate;border-spacing:0;font-size:.66rem;min-width:100%;}
 
@@ -851,6 +848,12 @@ table.lta-fc-tbl tbody tr:hover{background:#e8f4ff;}
       <option value="all">All Months</option>
     </select>
   </div>
+  <div class="fg" id="fgPhase" style="display:none">
+    <label>🗓️ Project Phase</label>
+    <select id="fPhase" onchange="applyFilters()">
+      <option value="all">All Phases</option>
+    </select>
+  </div>
 </div>
 
 <!-- EMPTY STATE -->
@@ -1017,6 +1020,17 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
 <span class="wsrc">Tax code: SF / CA · Threshold: 50% CA presence · ONSHORE resources only</span></span></div>
     </div>
 
+    <!-- ══ PROJECT TIMELINE BANNER ══ -->
+    <div id="timelineBanner" style="display:none;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+        <span style="font-size:.72rem;font-weight:700;color:#003087;text-transform:uppercase;letter-spacing:.5px;">📅 Project Timeline</span>
+        <span id="tlOverlapBadge" style="display:none;background:#fff3e0;border:1px solid #ff8f00;color:#e65100;font-size:.65rem;font-weight:700;border-radius:4px;padding:2px 8px;">⚠️ Phase Overlap Active</span>
+        <span style="font-size:.65rem;color:#999;margin-left:auto;">Showing phase boundaries relative to roster months</span>
+      </div>
+      <div id="timelineTrack" style="position:relative;background:#f5f7fa;border:1px solid #e0e6f0;border-radius:8px;overflow:hidden;height:62px;"></div>
+      <div id="timelineLegend" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;"></div>
+    </div>
+
     <div class="tab-panel active" id="tHeat">
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
         <div class="legend" style="margin-bottom:0;flex-wrap:wrap;">
@@ -1173,6 +1187,7 @@ Upload the LTA tracking file or use demo data. File format: Name + monthly CA da
         </div>
         <!-- Date range -->
         <div id="ltaDateRangeWrap" style="display:flex;align-items:flex-end;gap:8px;background:#f0f4ff;border:1px solid #c5cae9;border-radius:8px;padding:6px 10px">
+          <div style="align-self:flex-start;font-size:.58rem;font-weight:700;color:#3949ab;white-space:nowrap;padding-top:2px;letter-spacing:.3px;text-transform:uppercase;border-right:2px solid #c5cae9;padding-right:8px;margin-right:2px">📅 Rolling<br>10M Range</div>
           <div class="fg">
             <label><span class="lbl-tip" style="color:#3949ab">📅 Start Month<span class="ltip"><strong>Date Range — Start Month</strong>Filter to include months <b>on or after</b> this month. Combine with End Month to isolate a custom period. All metrics (CA Days, Local Days, Biz Days, CA%) recalculate for the selected range.</span></span></label>
             <input type="month" id="ltaDateStart" onchange="renderLTATable()"
@@ -1285,6 +1300,7 @@ let R = [];         // master resource array (merged)
 let FD = [];        // filtered data
 let WEEKS = [];     // week labels (union of all flex files, sorted)
 let MONTHS = [];    // month labels from roster file
+let _timelineData = []; // parsed from PROPEL_TIMELINE sheet: [{phase, startDt, endDt, overlap, overlapPhase, overlapMonths}]
 let rosterLoaded = false;
 let flexLoaded = false;
 let sortDir = 1, lastCol = -1;
@@ -1434,6 +1450,14 @@ function handleRosterFile(input){
   reader.onload = e => {
     try {
       const wb = XLSX.read(e.target.result, {type:'array'});
+      /* ── Parse PROPEL_TIMELINE sheet if present ── */
+      const tlSheet = wb.Sheets['PROPEL_TIMELINE'];
+      if(tlSheet){
+        const tlAoa = XLSX.utils.sheet_to_json(tlSheet, {header:1, defval:null});
+        _parseTimelineSheet(tlAoa);
+      } else {
+        _timelineData = [];
+      }
       const ws = wb.Sheets[wb.SheetNames[0]];
       const aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
       parseRosterAoA(aoa, file.name);
@@ -1601,6 +1625,277 @@ function normalizeShore(s){
   if(/on/i.test(s)&&!/off/i.test(s)) return 'ONSHORE';
   if(/off/i.test(s)) return 'OFFSHORE';
   return s.toUpperCase()||'ONSHORE';
+}
+
+/* ════════════════════════════════════════════════════
+   PROJECT TIMELINE — Parse, Render, Filter
+════════════════════════════════════════════════════ */
+
+/* Phase color palette */
+const PHASE_COLORS = [
+  {bg:'#1a237e', border:'#3949ab', text:'#fff', light:'#e8eaf6'},
+  {bg:'#1b5e20', border:'#43a047', text:'#fff', light:'#e8f5e9'},
+  {bg:'#b71c1c', border:'#ef5350', text:'#fff', light:'#ffebee'},
+  {bg:'#4a148c', border:'#8e24aa', text:'#fff', light:'#f3e5f5'},
+  {bg:'#e65100', border:'#fb8c00', text:'#fff', light:'#fff3e0'},
+];
+
+/* Parse the PROPEL_TIMELINE AoA into _timelineData */
+function _parseTimelineSheet(aoa){
+  _timelineData = [];
+  if(!aoa || aoa.length < 2) return;
+  /* Find header row */
+  let hIdx = -1;
+  for(let i=0; i<Math.min(aoa.length,5); i++){
+    const r = aoa[i]||[];
+    if(r.some(v => v && /PHASE/i.test(String(v)))){
+      hIdx = i; break;
+    }
+  }
+  if(hIdx < 0) return;
+  const h = (aoa[hIdx]||[]).map(v => v ? String(v).toUpperCase().trim() : '');
+  const ci = {
+    phase:   h.indexOf('PHASE'),
+    start:   h.indexOf('START_DT'),
+    end:     h.indexOf('END_DT'),
+    overlap: h.indexOf('OVERLAP'),
+    ovPhase: h.indexOf('OVERLAP_PHASE'),
+    ovMonths:h.indexOf('OVERLAP_PERIOD_IN_MONTHS')
+  };
+  if(ci.phase<0 || ci.start<0 || ci.end<0) return;
+
+  for(let i=hIdx+1; i<aoa.length; i++){
+    const r = aoa[i]||[];
+    if(!r[ci.phase]) continue;
+    /* Dates can come as JS Date objects or Excel serial numbers */
+    const toDate = v => {
+      if(!v) return null;
+      if(v instanceof Date) return v;
+      if(typeof v === 'number'){
+        /* Excel serial: days since 1900-01-00 */
+        const d = new Date(Math.round((v - 25569)*86400*1000));
+        return d;
+      }
+      const p = new Date(v);
+      return isNaN(p)?null:p;
+    };
+    const sd = toDate(r[ci.start]);
+    const ed = toDate(r[ci.end]);
+    if(!sd || !ed) continue;
+    const ov = r[ci.overlap];
+    const ovBool = (ov===true || String(ov).toUpperCase()==='TRUE');
+    _timelineData.push({
+      phase:       String(r[ci.phase]).toUpperCase().trim(),
+      startDt:     sd,
+      endDt:       ed,
+      overlap:     ovBool,
+      overlapPhase:r[ci.ovPhase] ? String(r[ci.ovPhase]).toUpperCase().trim() : null,
+      overlapMonths: r[ci.ovMonths] ? +r[ci.ovMonths] : 0,
+      colorIdx:    _timelineData.length % PHASE_COLORS.length
+    });
+  }
+}
+
+/* Populate the Phase filter dropdown */
+function _populatePhaseFilter(){
+  const sel = document.getElementById('fPhase');
+  const fg  = document.getElementById('fgPhase');
+  if(!sel || !fg) return;
+  /* Keep current selection if possible */
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">All Phases</option>';
+  _timelineData.forEach(td=>{
+    const o = document.createElement('option');
+    o.value = td.phase;
+    const c = PHASE_COLORS[td.colorIdx];
+    const dur = _phaseDurationLabel(td.startDt, td.endDt);
+    o.textContent = td.phase + (td.overlap ? ' ⚠️' : '') + '  (' + dur + ')';
+    sel.appendChild(o);
+  });
+  fg.style.display = _timelineData.length ? '' : 'none';
+  if(cur && [...sel.options].some(o=>o.value===cur)) sel.value = cur;
+}
+
+function _phaseDurationLabel(sd, ed){
+  const months = (ed.getFullYear()-sd.getFullYear())*12 + (ed.getMonth()-sd.getMonth()) + 1;
+  const sm = sd.toLocaleString('en-US',{month:'short',year:'2-digit'});
+  const em = ed.toLocaleString('en-US',{month:'short',year:'2-digit'});
+  return sm + ' – ' + em + ' · ' + months + 'mo';
+}
+
+/* Render the timeline bar above the tab panels */
+function _renderTimelineBanner(){
+  const banner  = document.getElementById('timelineBanner');
+  const track   = document.getElementById('timelineTrack');
+  const legend  = document.getElementById('timelineLegend');
+  const ovBadge = document.getElementById('tlOverlapBadge');
+  if(!banner || !track || !legend) return;
+
+  if(!_timelineData.length || !MONTHS.length){
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = '';
+
+  /* Determine date range: all phase start/end + roster months */
+  const MON3 = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  function mlToDate(ml){
+    const m = String(ml).match(/^([a-z]{3})-(\d{2})$/i);
+    if(!m) return null;
+    const mo = MON3[m[1].toLowerCase()];
+    if(mo===undefined) return null;
+    const yr = +m[2] + (+m[2]<50?2000:1900);
+    return new Date(yr, mo, 1);
+  }
+
+  const rDates = MONTHS.map(mlToDate).filter(Boolean);
+  const allDates = [
+    ...rDates,
+    ..._timelineData.map(t=>t.startDt),
+    ..._timelineData.map(t=>t.endDt)
+  ];
+  const minT = Math.min(...allDates.map(d=>d.getTime()));
+  const maxT = Math.max(...allDates.map(d=>d.getTime()));
+  const range = maxT - minT || 1;
+
+  const pct = t => ((t-minT)/range*100).toFixed(3)+'%';
+
+  /* Build track HTML */
+  let html = '';
+
+  /* Roster month tick marks */
+  rDates.forEach((d,i)=>{
+    const ml = MONTHS[i];
+    const x = pct(d.getTime());
+    html += `<div style="position:absolute;left:${x};top:0;bottom:0;border-left:1px dashed rgba(0,48,135,0.15);pointer-events:none;"></div>`;
+  });
+
+  /* Phase bars — solid color per phase, no stripe on bar itself */
+  const selPhase = (document.getElementById('fPhase')||{}).value || 'all';
+  _timelineData.forEach(td=>{
+    const c = PHASE_COLORS[td.colorIdx];
+    const x1 = pct(td.startDt.getTime());
+    const w  = ((td.endDt.getTime()-td.startDt.getTime())/range*100).toFixed(3)+'%';
+    const isSelected = selPhase === td.phase;
+    const isOther    = selPhase !== 'all' && !isSelected;
+    const opacity    = isOther ? '0.28' : '1';
+    const tip = td.overlap
+      ? `${td.phase} overlaps with ${td.overlapPhase||'another phase'} for ${td.overlapMonths} month(s)`
+      : td.phase;
+    html += `<div style="position:absolute;left:${x1};width:${w};top:8px;bottom:8px;
+      background:${c.bg};border-radius:4px;border:2px solid ${c.border};
+      display:flex;align-items:center;justify-content:center;overflow:hidden;
+      opacity:${opacity};cursor:default;box-sizing:border-box;" title="${tip}">
+      <span style="color:${c.text};font-size:.58rem;font-weight:800;white-space:nowrap;
+        padding:0 6px;text-overflow:ellipsis;overflow:hidden;letter-spacing:.3px;
+        text-shadow:0 1px 2px rgba(0,0,0,.5);">${td.phase}</span>
+    </div>`;
+  });
+
+  /* Overlap zones — blended diagonal stripe of BOTH phase colors, rendered on top */
+  for(let i=0; i<_timelineData.length; i++){
+    for(let j=i+1; j<_timelineData.length; j++){
+      const a = _timelineData[i], b = _timelineData[j];
+      const oStart = Math.max(a.startDt.getTime(), b.startDt.getTime());
+      const oEnd   = Math.min(a.endDt.getTime(),   b.endDt.getTime());
+      if(oEnd > oStart){
+        const ca = PHASE_COLORS[a.colorIdx];
+        const cb = PHASE_COLORS[b.colorIdx];
+        const ox = pct(oStart);
+        const ow = ((oEnd-oStart)/range*100).toFixed(3)+'%';
+        const oMonths = Math.round((oEnd-oStart)/2592000000);
+        const stripe = `repeating-linear-gradient(135deg,${ca.bg} 0px,${ca.bg} 7px,${cb.bg} 7px,${cb.bg} 14px)`;
+        html += `<div style="position:absolute;left:${ox};width:${ow};top:4px;bottom:4px;
+          background:${stripe};
+          border-left:2px solid ${ca.border};border-right:2px solid ${cb.border};
+          border-radius:3px;box-sizing:border-box;display:flex;align-items:center;
+          justify-content:center;overflow:hidden;"
+          title="⚠️ Overlap: ${a.phase} + ${b.phase} · ${oMonths} month(s)">
+          <span style="color:#fff;font-size:.5rem;font-weight:900;letter-spacing:.2px;
+            text-shadow:0 1px 3px rgba(0,0,0,.85);white-space:nowrap;padding:0 4px;">⚠️ ${oMonths}mo</span>
+        </div>`;
+      }
+    }
+  }
+
+  track.innerHTML = html;
+
+  /* Legend */
+  const hasOverlap = _timelineData.some(t=>t.overlap);
+  ovBadge.style.display = hasOverlap ? '' : 'none';
+
+  legend.innerHTML = _timelineData.map(td=>{
+    const c = PHASE_COLORS[td.colorIdx];
+    const dur = _phaseDurationLabel(td.startDt, td.endDt);
+    const ovNote = td.overlap
+      ? `<span style="color:#e65100;font-size:.62rem;"> ⚠️ overlaps ${td.overlapPhase||''} (${td.overlapMonths}mo)</span>`
+      : '';
+    /* Solid swatch — no stripe on individual phase */
+    return `<div style="display:flex;align-items:center;gap:5px;font-size:.66rem;">
+      <div style="width:14px;height:14px;border-radius:3px;background:${c.bg};border:1px solid ${c.border};flex-shrink:0;"></div>
+      <span style="font-weight:700;color:${c.bg}">${td.phase}</span>
+      <span style="color:#888">${dur}</span>${ovNote}
+    </div>`;
+  }).join('') + (hasOverlap ? (() => {
+    /* Build blended overlap swatch from the two overlapping phases */
+    let ovPairs = [];
+    for(let i=0; i<_timelineData.length; i++){
+      for(let j=i+1; j<_timelineData.length; j++){
+        const a=_timelineData[i], b=_timelineData[j];
+        if(Math.min(a.endDt,b.endDt)>Math.max(a.startDt,b.startDt)){
+          ovPairs.push([a,b]);
+        }
+      }
+    }
+    return ovPairs.map(([a,b])=>{
+      const ca=PHASE_COLORS[a.colorIdx], cb=PHASE_COLORS[b.colorIdx];
+      const stripe=`repeating-linear-gradient(135deg,${ca.bg} 0px,${ca.bg} 4px,${cb.bg} 4px,${cb.bg} 8px)`;
+      return `<div style="display:flex;align-items:center;gap:5px;font-size:.66rem;">
+        <div style="width:14px;height:14px;border-radius:3px;background:${stripe};border-left:2px solid ${ca.border};border-right:2px solid ${cb.border};flex-shrink:0;"></div>
+        <span style="color:#555;font-weight:700;">Overlap: ${a.phase} + ${b.phase}</span>
+      </div>`;
+    }).join('');
+  })() : '');
+}
+
+/* Get active phase date range for filtering months */
+function _getPhaseMonthRange(){
+  const sel = (document.getElementById('fPhase')||{}).value || 'all';
+  if(sel === 'all' || !_timelineData.length) return null;
+  const td = _timelineData.find(t=>t.phase===sel);
+  if(!td) return null;
+  return { startDt: td.startDt, endDt: td.endDt };
+}
+
+/* Filter MONTHS array by selected phase range */
+function _monthsInPhase(){
+  const range = _getPhaseMonthRange();
+  if(!range) return null; // null = no filter = show all
+  const MON3 = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  return MONTHS.filter(ml=>{
+    const m = String(ml).match(/^([a-z]{3})-(\d{2})$/i);
+    if(!m) return true;
+    const mo = MON3[m[1].toLowerCase()];
+    if(mo===undefined) return true;
+    const yr = +m[2] + (+m[2]<50?2000:1900);
+    const mStart = new Date(yr, mo, 1);
+    const mEnd   = new Date(yr, mo+1, 0);
+    return mStart <= range.endDt && mEnd >= range.startDt;
+  });
+}
+
+/* Get which phases cover a given month label */
+function _getPhasesForMonth(ml){
+  if(!_timelineData.length) return [];
+  const MON3 = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  const m = String(ml).match(/^([a-z]{3})-(\d{2})$/i);
+  if(!m) return [];
+  const mo = MON3[m[1].toLowerCase()];
+  if(mo===undefined) return [];
+  const yr = +m[2] + (+m[2]<50?2000:1900);
+  const mStart = new Date(yr, mo, 1);
+  const mEnd   = new Date(yr, mo+1, 0);
+  return _timelineData.filter(td => td.startDt <= mEnd && td.endDt >= mStart);
 }
 
 /* ════════════════════════════════════════════════════
@@ -2141,6 +2436,10 @@ function initFilters(){
       if(tipEl) titleEl.appendChild(tipEl); // re-attach if detached
     }
   }
+
+  /* Phase filter (from PROPEL_TIMELINE) */
+  _populatePhaseFilter();
+  _renderTimelineBanner();
 }
 
 function applyFilters(){
@@ -2150,6 +2449,8 @@ function applyFilters(){
   const fst = document.getElementById('fStatus').value;
 
   const fa  = document.getElementById('fActive').value;
+  /* Re-render timeline banner to reflect phase selection highlight */
+  _renderTimelineBanner();
   FD = R.filter(r=>{
     const v = r.flex.actual - r.flex.forecast;
     if(fs!=='all' && r.shore!==fs) return false;
@@ -2191,18 +2492,6 @@ function renderAll(){
   drawResVar();
   drawMonthly();
   buildHeatmap();
-  /* Fix two-row sticky header: measure row-1 height, apply as top for row-2 */
-  requestAnimationFrame(()=>{
-    const wrap=document.querySelector('.heat-wrap');
-    const tbl =document.getElementById('heatTable');
-    if(!wrap||!tbl) return;
-    const row1=tbl.querySelector('thead tr:first-child');
-    if(!row1) return;
-    const row1H=row1.getBoundingClientRect().height||28;
-    tbl.querySelectorAll('thead tr:nth-child(2) th').forEach(th=>{
-      th.style.top=row1H+'px';
-    });
-  });
   buildRosterTable();
   buildDetailTable();
 }
@@ -2602,9 +2891,16 @@ function buildHeatmap(){
   const weekMonthMap={};
   weekDates.forEach((d,wi)=>{ const p=wdParse(d); if(p) weekMonthMap[wi]=p; });
 
+  /* Phase filter: restrict to months within selected phase */
+  const phaseMonths = _monthsInPhase(); // null = no filter; array = filtered labels
   const monthKeySet=new Set();
-  Object.values(weekMonthMap).forEach(p=>monthKeySet.add(mKey(p.year,p.month0)));
-  MONTHS.forEach(ml=>{ const p=mlParse(ml); if(p) monthKeySet.add(mKey(p.year,p.month0)); });
+  Object.values(weekMonthMap).forEach(p=>{
+    const k=mKey(p.year,p.month0);
+    if(!phaseMonths || phaseMonths.some(ml=>{ const pp=mlParse(ml); return pp && mKey(pp.year,pp.month0)===k; }))
+      monthKeySet.add(k);
+  });
+  const effectiveMonths = phaseMonths || MONTHS;
+  effectiveMonths.forEach(ml=>{ const p=mlParse(ml); if(p) monthKeySet.add(mKey(p.year,p.month0)); });
 
   const allMonthKeys=[...monthKeySet].sort();
 
@@ -2618,27 +2914,56 @@ function buildHeatmap(){
   const rosterMonthIdx={};
   MONTHS.forEach((ml,mi)=>{ const p=mlParse(ml); if(p) rosterMonthIdx[mKey(p.year,p.month0)]=mi; });
 
-  /* ── Header (frozen cols use fc- classes) ── */
+  /* ── Single-row header — eliminates two-row sticky overlap problem ── */
+  /* Frozen cols + month groups all in one <tr>; sub-col labels stacked inside each month group th */
   let hr1=`<tr>
-    <th class="fc-expand" rowspan="2"></th>
-    <th class="fc-name"   rowspan="2">Resource</th>
-    <th class="fc-shore"  rowspan="2">Shore</th>
-    <th class="fc-active" rowspan="2">Active</th>`;
-  let hr2=`<tr>`;
+    <th class="fc-expand"></th>
+    <th class="fc-name" style="text-align:left">Resource</th>
+    <th class="fc-shore">Shore</th>
+    <th class="fc-active">Active</th>`;
+  /* No hr2 — everything is in hr1 */
 
   allMonthKeys.forEach(k=>{
     const wis=monthWeekIndices[k];
-    const span=wis.length+3;
-    hr1+=`<th class="month-grp month-sep" colspan="${span}">${mLabel(k)}</th>`;
+    /* Phase coloring for this month */
+    const ml=mLabel(k);
+    const phasesHere=_getPhasesForMonth(ml);
+    const isOverlap=phasesHere.length>1;
+    const phaseC=phasesHere.length?PHASE_COLORS[phasesHere[0].colorIdx]:null;
+    let grpBg, grpText;
+    if(isOverlap){
+      const ca=PHASE_COLORS[phasesHere[0].colorIdx], cb=PHASE_COLORS[phasesHere[1].colorIdx];
+      grpBg=`background:repeating-linear-gradient(135deg,${ca.bg} 0px,${ca.bg} 8px,${cb.bg} 8px,${cb.bg} 16px)`;
+      grpText='color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)';
+    } else if(phaseC){
+      grpBg=`background:${phaseC.bg}`;
+      grpText='color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)';
+    } else {
+      grpBg='background:#1b1b1b'; grpText='';
+    }
+    const phaseTip=phasesHere.length?`title="${isOverlap?'⚠️ OVERLAP: ':''} ${phasesHere.map(p=>p.phase).join(' + ')}"` :'';
+    const phaseLabel=isOverlap
+      ? `<div style="font-size:.5rem;font-weight:900;color:#fff;background:rgba(0,0,0,.3);border-radius:3px;padding:1px 4px;margin-bottom:2px;display:inline-block">⚠️ OVERLAP</div>`
+      : phaseC ? `<div style="font-size:.48rem;color:rgba(255,255,255,.8);font-weight:600;margin-bottom:1px">${phasesHere[0].phase}</div>` : '';
+
+    /* Month label + phase info as a separator row inside the group */
+    hr1+=`<th class="month-sep" colspan="${wis.length+3}"
+      style="padding:0;vertical-align:top;${grpBg};border-bottom:1px solid rgba(255,255,255,.15)" ${phaseTip}>
+      <div style="${grpText};padding:4px 8px 3px;font-size:.68rem;font-weight:800;letter-spacing:.3px;border-bottom:1px solid rgba(255,255,255,.12);white-space:nowrap">
+        ${phaseLabel}${ml}
+      </div>
+      <div style="display:flex;align-items:stretch;">`;
+
     wis.forEach(wi=>{
-      hr2+=`<th class="sub-col month-sep" style="min-width:38px">Wk<br>${WEEKS[wi]||''}</th>`;
+      hr1+=`<div style="min-width:38px;flex:0 0 auto;padding:3px 4px;text-align:center;font-size:.58rem;font-weight:600;border-right:1px solid rgba(255,255,255,.1);white-space:nowrap">Wk<br>${WEEKS[wi]||''}</div>`;
     });
-    hr2+=`<th class="sub-col" style="min-width:52px;background:#1a237e">Roster<br>Planned</th>`;
-    hr2+=`<th class="sub-col" style="min-width:52px;background:#4a148c">Flex<br>Actual</th>`;
-    hr2+=`<th class="sub-col" style="min-width:52px;background:#3e2723">Variance<br>(Act−Plan)</th>`;
+    hr1+=`<div style="min-width:52px;flex:0 0 auto;padding:3px 4px;text-align:center;font-size:.58rem;font-weight:600;background:rgba(26,35,126,.5);border-right:1px solid rgba(255,255,255,.1)">Roster<br>Planned</div>`;
+    hr1+=`<div style="min-width:52px;flex:0 0 auto;padding:3px 4px;text-align:center;font-size:.58rem;font-weight:600;background:rgba(74,20,140,.5);border-right:1px solid rgba(255,255,255,.1)">Flex<br>Actual</div>`;
+    hr1+=`<div style="min-width:52px;flex:0 0 auto;padding:3px 4px;text-align:center;font-size:.58rem;font-weight:600;background:rgba(62,39,35,.5)">Var<br>(Act−Plan)</div>`;
+    hr1+=`</div></th>`;
   });
-  hr1+=`<th class="total-hdr" rowspan="2" style="min-width:60px">Flex Total<br>(All Weeks)</th></tr>`;
-  hr2+=`</tr>`;
+  hr1+=`<th class="total-hdr" style="min-width:60px;vertical-align:middle">Flex Total<br>(All Weeks)</th></tr>`;
+  const hr2=''; /* empty — single row */
 
   /* ── Helper: build month cells ──
      wa[]       = weekly actuals (aggregated across all WBS files for summary row,
@@ -2757,7 +3082,7 @@ function buildHeatmap(){
     <td class="total-cell">${grandFlexTotal>0?grandFlexTotal:''}</td>
   </tr>`;
 
-  t.innerHTML=`<thead>${hr1}${hr2}</thead><tbody>${rows}${footerRow}</tbody>`;
+  t.innerHTML=`<thead>${hr1}</thead><tbody>${rows}${footerRow}</tbody>`;
 }
 
 /* Toggle expand/collapse for a resource's WBS sub-rows */
@@ -2778,14 +3103,49 @@ function hmToggle(ri){
 function buildRosterTable(){
   const hd=document.getElementById('rosterHead');
   const bd=document.getElementById('rosterBody');
+  /* Phase filter: restrict visible months */
+  const phaseMonths = _monthsInPhase(); // null = show all
+  const visMonths = phaseMonths || MONTHS;
+  const visIdxs   = visMonths.map(m=>MONTHS.indexOf(m)).filter(i=>i>=0);
+
   let hh=`<th>#</th><th>Name</th><th>PGE ID</th><th>Shore</th><th>Active</th><th>Scrum</th><th>Role</th>`;
-  MONTHS.forEach(m=>hh+=`<th>${m}</th>`);
+  /* Phase band header if filtered */
+  if(phaseMonths){
+    const selPhase=(document.getElementById('fPhase')||{}).value||'';
+    const td=_timelineData.find(t=>t.phase===selPhase);
+    const c=td?PHASE_COLORS[td.colorIdx]:PHASE_COLORS[0];
+    hh=`<th>#</th><th>Name</th><th>PGE ID</th><th>Shore</th><th>Active</th><th>Scrum</th><th>Role</th>`;
+  }
+  visMonths.forEach((m,vi)=>{
+    /* Determine which phases cover this month for color band */
+    const phasesForMonth=_getPhasesForMonth(m);
+    const isOverlap=phasesForMonth.length>1;
+    let bg, txtStyle, border;
+    if(isOverlap){
+      const ca=PHASE_COLORS[phasesForMonth[0].colorIdx], cb=PHASE_COLORS[phasesForMonth[1].colorIdx];
+      bg=`repeating-linear-gradient(135deg,${ca.bg} 0px,${ca.bg} 8px,${cb.bg} 8px,${cb.bg} 16px)`;
+      border=`border-bottom:3px solid ${cb.border}`;
+      txtStyle='color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);font-weight:700';
+    } else if(phasesForMonth.length){
+      const c=PHASE_COLORS[phasesForMonth[0].colorIdx];
+      bg=c.bg; border=`border-bottom:3px solid ${c.border}`;
+      txtStyle='color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);font-weight:700';
+    } else {
+      bg=''; border=''; txtStyle='';
+    }
+    const tip=isOverlap?`title="⚠️ ${phasesForMonth.map(p=>p.phase).join(' + ')} overlap"`:
+              phasesForMonth.length?`title="${phasesForMonth[0].phase}"`:'' ;
+    const ovLabel=isOverlap?` <span style="font-size:.5rem;display:block;font-weight:900;color:rgba(255,255,255,.9)">⚠️ OVERLAP</span>`:
+      phasesForMonth.length?`<span style="font-size:.48rem;display:block;color:rgba(255,255,255,.7);font-weight:600">${phasesForMonth[0].phase}</span>`:'';
+    hh+=`<th style="background:${bg};${border};${txtStyle};padding:5px 6px;white-space:nowrap;min-width:58px" ${tip}>${m}${ovLabel}</th>`;
+  });
   hh+=`<th>Total</th>`;
   hd.innerHTML=hh;
   let bh='';
   FD.forEach((r,i)=>{
-    const tot=sm(r.rosterHrs);
     const isActiveR=(r.active||'YES')==='YES';
+    const visHrs=visIdxs.map(idx=>r.rosterHrs[idx]??'');
+    const tot=sm(visHrs);
     bh+=`<tr data-shore="${(r.shore||'').toUpperCase()}" data-scrum="${(r.scrum||'')}" style="${isActiveR?'':'opacity:.6;'}">
       <td>${i+1}</td><td><strong>${r.name}</strong></td>
       <td style="font-size:.68rem;color:#888">${r.pge}</td>
@@ -2793,7 +3153,7 @@ function buildRosterTable(){
       <td style="text-align:center"><span class="tag ${isActiveR?'tok':'tover'}">${isActiveR?'YES':'NO'}</span></td>
       <td style="font-size:.68rem">${r.scrum}</td>
       <td style="font-size:.67rem">${r.role}</td>`;
-    r.rosterHrs.forEach(v=>{
+    visHrs.forEach(v=>{
       const bg=v>=176?'#e8f5e9':v>=160?'#fff9c4':'#fff3e0';
       bh+=`<td style="background:${bg};font-weight:600;text-align:center">${v||''}</td>`;
     });
@@ -2802,7 +3162,7 @@ function buildRosterTable(){
   bd.innerHTML=bh;
   _populateRosterScrumFilter();
   const rc=document.getElementById('rosterRowCount');
-  if(rc) rc.textContent=FD.length+' resources shown';
+  if(rc) rc.textContent=FD.length+' resources shown'+(phaseMonths?` · ${visMonths.length} months (${(document.getElementById('fPhase')||{}).value||''} phase)`:'');
 }
 
 /* ── Detail Table ── */
@@ -3263,7 +3623,23 @@ async function ghFetchRoster(fname){
   try {
     stEl.textContent = '⌛ Loading…';
     stEl.className   = 'gh-status loading';
-    const aoa = await _ghFetchFile(fname);
+    /* Fetch raw buffer to access all sheets (PROPEL_TIMELINE included) */
+    const encodedPath = fname.split('/').map(s => encodeURIComponent(s)).join('/');
+    const url = GH_BASE + encodedPath + '?cb=' + Date.now();
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(`HTTP ${res.status} — file not found in repo: ${fname}`);
+    const buf = await res.arrayBuffer();
+    const wb  = XLSX.read(buf, {type:'array'});
+    /* Parse PROPEL_TIMELINE if present */
+    const tlSheet = wb.Sheets['PROPEL_TIMELINE'];
+    if(tlSheet){
+      const tlAoa = XLSX.utils.sheet_to_json(tlSheet, {header:1, defval:null});
+      _parseTimelineSheet(tlAoa);
+    } else {
+      _timelineData = [];
+    }
+    const ws  = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
     parseRosterAoA(aoa, fname);
     _ghRosterLoaded = true;
     stEl.textContent = '✅ Loaded';
@@ -3447,6 +3823,14 @@ function resetAllData(){
   ['fShore','fScrum','fClass','fStatus','fMonth'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.innerHTML='<option value="all">—</option>';
   });
+  /* Clear timeline */
+  _timelineData=[];
+  const tlBanner=document.getElementById('timelineBanner');
+  if(tlBanner) tlBanner.style.display='none';
+  const fgPhase=document.getElementById('fgPhase');
+  if(fgPhase) fgPhase.style.display='none';
+  const fPhase=document.getElementById('fPhase');
+  if(fPhase) fPhase.innerHTML='<option value="all">All Phases</option>';
   const fa=document.getElementById('fActive'); if(fa){ fa.value='YES'; }
 
   /* ── Reset GH state ── */
@@ -3994,6 +4378,10 @@ function _initLTAFilters(){
   _ltaSetDatePickerBounds();
   /* Populate resource name filter dropdown */
   _ltaPopulateResFilter();
+  /* Sync date range wrap visibility with current View Month selection */
+  const curSel=document.getElementById('ltaFMonth')?.value||'all';
+  const wrap=document.getElementById('ltaDateRangeWrap');
+  if(wrap) wrap.style.display=(curSel==='all')?'flex':'none';
 }
 
 /* ── Render LTA KPIs + main table + monthly breakdown ── */
@@ -4189,7 +4577,20 @@ function renderLTATable(){
     const biz=_bizDays(m);
     const tag=isFut3?`<span style="font-size:.5rem;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:4px;display:block;margin-top:2px">FORECAST</span>`
               :isCur3?`<span style="font-size:.5rem;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:4px;display:block;margin-top:2px">CURRENT</span>`:'';
-    return `<th class="lta-month-th" ${_holTipAttr(m,isFut3?'blue':'')} style="padding:6px 4px;text-align:center;font-size:.6rem;cursor:default;${thBg};color:#ffd700;min-width:80px;white-space:nowrap">${m}${tag}<span style="color:#90a4ae;font-size:.55rem;font-weight:400;display:block">${biz} biz days</span></th>`;
+    /* Phase indicator — 4px solid top stripe + inline phase label */
+    const phasesHere=_getPhasesForMonth(m);
+    const isOvlp=phasesHere.length>1;
+    let phBorder, phLabel;
+    if(isOvlp){
+      const ca=PHASE_COLORS[phasesHere[0].colorIdx], cb=PHASE_COLORS[phasesHere[1].colorIdx];
+      phBorder=`border-top:4px solid ${ca.border};`;
+      phLabel=`<span style="font-size:.46rem;display:block;font-weight:800;color:#ffd700;background:rgba(0,0,0,.25);border-radius:3px;padding:1px 3px;margin-top:2px">⚠️ ${phasesHere.map(p=>p.phase).join(' + ')}</span>`;
+    } else if(phasesHere.length){
+      const c=PHASE_COLORS[phasesHere[0].colorIdx];
+      phBorder=`border-top:4px solid ${c.border};`;
+      phLabel=`<span style="font-size:.46rem;display:block;font-weight:700;color:${c.border};background:rgba(255,255,255,.12);border-radius:3px;padding:1px 3px;margin-top:2px">${phasesHere[0].phase}</span>`;
+    } else { phBorder=''; phLabel=''; }
+    return `<th class="lta-month-th" ${_holTipAttr(m,isFut3?'blue':'')} style="padding:6px 4px;text-align:center;font-size:.6rem;cursor:default;${thBg};color:#ffd700;min-width:80px;white-space:nowrap;${phBorder}">${m}${tag}${phLabel}<span style="color:#90a4ae;font-size:.55rem;font-weight:400;display:block">${biz} biz days</span></th>`;
   }
 
   document.getElementById('ltaHead').innerHTML = `
@@ -4353,9 +4754,22 @@ function _renderLTAMonthBreakdown(computed){
     const isCur4=p4&&p4.yr===now4.getFullYear()&&p4.mo===now4.getMonth();
     const bg=isFut4?'background:#1565c0':isCur4?'background:#e65100':'background:#2d2d2d';
     const biz=_bizDays(ml);
+    /* Phase indicator — top stripe + label matching phase color */
+    const phasesHere=_getPhasesForMonth(ml);
+    const isOvlp=phasesHere.length>1;
+    let phBorder4, phLabel4;
+    if(isOvlp){
+      const ca=PHASE_COLORS[phasesHere[0].colorIdx], cb=PHASE_COLORS[phasesHere[1].colorIdx];
+      phBorder4=`border-top:4px solid ${ca.border};`;
+      phLabel4=`<span style="font-size:.45rem;display:block;font-weight:800;color:#ffd700;background:rgba(0,0,0,.3);border-radius:3px;padding:1px 4px;margin-bottom:1px">⚠️ ${phasesHere.map(p=>p.phase).join(' + ')}</span>`;
+    } else if(phasesHere.length){
+      const c=PHASE_COLORS[phasesHere[0].colorIdx];
+      phBorder4=`border-top:4px solid ${c.border};`;
+      phLabel4=`<span style="font-size:.45rem;display:block;font-weight:700;color:${c.border};background:rgba(255,255,255,.1);border-radius:3px;padding:1px 4px;margin-bottom:1px">${phasesHere[0].phase}</span>`;
+    } else { phBorder4=''; phLabel4=''; }
     html+=`<th colspan="3" class="lta-month-th" ${_holTipAttr(ml,isFut4?'blue':'')}
-      style="${bg};color:#ffd700;border-left:2px solid #e0301e;text-align:center;min-width:132px;padding:5px 4px;white-space:nowrap">
-      ${ml}<span style="display:block;font-size:.55rem;color:#90a4ae;font-weight:400">${biz} biz · CA | Local | CA%</span>
+      style="${bg};color:#ffd700;border-left:2px solid #e0301e;text-align:center;min-width:132px;padding:5px 4px;white-space:nowrap;${phBorder4}">
+      ${phLabel4}${ml}<span style="display:block;font-size:.55rem;color:#90a4ae;font-weight:400">${biz} biz · CA | Local | CA%</span>
     </th>`;
   });
   html+=`</tr></thead><tbody>`;
@@ -4403,7 +4817,7 @@ function _renderLTAMonthBreakdown(computed){
     document.getElementById('ltaMonthBreakdown'),
     document.getElementById('ltaMBTable')
   );
-  }
+}
 
 /* ════════════════════════════════════════════════════
    LTA FORECAST MODEL
@@ -4487,8 +4901,21 @@ function _renderLTAForecast(){
     const biz=_bizDays(ml);
     const ena=_ltaForecastEditable.has(ml);
     const mlKey=ml.replace(/[^a-zA-Z0-9]/g,'_');
-    html+=`<th class="lta-fc-th" ${_holTipAttr(ml,'blue')} style="min-width:160px;text-align:center;padding:4px 6px;${ena?'background:#0d47a1;':''}">
-      <div style="font-weight:700;font-size:.63rem">${ml}</div>
+    /* Phase indicator — 4px top border + phase label above month name */
+    const phasesHere=_getPhasesForMonth(ml);
+    const isOvlp=phasesHere.length>1;
+    let phBorderFc, phLabelFc;
+    if(isOvlp){
+      const ca=PHASE_COLORS[phasesHere[0].colorIdx], cb=PHASE_COLORS[phasesHere[1].colorIdx];
+      phBorderFc=`border-top:4px solid ${ca.border};`;
+      phLabelFc=`<div style="font-size:.45rem;color:#ffd700;font-weight:800;background:rgba(0,0,0,.3);border-radius:3px;padding:1px 4px;margin-bottom:2px">⚠️ ${phasesHere.map(p=>p.phase).join(' + ')}</div>`;
+    } else if(phasesHere.length){
+      const c=PHASE_COLORS[phasesHere[0].colorIdx];
+      phBorderFc=`border-top:4px solid ${c.border};`;
+      phLabelFc=`<div style="font-size:.45rem;color:${c.border};font-weight:700;background:rgba(255,255,255,.1);border-radius:3px;padding:1px 4px;margin-bottom:2px">${phasesHere[0].phase}</div>`;
+    } else { phBorderFc=''; phLabelFc=''; }
+    html+=`<th class="lta-fc-th" ${_holTipAttr(ml,'blue')} style="min-width:160px;text-align:center;padding:4px 6px;${ena?'background:#0d47a1;':''} ${phBorderFc}">
+      ${phLabelFc}<div style="font-weight:700;font-size:.63rem;color:#ffd700">${ml}</div>
       <div style="font-size:.55rem;color:#90caf9">${biz} biz days</div>
       <div style="margin-top:3px">
         <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;font-size:.58rem;color:#fff">
@@ -4496,10 +4923,10 @@ function _renderLTAForecast(){
             style="accent-color:#ffd700;width:12px;height:12px;cursor:pointer"> Edit CA
         </label>
       </div>
-      <div style="display:flex;align-items:center;gap:3px;justify-content:center;margin-top:2px;opacity:${ena?'1':'.35'}">
+      <div style="display:flex;align-items:center;gap:3px;justify-content:center;margin-top:2px;opacity:${ena?'1':'-.35'}">
         <span style="font-size:.55rem;color:#ffd700;font-weight:700">All:</span>
         <input type="number" min="0" max="${biz}" step="1" placeholder="—"
-          id="fcbulk_${mlKey}" ${ena?'':'disabled'}
+          id="fcbulk_${mlKey}" ${ena?'':"disabled"}
           style="width:38px;text-align:center;border:1.5px solid ${ena?'#ffd700':'#555'};border-radius:4px;
             padding:2px 3px;font-size:.64rem;font-weight:700;background:${ena?'#1a3a6e':'#1b2a40'};
             color:${ena?'#ffd700':'#888'};cursor:${ena?'text':'not-allowed'}"
@@ -4776,8 +5203,13 @@ function _ltaApplyStickyOffsets(){
 /* ── View Month filter change — clear date range when a specific month is picked ── */
 function ltaMonthFilterChange(){
   const sel=document.getElementById('ltaFMonth')?.value||'all';
-  if(sel&&sel!=='all'){
-    // Clear date range when a specific month is selected
+  const wrap=document.getElementById('ltaDateRangeWrap');
+  if(sel==='all'){
+    // Rolling 10M — show date pickers
+    if(wrap) wrap.style.display='flex';
+  } else {
+    // Specific month selected — hide date pickers and clear values
+    if(wrap) wrap.style.display='none';
     const ds=document.getElementById('ltaDateStart');
     const de=document.getElementById('ltaDateEnd');
     if(ds) ds.value='';
